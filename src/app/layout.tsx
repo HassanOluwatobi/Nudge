@@ -21,10 +21,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f8f5ee" },
-    { media: "(prefers-color-scheme: dark)", color: "#221f1b" },
-  ],
+  themeColor: "#fde6da",
 };
 
 export default function RootLayout({
@@ -37,9 +34,9 @@ export default function RootLayout({
       className={`${GeistSans.variable} ${GeistSerif.variable}`}
     >
       <body>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <ThemeProvider attribute="class" forcedTheme="light" defaultTheme="light">
           {children}
-          <Toaster position="bottom-center" offset={160} mobileOffset={{ bottom: 160 }} />
+          <Toaster position="bottom-center" offset={104} mobileOffset={{ bottom: 104 }} />
         </ThemeProvider>
       </body>
     </html>

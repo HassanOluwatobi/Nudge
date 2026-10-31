@@ -41,58 +41,43 @@
   --radius-4xl: calc(var(--radius) * 2.5);
 }
 
-/* NudgeMe tokens: warm cream, one sage accent, no red. */
+/* NudgeMe clay garden: peach, lilac and mint. Soft, warm, never harsh. */
 :root {
-  --radius: 1rem;
-  --background: oklch(0.975 0.011 85);
-  --foreground: oklch(0.25 0.014 60);
-  --card: oklch(0.993 0.005 85);
-  --card-foreground: oklch(0.25 0.014 60);
-  --popover: oklch(0.993 0.005 85);
-  --popover-foreground: oklch(0.25 0.014 60);
-  --primary: oklch(0.5 0.072 152);
-  --primary-foreground: oklch(0.985 0.008 85);
-  --secondary: oklch(0.945 0.012 85);
-  --secondary-foreground: oklch(0.3 0.014 60);
-  --muted: oklch(0.948 0.011 85);
-  --muted-foreground: oklch(0.5 0.014 60);
-  --accent: oklch(0.935 0.032 150);
-  --accent-foreground: oklch(0.32 0.05 152);
-  --destructive: oklch(0.52 0.11 45);
-  --border: oklch(0.905 0.012 85);
-  --input: oklch(0.89 0.012 85);
-  --ring: oklch(0.6 0.07 152);
-  --calm: oklch(0.96 0.02 150);
-  --idea: oklch(0.94 0.045 82);
-  --idea-foreground: oklch(0.45 0.08 70);
-  --note: oklch(0.94 0.025 240);
-  --note-foreground: oklch(0.42 0.06 245);
-}
+  --radius: 1.1rem;
+  --background: oklch(0.975 0.014 55);
+  --foreground: oklch(0.27 0.045 330);
+  --card: oklch(0.995 0.004 60);
+  --card-foreground: oklch(0.27 0.045 330);
+  --popover: oklch(0.99 0.006 60);
+  --popover-foreground: oklch(0.27 0.045 330);
+  --primary: oklch(0.72 0.13 22);
+  --primary-foreground: oklch(0.99 0.005 60);
+  --secondary: oklch(0.955 0.018 300);
+  --secondary-foreground: oklch(0.32 0.05 320);
+  --muted: oklch(0.955 0.012 50);
+  --muted-foreground: oklch(0.52 0.035 330);
+  --accent: oklch(0.95 0.035 300);
+  --accent-foreground: oklch(0.38 0.09 295);
+  --destructive: oklch(0.6 0.13 30);
+  --border: oklch(0.92 0.014 40);
+  --input: oklch(0.9 0.016 40);
+  --ring: oklch(0.72 0.11 300);
+  --calm: oklch(0.95 0.03 165);
+  --idea: oklch(0.95 0.05 85);
+  --idea-foreground: oklch(0.47 0.09 70);
+  --note: oklch(0.95 0.03 280);
+  --note-foreground: oklch(0.44 0.08 285);
 
-.dark {
-  --background: oklch(0.2 0.008 70);
-  --foreground: oklch(0.94 0.01 85);
-  --card: oklch(0.24 0.009 70);
-  --card-foreground: oklch(0.94 0.01 85);
-  --popover: oklch(0.25 0.009 70);
-  --popover-foreground: oklch(0.94 0.01 85);
-  --primary: oklch(0.74 0.085 152);
-  --primary-foreground: oklch(0.2 0.01 70);
-  --secondary: oklch(0.28 0.009 70);
-  --secondary-foreground: oklch(0.92 0.01 85);
-  --muted: oklch(0.27 0.009 70);
-  --muted-foreground: oklch(0.7 0.012 80);
-  --accent: oklch(0.31 0.04 152);
-  --accent-foreground: oklch(0.88 0.05 150);
-  --destructive: oklch(0.72 0.1 45);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 13%);
-  --ring: oklch(0.65 0.07 152);
-  --calm: oklch(0.26 0.025 152);
-  --idea: oklch(0.32 0.04 82);
-  --idea-foreground: oklch(0.86 0.07 82);
-  --note: oklch(0.31 0.03 240);
-  --note-foreground: oklch(0.85 0.05 240);
+  --peach: #ffd9c4;
+  --lilac: #e6dcff;
+  --mint: #d3f1e2;
+  --coral-1: #ff9f7f;
+  --coral-2: #ff7d8e;
+  --coral-shade: #e65d7c;
+  --grape-1: #ad92ff;
+  --grape-2: #7c5df2;
+  --grape-shade: #5e40d6;
+  --plum: #3a2740;
 }
 
 @layer base {
@@ -104,9 +89,79 @@
     -webkit-tap-highlight-color: transparent;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
     font-feature-settings: "ss01", "cv11";
+    background:
+      radial-gradient(120% 60% at 0% 0%, var(--peach) 0%, transparent 60%),
+      radial-gradient(90% 55% at 100% 30%, var(--lilac) 0%, transparent 60%),
+      radial-gradient(100% 50% at 0% 100%, var(--mint) 0%, transparent 60%),
+      radial-gradient(80% 40% at 100% 100%, #ffe9dc 0%, transparent 70%),
+      #fdf6f1;
+    background-attachment: fixed;
+    min-height: 100dvh;
   }
+  /* Paper grain, kept very faint. */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.07;
+    mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.35  0 0 0 0 0.25  0 0 0 0 0.3  0 0 0 .9 0'/></filter><rect width='160' height='160' filter='url(%23n)'/></svg>");
+  }
+}
+
+@layer components {
+  /* Candy buttons: a soft gradient sitting on its own shadow. Pressing sinks it. */
+  .candy {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border-radius: 1.4rem;
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    background: linear-gradient(180deg, var(--coral-1), var(--coral-2));
+    box-shadow: 0 5px 0 var(--coral-shade), 0 16px 26px -10px rgb(255 110 125 / 0.55), inset 0 1px 0 rgb(255 255 255 / 0.45);
+    transition: transform 140ms cubic-bezier(0.3, 0.7, 0.4, 1), box-shadow 140ms;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .candy:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--coral-shade), 0 8px 16px -10px rgb(255 110 125 / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.45); }
+  .candy:disabled { filter: grayscale(0.6) opacity(0.6); }
+  .candy-grape { background: linear-gradient(180deg, var(--grape-1), var(--grape-2)); box-shadow: 0 4px 0 var(--grape-shade), 0 12px 22px -10px rgb(124 93 242 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.4); }
+  .candy-grape:active { box-shadow: 0 1px 0 var(--grape-shade), 0 6px 12px -8px rgb(124 93 242 / 0.5); }
+  .candy-soft { color: var(--plum); background: linear-gradient(180deg, #fff, #f6eef2); box-shadow: 0 4px 0 #e7dbe2, 0 12px 22px -12px rgb(90 50 80 / 0.25), inset 0 1px 0 #fff; }
+  .candy-soft:active { box-shadow: 0 1px 0 #e7dbe2, 0 6px 12px -10px rgb(90 50 80 / 0.25); }
+
+  .clay-card {
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.96), rgb(255 252 250 / 0.92));
+    border-radius: 2.25rem;
+    box-shadow: 0 2px 0 rgb(255 255 255) inset, 0 -2px 0 rgb(240 225 230) inset, 0 24px 50px -24px rgb(120 70 90 / 0.28), 0 6px 16px -10px rgb(120 70 90 / 0.15);
+  }
+  .bubble {
+    position: relative;
+    background: #fff;
+    border-radius: 1.4rem;
+    box-shadow: 0 14px 30px -16px rgb(120 70 90 / 0.35);
+  }
+  .bubble::after {
+    content: "";
+    position: absolute;
+    left: 22px;
+    bottom: -8px;
+    width: 18px;
+    height: 18px;
+    background: #fff;
+    border-radius: 4px;
+    transform: rotate(45deg);
+  }
+  .step-pill { background: linear-gradient(110deg, #e9f7ef 0%, #efeafd 100%); border-radius: 1.4rem; }
+  .serif-em { font-style: italic; color: #e8664f; }
 }
 
 /* Done moment: the check draws in, then the row settles away. */
@@ -129,7 +184,36 @@
 .nm-settle { animation: nm-settle 240ms ease-in 220ms forwards; }
 .nm-rise { animation: nm-rise 280ms cubic-bezier(0.22, 1, 0.36, 1) both; }
 
+/* Spring entrances and the done moment. */
+@keyframes nm-spring-in {
+  0% { opacity: 0; transform: translateY(18px) scale(0.97); }
+  60% { opacity: 1; transform: translateY(-3px) scale(1.005); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes nm-pop {
+  0% { opacity: 0; transform: scale(0.6); }
+  65% { opacity: 1; transform: scale(1.06); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes nm-squish {
+  0% { transform: scale(1); }
+  30% { transform: scale(1.04, 0.94); }
+  60% { transform: scale(0.98, 1.03); }
+  100% { transform: scale(1); }
+}
+@keyframes nm-fly-right { to { opacity: 0; transform: translateX(120%) rotate(12deg); } }
+@keyframes nm-fly-left { to { opacity: 0; transform: translateX(-120%) rotate(-12deg); } }
+@keyframes nm-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.nm-spring-in { animation: nm-spring-in 520ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.nm-pop { animation: nm-pop 420ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.nm-squish { animation: nm-squish 420ms cubic-bezier(0.3, 0.7, 0.4, 1); }
+.nm-fly-right { animation: nm-fly-right 320ms cubic-bezier(0.5, 0, 0.75, 0) forwards; }
+.nm-fly-left { animation: nm-fly-left 320ms cubic-bezier(0.5, 0, 0.75, 0) forwards; }
+.nm-float { animation: nm-float 4s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
+  .nm-spring-in, .nm-pop, .nm-squish, .nm-float { animation: none; }
+  .nm-fly-right, .nm-fly-left { animation: nm-settle 1ms linear forwards; }
   .nm-check-path { animation: none; stroke-dashoffset: 0; }
   .nm-settle { animation: nm-settle 1ms linear 200ms forwards; transform: none; }
   .nm-rise { animation: none; }

@@ -242,7 +242,7 @@ export function useNudge() {
           ...tasks.map((t) => (t.id === mustId ? { ...t, must: true, bucket: "today" as Bucket } : t)),
         ],
         entries: [...entries, ...s.entries],
-        meta: { ...s.meta, onboarded: true, lastOpen: today, morningSeen: today, eveningSeen: today },
+        meta: { ...s.meta, onboarded: true, lastOpen: today, morningSeen: today, eveningSeen: today, startedAt: s.meta.startedAt ?? today },
       }));
     },
 

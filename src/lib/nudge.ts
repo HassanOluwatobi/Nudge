@@ -40,6 +40,10 @@ export type Meta = {
   eveningHour: number;
   yesterdayWins?: string[];
   win?: { date: string; title: string };
+  /** First day of use, for the friendly "Day N" pill. */
+  startedAt?: string;
+  /** Has the home-screen tour been shown? */
+  toured?: boolean;
 };
 
 export type State = { v: 1; tasks: Task[]; entries: Entry[]; meta: Meta };
@@ -236,3 +240,28 @@ export const WIN_LINES = [
   "That counts. Well done.",
   "Finished. Take a breath.",
 ];
+
+/** Rough size of a first step, for the "First step · 10 min" label. */
+export function stepMinutes(step: string): string {
+  const m = step.match(/(\d+)\s*minute/i);
+  if (m) return `${m[1]} min`;
+  if (/^just open it/i.test(step)) return "1 min";
+  if (/^(find|open|start with)/i.test(step)) return "2 min";
+  return "5 min";
+}
+
+/** Today first, then anything due soonest. Used to suggest a one thing. */
+export function candidates(state: State, limit = 3): Task[] {
+  const order = (t: Task) => (t.bucket === "today" ? 0 : t.bucket === "week" ? 1 : 2);
+  return state.tasks
+    .filter((t) => t.bucket === "today" || t.bucket === "week")
+    .sort((a, b) => order(a) - order(b) || (a.due ?? "9999").localeCompare(b.due ?? "9999") || a.createdAt.localeCompare(b.createdAt))
+    .slice(0, limit);
+}
+
+export const dayNumber = (state: State, today = ymd()) => {
+  const start = state.meta.startedAt ?? state.tasks.map((t) => isoDay(t.createdAt)!).sort()[0] ?? today;
+  const [y1, m1, d1] = start.split("-").map(Number);
+  const [y2, m2, d2] = today.split("-").map(Number);
+  return Math.max(1, Math.round((new Date(y2, m2 - 1, d2).getTime() - new Date(y1, m1 - 1, d1).getTime()) / 864e5) + 1);
+};
