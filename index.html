@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nudge</title>
+<meta name="description" content="Nudge. One thing at a time. A focus app built for ADHD brains.">
+<meta name="theme-color" content="#f4f1ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e0d0c" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Nudge">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f1ec; --bg2:#ebe7e0; --card:#fffdfa; --ink:#141312; --ink2:#3a3835; --muted:#85807a; --line:#e2ddd5;
+  --hot:#ff4d2e; --hot2:#ff7a45; --hot-soft:#ffe9e2; --ok:#17a35a; --ok-soft:#dff3e7; --calm:#6c5ce7; --calm-soft:#ece9fd; --sky:#2f6bff;
+  --r:22px; --shadow:0 1px 0 rgba(0,0,0,.03),0 12px 32px -12px rgba(40,30,20,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0e0d0c; --bg2:#171614; --card:#1a1917; --ink:#f5f2ed; --ink2:#d6d2cb; --muted:#8d8780; --line:#2a2825;
+    --hot:#ff5a3c; --hot2:#ff8a55; --hot-soft:#2d1913; --ok:#2fd27a; --ok-soft:#10261a; --calm:#9c8cff; --calm-soft:#1f1b38; --sky:#6f98ff;
+    --shadow:0 1px 0 rgba(255,255,255,.02),0 16px 40px -16px rgba(0,0,0,.8); }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--ink)}
+body{font-family:"Inter Tight",system-ui,sans-serif;font-size:15.5px;line-height:1.45;-webkit-text-size-adjust:100%}
+button{font-family:inherit;color:inherit}
+.serif{font-family:"Instrument Serif",Georgia,serif;font-weight:400}
+.wrap{max-width:560px;margin:0 auto;padding:20px 18px 120px}
+[hidden]{display:none!important}
+
+/* Top */
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.hello{font-size:14.5px;color:var(--muted);margin-top:6px}
+.hello b{color:var(--ink);font-weight:600}
+.topr{display:flex;gap:8px;align-items:center;margin-top:6px}
+.topr .prog{margin-top:0}
+.gear{width:40px;height:40px;border:0;border-radius:50%;background:var(--card);box-shadow:var(--shadow);font-size:18px;cursor:pointer;color:var(--muted)}
+.dayname{font-size:44px;line-height:1;letter-spacing:-.01em}
+.prog{background:var(--card);box-shadow:var(--shadow);border-radius:999px;padding:8px 14px;font-weight:700;font-size:14px;white-space:nowrap;align-self:flex-start;margin-top:6px}
+.wins{background:var(--ok-soft);color:var(--ok);border-radius:999px;padding:6px 12px;font-weight:700;font-size:13px;white-space:nowrap}
+.daybar{margin-top:14px}
+.daybar .row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);margin-bottom:6px}
+.daybar .row b{color:var(--ink);font-weight:600}
+.track{position:relative;height:8px;border-radius:99px;background:var(--bg2);overflow:hidden}
+.track .left{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,var(--sky),#7aa2ff);border-radius:99px;transition:width .6s}
+.track .plan{position:absolute;inset:0 auto 0 0;background:repeating-linear-gradient(135deg,rgba(255,255,255,.55) 0 4px,transparent 4px 8px);border-radius:99px}
+.track.over .left{background:linear-gradient(90deg,var(--hot),var(--hot2))}
+.trim{font-size:12.5px;color:var(--hot);margin-top:6px;background:none;border:0;padding:0;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+
+.note{margin-top:16px;font-size:14px;color:var(--muted);line-height:1.5;padding:0 4px}
+.note::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--sky);margin-right:8px;transform:translateY(-1px)}
+.banner{margin-top:14px;border-radius:16px;padding:14px 16px;display:flex;gap:12px;align-items:center;justify-content:space-between}
+.banner p{margin:0;font-size:14px}
+.banner.calm{background:var(--calm-soft)}
+.banner.fresh{background:var(--hot-soft)}
+.pill{border:0;background:var(--ink);color:var(--bg);border-radius:999px;padding:9px 14px;font-weight:700;font-size:13px;cursor:pointer;white-space:nowrap}
+.pill.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--line)}
+
+/* NOW card */
+.now{margin-top:18px;background:var(--card);border-radius:28px;padding:22px 22px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.now::after{content:"";position:absolute;right:-60px;top:-60px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,var(--hot-soft),transparent 70%);pointer-events:none}
+.now.solo::after{background:radial-gradient(circle,var(--calm-soft),transparent 70%)}
+.nowtop{display:flex;align-items:center;gap:12px;position:relative;z-index:1}
+.emo{width:52px;height:52px;border-radius:16px;background:var(--bg2);display:grid;place-items:center;font-size:28px;flex:none}
+.emo.sm{width:36px;height:36px;border-radius:11px;font-size:19px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--hot);display:flex;align-items:center;gap:8px}
+.now.solo .eyebrow{color:var(--calm)}
+.dot{width:8px;height:8px;border-radius:50%;background:currentColor;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+.now h2{font-size:34px;line-height:1.08;letter-spacing:-.025em;margin:10px 0 0;font-weight:700;position:relative;z-index:1}
+.now .first{margin-top:12px;font-size:16px;color:var(--ink2);position:relative;z-index:1}
+.now .first i{font-family:"Instrument Serif",serif;font-size:19px;color:var(--muted);margin-right:4px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.chip{font-size:12px;color:var(--muted);background:var(--bg2);border-radius:999px;padding:3px 9px;font-weight:500}
+.chip.hot{background:var(--hot-soft);color:var(--hot)}
+.durs{display:flex;align-items:center;gap:4px;margin-top:20px;font-size:13px;color:var(--muted)}
+.durs .lbl{margin-right:6px}
+.dur{border:0;background:transparent;border-radius:999px;padding:6px 11px;font-weight:700;font-size:13px;cursor:pointer;color:var(--muted)}
+.dur.on{background:var(--bg2);color:var(--ink)}
+.durhint{font-size:12.5px;color:var(--muted);text-align:center;margin-top:8px;min-height:1em}
+.go{margin-top:10px;width:100%;border:0;border-radius:18px;padding:18px;font-size:19px;font-weight:800;letter-spacing:-.01em;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--hot),var(--hot2));box-shadow:0 10px 24px -10px var(--hot);transition:transform .12s}
+.now.solo .go{background:linear-gradient(135deg,var(--calm),#a29bfe);box-shadow:0 10px 24px -10px var(--calm)}
+.go:active{transform:scale(.98)}
+.alts{display:flex;justify-content:space-between;margin-top:12px}
+.alt{border:0;background:none;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;padding:8px 4px}
+.alt.done{color:var(--ok)}
+
+.empty-now{text-align:center;padding:30px 10px 10px}
+.empty-now h2{font-size:30px}
+.empty-now p{color:var(--muted)}
+
+/* Then */
+.h3{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:26px 2px 10px;display:flex;justify-content:space-between}
+.then{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.thenToggle{margin-top:18px;width:100%;border:0;background:transparent;color:var(--muted);font-weight:600;font-size:14px;padding:10px;cursor:pointer;border-radius:14px}
+.thenToggle:hover{background:var(--bg2)}
+.mini{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:16px;padding:12px 14px;box-shadow:var(--shadow)}
+.mini .t{flex:1;min-width:0}
+.mini .t b{display:block;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mini .t span{font-size:12.5px;color:var(--muted)}
+.mini button.sw{border:0;background:var(--bg2);border-radius:10px;padding:7px 10px;font-size:12.5px;font-weight:600;cursor:pointer}
+.circle{flex:none;width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:transparent;cursor:pointer;padding:0;display:grid;place-items:center;color:#fff;font-size:13px}
+.circle.on{background:var(--ok);border-color:var(--ok)}
+.doneline{display:flex;flex-wrap:wrap;gap:6px}
+.donechip{font-size:13px;background:var(--ok-soft);color:var(--ok);border-radius:999px;padding:5px 11px;font-weight:600}
+
+/* Everything view */
+.seg{display:flex;gap:6px;margin-top:6px;overflow-x:auto;padding-bottom:2px}
+.seg button{border:0;background:var(--bg2);border-radius:999px;padding:8px 14px;font-weight:600;font-size:13.5px;cursor:pointer;color:var(--muted);white-space:nowrap}
+.seg button.on{background:var(--ink);color:var(--bg)}
+.task{background:var(--card);border-radius:18px;padding:14px;box-shadow:var(--shadow)}
+.task .row1{display:flex;gap:12px;align-items:flex-start}
+.task .bd{flex:1;min-width:0;cursor:pointer}
+.task .bd b{font-weight:600}
+.task.isdone .bd b{text-decoration:line-through;color:var(--muted);font-weight:500}
+.task .stp{font-size:13.5px;color:var(--muted);margin-top:2px}
+.tag{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--hot);display:block;margin-bottom:2px}
+.ex{margin:12px 0 0 86px;display:flex;flex-direction:column;gap:10px}
+.sub{display:flex;gap:9px;align-items:center;font-size:14.5px}
+.sq{flex:none;width:21px;height:21px;border-radius:7px;border:2px solid var(--line);background:transparent;cursor:pointer;padding:0;color:#fff;font-size:12px;display:grid;place-items:center}
+.sub.d .sq{background:var(--ok);border-color:var(--ok)}
+.sub.d span{text-decoration:line-through;color:var(--muted)}
+.sub span{flex:1}
+.x{border:0;background:none;color:var(--muted);cursor:pointer;font-size:17px;padding:0 4px}
+.inrow{display:flex;gap:6px}
+.inrow input,.field select,.field input{flex:1;min-width:0;border:0;background:var(--bg2);color:var(--ink);border-radius:11px;padding:10px 12px;font:inherit;font-size:16px}
+.inrow button{border:0;background:var(--ink);color:var(--bg);border-radius:11px;padding:0 14px;font-weight:700;font-size:13px;cursor:pointer}
+.fields{display:flex;gap:8px}
+.field{flex:1;display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.mv{display:flex;flex-wrap:wrap;gap:6px}
+.mv button{border:0;background:var(--bg2);border-radius:10px;font-size:12.5px;padding:7px 10px;cursor:pointer;font-weight:600;color:var(--ink2)}
+.list{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.muted{color:var(--muted);font-size:14px;padding:6px 2px}
+.muted.center{text-align:center}
+.tools{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap}
+
+/* Bottom bar */
+.dock{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(12px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--bg) 35%);z-index:20}
+.dock .in{max-width:560px;margin:0 auto;display:flex;gap:8px;align-items:center;background:var(--card);border-radius:20px;padding:6px;box-shadow:var(--shadow)}
+.tab{flex:1;border:0;background:none;padding:11px 0;border-radius:15px;font-weight:700;font-size:14px;cursor:pointer;color:var(--muted)}
+.tab.on{background:var(--bg2);color:var(--ink)}
+.plus{flex:none;width:48px;height:44px;border:0;border-radius:15px;background:var(--ink);color:var(--bg);font-size:24px;font-weight:500;cursor:pointer;line-height:1}
+
+/* Sheets */
+.scrim{position:fixed;inset:0;background:rgba(10,8,6,.45);z-index:40;backdrop-filter:blur(2px);animation:fade .2s}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--card);border-radius:28px 28px 0 0;padding:10px 20px calc(24px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto;animation:up .28s cubic-bezier(.2,.9,.3,1)}
+.sheet .grab{width:40px;height:5px;border-radius:9px;background:var(--line);margin:0 auto 14px}
+.sheet h3{font-size:24px;letter-spacing:-.02em;margin:0 0 4px}
+.sheet .sub2{color:var(--muted);font-size:14px;margin:0 0 14px}
+.sheet textarea{width:100%;min-height:110px;border:0;background:var(--bg2);border-radius:16px;padding:14px;font:inherit;font-size:17px;color:var(--ink);resize:none;outline:none}
+.sheet .act{display:flex;justify-content:space-between;align-items:center;margin-top:12px;gap:10px}
+.big{border:0;border-radius:15px;padding:14px 20px;font-weight:800;font-size:16px;cursor:pointer;background:var(--ink);color:var(--bg)}
+.big:disabled{opacity:.5}
+.reply{margin-top:14px;background:var(--bg2);border-radius:16px;padding:12px 14px;font-size:14.5px}
+.reply ul{margin:6px 0 0;padding-left:18px}
+.sugs{display:flex;gap:6px;overflow-x:auto;margin:0 -20px 12px;padding:0 20px 2px;scrollbar-width:none}
+.sug{flex:none;border:0;background:var(--bg2);border-radius:999px;padding:9px 13px;font-weight:600;font-size:13.5px;cursor:pointer;white-space:nowrap}
+.reasons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.reason{border:0;background:var(--bg2);border-radius:16px;padding:14px;text-align:left;cursor:pointer;font-size:14.5px;font-weight:600;line-height:1.3}
+.reason span{display:block;font-size:22px;margin-bottom:6px}
+.reason.wide{grid-column:span 2}
+.plan{margin-top:6px}
+.plan .reframe{font-family:"Instrument Serif",serif;font-size:22px;line-height:1.25;margin:4px 0 14px}
+.plan ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:8px;font-size:15.5px}
+.plan .tip{margin-top:14px;font-size:14px;color:var(--muted)}
+.plan .act{flex-wrap:wrap}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+
+/* Focus */
+.focus{position:fixed;inset:0;z-index:50;background:var(--bg);overflow:auto;display:flex;flex-direction:column;align-items:center;padding:22px 22px calc(28px + env(safe-area-inset-bottom));text-align:center}
+.focus .bar{width:100%;max-width:520px;display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--muted)}
+.focus .bar button{border:0;background:none;color:var(--muted);font-weight:600;cursor:pointer;padding:6px}
+.buddy{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.buddy i{width:8px;height:8px;border-radius:50%;background:var(--ok);display:inline-block;animation:pulse 2.4s infinite}
+.disc{position:relative;width:min(64vw,250px);aspect-ratio:1;margin:18px auto 6px}
+.disc .core{position:absolute;inset:14%;border-radius:50%;background:var(--hot-soft);display:grid;place-items:center;font-size:clamp(56px,16vw,84px);animation:breathe 4s ease-in-out infinite}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+.clock{font-family:"Instrument Serif",serif;font-size:64px;line-height:1;font-variant-numeric:tabular-nums;margin-top:4px}
+.range{color:var(--muted);font-size:14px;margin-top:2px}
+.parkBtn{border:0;background:none;color:var(--muted);font-weight:600;font-size:14px;cursor:pointer;margin-top:18px;padding:8px}
+.disc svg{width:100%;height:100%;transform:rotate(-90deg)}
+.disc .num{position:absolute;inset:0;display:grid;place-items:center;font-size:clamp(44px,13vw,64px);font-weight:800;letter-spacing:-.04em;font-variant-numeric:tabular-nums}
+.focus h2{font-size:28px;letter-spacing:-.02em;margin:18px 0 2px;max-width:480px;line-height:1.15}
+.focus .fs{color:var(--ink2);font-size:16px;max-width:440px}
+.focus .fs i{font-family:"Instrument Serif",serif;font-size:19px;color:var(--muted)}
+.fsubs{width:100%;max-width:420px;text-align:left;display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.ctrls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:20px;width:100%;max-width:440px}
+.ctrls button{flex:1;min-width:110px;border:0;background:var(--card);border-radius:15px;padding:14px 12px;font-size:15px;font-weight:700;cursor:pointer;box-shadow:var(--shadow)}
+.ctrls .ok{background:var(--ok);color:#fff}
+.fsubs .sub{padding:10px 12px;border-radius:14px}
+.fsubs .sub.cur{background:var(--card);box-shadow:var(--shadow);font-weight:700;font-size:16px}
+.fsubs .sub em{font-style:normal;font-size:10.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:var(--hot);border-radius:6px;padding:2px 6px;order:3}
+.park{width:100%;max-width:440px;margin-top:22px}
+.park .inrow input{background:var(--card);box-shadow:var(--shadow)}
+.park small{display:block;color:var(--muted);font-size:12.5px;margin-top:6px;min-height:1.2em}
+.menu{display:flex;flex-direction:column;gap:8px;width:100%;max-width:420px;margin-top:18px}
+.menu button{border:0;background:var(--card);border-radius:14px;padding:14px;font-size:15px;font-weight:600;text-align:left;cursor:pointer;box-shadow:var(--shadow)}
+.menu button.on{background:var(--calm-soft);box-shadow:inset 0 0 0 2px var(--calm)}
+.out{font-size:30px;letter-spacing:-.02em;margin:40px 0 6px;font-weight:700}
+
+/* Win screen */
+.win{position:fixed;inset:0;z-index:65;background:linear-gradient(160deg,var(--ok),#0f7a42);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;text-align:center;animation:fade .25s}
+.win.out{opacity:0;transition:opacity .25s}
+.winEmo{width:110px;height:110px;border-radius:34px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-size:58px;animation:pop2 .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop2{from{transform:scale(.3) rotate(-12deg)}to{transform:none}}
+.winH{font-size:44px;line-height:1.05;margin-top:22px;max-width:420px}
+.winT{opacity:.85;margin-top:8px;font-size:16px;text-decoration:line-through;text-decoration-color:rgba(255,255,255,.6)}
+.stats{display:flex;gap:10px;margin-top:26px;flex-wrap:wrap;justify-content:center}
+.stat{background:rgba(255,255,255,.14);border-radius:18px;padding:14px 18px;min-width:96px}
+.stat b{display:block;font-size:28px;font-weight:800;letter-spacing:-.02em}
+.stat span{font-size:12.5px;opacity:.85}
+.winNext{margin-top:22px;opacity:.9;font-size:15px}
+.winBtn{margin-top:18px;border:0;background:#fff;color:#0f5c33;border-radius:16px;padding:16px 34px;font-weight:800;font-size:17px;cursor:pointer}
+
+/* Nudge additions */
+.sheet{position:fixed}
+.sclose{position:absolute;top:14px;right:14px;width:36px;height:36px;border:0;border-radius:50%;background:var(--bg2);color:var(--muted);font-size:22px;line-height:1;cursor:pointer;z-index:2}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;font-weight:600;font-size:14px;z-index:90;max-width:88vw;text-align:center;animation:up .25s;transition:opacity .3s}
+.toast.out{opacity:0}
+.linkai{border:0;background:none;color:var(--calm);font-weight:700;font-size:14px;cursor:pointer;padding:6px 0;text-align:left}
+.sfield{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--muted);margin-top:12px}
+.sfield input{border:0;background:var(--bg2);color:var(--ink);border-radius:12px;padding:12px 14px;font:inherit;font-size:16px}
+.sblock{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+.sblock h4{margin:0 0 4px;font-size:17px}
+.provs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.prov{border:0;background:var(--bg2);border-radius:16px;padding:14px;display:flex;flex-direction:column;align-items:flex-start;gap:2px;cursor:pointer;text-align:left;box-shadow:inset 0 0 0 2px transparent}
+.prov.on{box-shadow:inset 0 0 0 2px var(--ink);background:var(--card)}
+.prov b{font-size:15.5px;margin-top:6px}
+.prov small{color:var(--muted);font-size:12px}
+.mark{width:30px;height:30px;border-radius:9px;color:#fff;display:grid;place-items:center;font-size:16px;font-weight:700}
+.getkey{display:inline-block;margin-top:8px;font-size:14px;font-weight:600;color:var(--sky);text-decoration:none}
+.adv{margin-top:10px}.adv summary{font-size:13px;color:var(--muted);cursor:pointer}
+.fine{font-size:12.5px;color:var(--muted);margin-top:12px;line-height:1.45}.fine.center{text-align:center;margin-top:26px}
+.danger{border:0;background:var(--hot-soft);color:var(--hot);border-radius:12px;padding:12px 16px;font-weight:700;cursor:pointer;width:100%}
+.restore{width:100%;min-height:80px;margin-top:10px;border:0;background:var(--bg2);border-radius:12px;padding:10px;font:12px ui-monospace,monospace;color:var(--ink)}
+.onb{position:fixed;inset:0;z-index:85;background:var(--bg);overflow:auto;display:flex;justify-content:center;transition:opacity .3s}
+.onb.out{opacity:0}
+.onbIn{width:100%;max-width:480px;padding:56px 24px 40px;display:flex;flex-direction:column;animation:fade .35s}
+.onbLogo{width:72px;height:72px;border-radius:22px;background:linear-gradient(135deg,var(--hot),var(--hot2));color:#fff;display:grid;place-items:center;font-family:"Instrument Serif",serif;font-size:44px;box-shadow:0 14px 30px -12px var(--hot)}
+.onb h1{font-size:64px;margin:22px 0 6px;font-weight:400;letter-spacing:-.01em}
+.onb h2{font-size:32px;letter-spacing:-.02em;margin:6px 0 8px;line-height:1.1}
+.onb .lead{color:var(--ink2);font-size:17px;margin:0 0 18px}
+.onbList{list-style:none;padding:0;margin:8px 0 28px;display:flex;flex-direction:column;gap:12px}
+.onbList li{background:var(--card);border-radius:16px;padding:14px 16px;box-shadow:var(--shadow);font-weight:600}
+.onbList li::before{content:"✓";color:var(--ok);margin-right:10px;font-weight:800}
+.onbStep{font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--hot);margin:0}
+.onbIn1{border:0;background:var(--card);box-shadow:var(--shadow);border-radius:16px;padding:16px;font:inherit;font-size:20px;color:var(--ink);margin:10px 0 18px}
+.onbTa{border:0;background:var(--card);box-shadow:var(--shadow);border-radius:18px;padding:16px;font:inherit;font-size:17px;color:var(--ink);min-height:220px;resize:vertical;margin-bottom:18px;line-height:1.6}
+.onb .alt{align-self:center;margin-top:8px}
+.go:disabled{opacity:.45;box-shadow:none}
+.pickList{display:flex;flex-direction:column;gap:8px;margin:6px 0 18px}
+.pick{border:0;background:var(--card);box-shadow:var(--shadow);border-radius:16px;padding:10px 12px;display:flex;align-items:center;gap:12px;cursor:pointer;text-align:left;font-size:15.5px;font-weight:600;position:relative}
+.pick span:nth-child(2){flex:1}
+.pick.on{box-shadow:inset 0 0 0 2.5px var(--hot),var(--shadow)}
+.pick.on::after{content:attr(data-n);width:26px;height:26px;border-radius:50%;background:var(--hot);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800;flex:none}
+.sheet .pick{background:var(--bg2);box-shadow:none}
+.sheet .pick.on{box-shadow:inset 0 0 0 2.5px var(--hot)}
+.aitip{margin-top:18px;background:var(--calm-soft);border-radius:18px;padding:14px 16px;display:flex;gap:12px;align-items:center}
+.aitip p{margin:0;font-size:14px;flex:1}
+.aitip .x{font-size:20px}
+.handwrap{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.handwrap .muted{padding:0}
+.handoff{display:inline-flex;align-items:center;gap:10px;background:var(--card);box-shadow:var(--shadow);border-radius:14px;padding:10px 14px 10px 10px;font-weight:700;font-size:15px;color:var(--ink);text-decoration:none}
+.sheet .handoff{background:var(--bg2);box-shadow:none}
+.handoff .mark{width:26px;height:26px;border-radius:8px;font-size:14px}
+.handoff i{font-style:normal;color:var(--muted)}
+.pasteback{width:100%;display:flex;flex-direction:column;gap:8px}
+.pasteback textarea{min-height:120px}
+.adv.advbig{margin-top:18px}.adv.advbig summary{font-size:14px;font-weight:600}
+.onbQ{margin:0 0 8px;color:var(--muted);font-size:14px}
+.appchips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+.appchip{border:0;background:var(--card);box-shadow:var(--shadow);border-radius:999px;padding:7px 14px 7px 7px;display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;cursor:pointer}
+.appchip .mark{width:24px;height:24px;border-radius:50%;font-size:12px}
+.appchip.on{box-shadow:inset 0 0 0 2.5px var(--ink)}
+/* Countdown */
+.count{position:fixed;inset:0;z-index:80;background:var(--bg);display:grid;place-items:center}
+.count span{font-size:160px;font-weight:800;letter-spacing:-.06em;color:var(--hot);animation:cd .65s ease-out}
+@keyframes cd{0%{transform:scale(1.4);opacity:0}30%{opacity:1}100%{transform:scale(.85);opacity:.15}}
+/* Party */
+.party{position:fixed;inset:0;pointer-events:none;z-index:70;display:grid;place-items:center}
+.party .msg{background:var(--ink);color:var(--bg);font-weight:800;font-size:19px;padding:15px 24px;border-radius:18px;animation:pop 2s ease forwards}
+.bit{position:fixed;width:10px;height:10px;border-radius:3px;top:50%;left:50%;animation:fly 1.4s cubic-bezier(.1,.8,.3,1) forwards}
+@keyframes pop{0%{transform:scale(.6);opacity:0}12%{transform:scale(1.06);opacity:1}22%{transform:scale(1)}80%{opacity:1}100%{opacity:0;transform:translateY(-14px)}}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+@media (prefers-reduced-motion: reduce){.bit{display:none}.party .msg,.dot,.buddy i{animation:none}}
+.status{color:var(--muted);font-size:13px;margin-top:10px;min-height:1em}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div><div class="dayname serif" id="dayName"></div><div class="hello" id="hello"></div></div>
+    <div class="topr"><div class="prog" id="prog" hidden></div><button class="gear" id="gearBtn" aria-label="Settings">⚙︎</button></div>
+  </div>
+  <div class="daybar" id="daybar" hidden>
+    <div class="row"><span id="dayLeft"></span><span id="dayPlan"></span></div>
+    <div class="track" id="track"><div class="left" id="trackLeft"></div><div class="plan" id="trackPlan"></div></div>
+    <button class="trim" id="trimBtn" hidden>More planned than time left. Trim today?</button>
+  </div>
+  <div class="status" id="status">Loading your board…</div>
+
+  <!-- NOW VIEW -->
+  <div id="viewNow">
+    <div class="banner fresh" id="freshBanner" hidden><p id="freshText">Welcome back. No catching up needed. Let's pick one thing.</p><button class="pill" id="freshBtn">Fresh start</button></div>
+    <div class="banner calm" id="leBanner" hidden><p>Low energy mode. One small thing is a full day's win.</p><button class="pill ghost" id="leOff">I'm better</button></div>
+
+    <div class="now" id="nowCard" hidden>
+      <div class="nowtop"><div class="emo" id="nowEmo"></div><div class="eyebrow"><span class="dot"></span><span id="nowLabel">Now</span></div></div>
+      <h2 id="nowTitle"></h2>
+      <div class="first" id="nowStep"></div>
+      <div class="chips" id="nowChips"></div>
+      <div class="durs" id="durs"></div>
+      <button class="go" id="goBtn">Start</button>
+      <div class="durhint" id="durHint"></div>
+      <div class="alts">
+        <button class="alt" id="stuckBtn">I'm stuck</button>
+        <button class="alt" id="skipBtn">Not now</button>
+        <button class="alt done" id="doneBtn">Done ✓</button>
+      </div>
+    </div>
+    <div class="now empty-now" id="nowEmpty" hidden>
+      <h2 class="serif" id="emptyTitle">Clear.</h2>
+      <p id="emptyText">Nothing on deck right now.</p>
+      <div class="act" style="justify-content:center;gap:8px"><button class="pill" id="planBtn">Plan my day</button><button class="pill ghost" id="pullBtn">Just one small thing</button></div>
+    </div>
+
+    <div class="note" id="note" hidden></div>
+    <div class="aitip" id="aiTip" hidden><p>✦ <b>Pick your AI app</b> and Nudge can hand you a plan from ChatGPT, Claude, Gemini or Grok when you're stuck.</p><button class="pill" id="aiTipBtn">Pick</button><button class="x" id="aiTipX" aria-label="Dismiss">×</button></div>
+    <div id="thenWrap" hidden>
+      <button class="thenToggle" id="thenToggle"></button>
+      <div class="then" id="then" hidden></div>
+    </div>
+    <div id="doneWrap" hidden>
+      <div class="h3"><span>Done today</span></div>
+      <div class="doneline" id="doneToday"></div>
+    </div>
+  </div>
+
+  <!-- EVERYTHING VIEW -->
+  <div id="viewAll" hidden>
+    <div class="seg" id="seg"></div>
+    <div class="list" id="allList"></div>
+    <div class="tools">
+      <button class="pill ghost" id="planBtn2">Plan my day</button>
+      <button class="pill ghost" id="leOn">Low energy today</button>
+      <button class="pill ghost" id="freshBtn2">Fresh start</button>
+    </div>
+  </div>
+</div>
+
+<div class="dock"><div class="in">
+  <button class="tab on" id="tabNow">Now</button>
+  <button class="tab" id="tabAll">Everything</button>
+  <button class="plus" id="plusBtn" aria-label="Tell Nudge">+</button>
+</div></div>
+
+<div id="sheetHost"></div>
+
+<div class="focus" id="focus" hidden>
+  <div class="bar"><div class="buddy"><i></i><span id="buddyText">Nudge is right here with you</span></div><button id="fClose">Exit</button></div>
+  <div id="fRun">
+    <h2 id="fTitle"></h2>
+    <div class="range" id="fRange"></div>
+    <div class="disc"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="46" fill="none" stroke="var(--bg2)" stroke-width="7"/><circle id="arc" cx="50" cy="50" r="46" fill="none" stroke="var(--hot)" stroke-width="7" stroke-linecap="round" stroke-dasharray="289.03" stroke-dashoffset="0"/></svg><div class="core" id="fEmo">✨</div></div>
+    <div class="clock" id="fNum">15:00</div>
+    <div class="fs" id="fStep"></div>
+    <div class="fsubs" id="fSubs"></div>
+    <div class="ctrls" id="fCtrls"></div>
+    <button class="parkBtn" id="parkToggle">💭 Random thought? Park it</button>
+    <div class="park" id="parkBox" hidden>
+      <form class="inrow" id="parkForm"><input id="parkIn" placeholder="Random thought? Park it here." autocomplete="off"><button>Park</button></form>
+      <small id="parkMsg">It goes to your list for later. Stay with this.</small>
+    </div>
+  </div>
+  <div id="fEnd" hidden>
+    <div class="out" id="endTitle">Time.</div>
+    <div class="fs" id="endText">How did that go?</div>
+    <div class="ctrls" id="endCtrls"></div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,"0");
+const todayISO=()=>{const d=new Date();return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());};
+const isToday=iso=>iso&&new Date(iso).toDateString()===new Date().toDateString();
+const DAY_START=8,DAY_END=21;
+const EST={"15m":15,"30m":30,"1h":60,"2h":120,"half day":240,"day":480};
+const BUCKETS={today:"Today",week:"This week",later:"Later"};
+const CHEERS=["Done. That counts.","One less thing in your head.","That's how it's done.","Off your plate. Nice.","Progress. Real progress.","You did the hard part."];
+const BREAKS=["💧 Drink a full glass of water","🙆 Stretch for two minutes","🌤️ Step outside for fresh air","🎵 Play one song you love, loud","🚶 Walk around the room twice","👀 Look out a window for a minute"];
+let thenOpen=false;
+let db=null,sample=null,tasks=[],meta={},writable=true,view="now",seg="today",open=new Set(),skipped=new Set(),dur=15;
+const busy=new Set();
+try{skipped=new Set(JSON.parse(sessionStorage.getItem("skipped:"+todayISO())||"[]"));}catch(_){}
+try{const v=parseInt(localStorage.getItem("dur"));if([5,15,25].includes(v))dur=v;}catch(_){}
+
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+function subsOf(t){return (Array.isArray(t.subs)?t.subs:[]).map(s=>typeof s==="string"?{t:s,d:false}:{t:String(s.t||""),d:!!s.d});}
+function fmtMin(m){m=Math.max(0,Math.round(m));const h=Math.floor(m/60),r=m%60;return h&&r?h+"h "+r+"m":h?h+"h":r+"m";}
+function dueInfo(due){if(!due)return null;const diff=Math.round((new Date(due+"T00:00:00")-new Date(todayISO()+"T00:00:00"))/864e5);
+  if(diff<0)return{t:"Overdue",hot:true,diff};if(diff===0)return{t:"Due today",hot:true,diff};if(diff===1)return{t:"Due tomorrow",hot:true,diff};
+  return{t:"Due "+new Date(due+"T00:00:00").toLocaleDateString("en-GB",diff<7?{weekday:"short"}:{day:"numeric",month:"short"}),hot:false,diff};}
+const EMO=[[/web ?site|homepage|webflow|landing|domain|\bsite\b/i,"🌐"],[/video|edit|episode|reel|film/i,"🎬"],[/email|mail|inbox|reply/i,"✉️"],[/design|figma|\bui\b|dashboard|portal|dark mode|component|flow|screen|modal/i,"🎨"],[/buy|shop|wardrobe|cloth|sandal|order/i,"🛍️"],[/call|phone|ring/i,"📞"],[/write|article|copy|post|blog|page|playbook/i,"✍️"],[/pay|invoice|money|bank|tax|budget/i,"💸"],[/idea|explore|look into|brainstorm/i,"💡"],[/mercor|job|work|client|pitch/i,"💼"],[/gym|run|walk|workout|exercise/i,"🏃"],[/clean|tidy|laundry|dishes/i,"🧹"],[/read|study|learn|course/i,"📚"],[/meet|meeting|sync|dentist|doctor|appointment|\bbook\b|schedule/i,"🗓️"],[/grocer|food|cook|meal|lunch|dinner/i,"🛒"],[/customer|card/i,"💳"],[/ask|claude/i,"💬"]];
+const emo=t=>{if(t&&t.emoji)return t.emoji;const s=((t&&t.title)||"")+" "+((t&&t.area)||"");for(const [r,e] of EMO)if(r.test(s))return e;return "✨";};
+const lowOn=()=>meta.lowEnergy&&meta.lowEnergy.date===todayISO();
+const open_=b=>tasks.filter(t=>t.bucket===b);
+function sorted(list){return list.slice().sort((a,b)=>(b.must===true)-(a.must===true)||(a.order||0)-(b.order||0));}
+
+/* Which task is NOW */
+function pickNow(){
+  if(lowOn()){const s=tasks.find(t=>t.id===meta.lowEnergy.taskId&&t.bucket!=="done");return s?{t:s,solo:true}:{t:null,solo:true};}
+  const today=sorted(open_("today"));
+  const avail=today.filter(t=>!skipped.has(t.id));
+  const t=avail[0]||today[0]||null;
+  return{t,solo:false};
+}
+
+/* ---------- Render ---------- */
+function render(){
+  const h=new Date().getHours(),d=new Date();
+  $("dayName").textContent=d.toLocaleDateString("en-GB",{weekday:"long"});
+  $("hello").innerHTML="";$("hello").append(document.createTextNode(d.toLocaleDateString("en-GB",{day:"numeric",month:"long"})+" · "+(h<12?"Good morning":h<17?"Good afternoon":"Good evening")+", "),el("b",null,NAME()||"friend"));
+  const dToday=tasks.filter(t=>t.bucket==="done"&&isToday(t.doneAt)).length,oToday=lowOn()?(pickNow().t?1:0):open_("today").length;
+  $("prog").textContent="🎉 "+dToday+"/"+(dToday+oToday);$("prog").hidden=!(dToday+oToday);
+  renderDay();
+  $("viewNow").hidden=view!=="now";$("viewAll").hidden=view!=="all";
+  $("tabNow").classList.toggle("on",view==="now");$("tabAll").classList.toggle("on",view==="all");
+  if(view==="now")renderNow();else renderAll();
+}
+function renderDay(){
+  const now=new Date(),end=new Date();end.setHours(DAY_END,0,0,0);
+  const start=new Date();start.setHours(DAY_START,0,0,0);
+  const total=(end-start)/6e4,left=Math.max(0,(end-now)/6e4);
+  const list=lowOn()?tasks.filter(t=>meta.lowEnergy&&t.id===meta.lowEnergy.taskId&&t.bucket!=="done"):open_("today");
+  const plan=list.reduce((s,t)=>s+(EST[t.est]||30),0);
+  $("daybar").hidden=!db;
+  if(left<=0){$("dayLeft").innerHTML="<b>Day's done.</b> Rest counts too.";$("dayPlan").textContent="";$("trackLeft").style.width="0%";$("trackPlan").style.width="0%";$("trimBtn").hidden=true;return;}
+  $("dayLeft").innerHTML="";$("dayLeft").append(el("b",null,fmtMin(left))," left today");
+  $("dayPlan").textContent=!plan?"":plan>left*1.3?"more planned than fits":"about "+fmtMin(plan)+" planned";
+  $("trackLeft").style.width=(left/total*100)+"%";
+  $("trackPlan").style.width=Math.min(left,plan)/total*100+"%";
+  const over=plan>left*0.85&&!lowOn();
+  $("track").classList.toggle("over",over);$("trimBtn").hidden=!over||!writable||open_("today").length>4;
+}
+function renderNow(){
+  const {t,solo}=pickNow();
+  // note
+  if(meta.note&&meta.date===todayISO()){$("note").textContent=meta.note;$("note").hidden=false;}else $("note").hidden=true;
+  // banners
+  const le=lowOn();$("leBanner").hidden=!le;
+  const today=open_("today");
+  const overdue=tasks.filter(x=>x.bucket!=="done"&&x.due&&dueInfo(x.due).diff<0).length;
+  const lastDone=tasks.filter(x=>x.doneAt).map(x=>Date.parse(x.doneAt)).sort((a,b)=>b-a)[0]||0;
+  const stale=today.length>4||overdue>=3||(lastDone&&Date.now()-lastDone>2.5*864e5);
+  $("freshBanner").hidden=!stale||le||!writable;
+  $("freshText").textContent=today.length>4?"Today's got "+today.length+" things on it. That's a lot. Want to reset to just one?":"Welcome back. No catching up needed. Let's pick one thing.";
+
+  const card=$("nowCard");
+  if(t){
+    card.hidden=false;$("nowEmpty").hidden=true;card.classList.toggle("solo",solo);
+    $("nowLabel").textContent=solo?"Your one thing today":(t.must?"Now · must-do":"Now");
+    $("nowTitle").textContent=t.title||"Untitled";$("nowEmo").textContent=emo(t);
+    const st=$("nowStep");st.replaceChildren();
+    const subs=subsOf(t),next=subs.find(s=>!s.d);
+    const stepText=next?next.t:t.step;
+    st.append(el("i",null,"start with"),document.createTextNode(stepText||"Open it up and look at it for two minutes. That's all."));
+    const ch=$("nowChips");ch.replaceChildren();
+    if(t.est)ch.append(el("span","chip","⏱ "+t.est));
+    const di=dueInfo(t.due);if(di)ch.append(el("span","chip"+(di.hot?" hot":""),di.t));
+    if(subs.length)ch.append(el("span","chip",subs.filter(s=>s.d).length+"/"+subs.length+" steps"));
+    if(t.area)ch.append(el("span","chip",t.area));
+    const ds=$("durs");ds.replaceChildren();
+    ds.append(el("span","lbl","Focus for"));for(const m of [5,15,25]){const b=el("button","dur"+(m===dur?" on":""),m+" min");b.onclick=()=>{dur=m;try{localStorage.setItem("dur",m)}catch(_){}renderNow();};ds.append(b);}
+    $("goBtn").textContent="Start "+dur+" minutes";
+    $("durHint").textContent=dur===5?"Just start. You're allowed to stop after five.":dur===25?"Big push. Take a break after.":"";
+    $("goBtn").onclick=()=>startFocus(t.id,dur);
+    $("stuckBtn").onclick=()=>openStuck(t);
+    $("doneBtn").onclick=()=>markDone(t);
+    const others=today.filter(x=>x.id!==t.id);
+    $("skipBtn").hidden=solo||!others.length;
+    $("skipBtn").onclick=()=>{skipped.add(t.id);if(others.every(o=>skipped.has(o.id)))skipped=new Set([t.id]);try{sessionStorage.setItem("skipped:"+todayISO(),JSON.stringify([...skipped]))}catch(_){}renderNow();};
+    $("goBtn").disabled=!writable;
+  }else{
+    card.hidden=true;$("nowEmpty").hidden=false;
+    const doneToday=tasks.filter(x=>x.bucket==="done"&&isToday(x.doneAt)).length;
+    $("emptyTitle").textContent=doneToday?"You cleared today.":"Clear.";
+    $("emptyText").textContent=le?"Your one thing is done. That's a full win. Rest now.":doneToday?"That's "+doneToday+(doneToday===1?" thing":" things")+" done. Rest, or pull one more in if you're on a roll.":"Nothing on deck. Pull in one small task when you're ready.";
+    $("pullBtn").hidden=le||!open_("week").length&&!open_("later").length||!writable;$("planBtn").hidden=$("pullBtn").hidden||doneToday>0;
+    $("pullBtn").onclick=pullOne;
+  }
+  // then
+  const thenList=solo?[]:sorted(today).filter(x=>!t||x.id!==t.id);
+  $("thenWrap").hidden=!thenList.length;$("then").hidden=!thenOpen;
+  $("thenToggle").textContent=thenOpen?"Hide what's next":(thenList.length===1?"1 more thing after this":thenList.length+" more things after this")+"  ▾";
+  $("thenToggle").onclick=()=>{thenOpen=!thenOpen;renderNow();};
+  const th=$("then");th.replaceChildren();
+  for(const x of thenList){
+    const r=el("div","mini");const c=el("button","circle");c.setAttribute("aria-label","Mark done");c.onclick=()=>markDone(x);
+    const tt=el("div","t");r.append(el("div","emo sm",emo(x)));tt.append(el("b",null,x.title));const meta2=[x.est,dueInfo(x.due)&&dueInfo(x.due).t].filter(Boolean).join(" · ");if(meta2)tt.append(el("span",null,meta2));
+    const sw=el("button","sw","Do this now");sw.onclick=()=>{skipped=new Set(today.filter(o=>o.id!==x.id).map(o=>o.id));try{sessionStorage.setItem("skipped:"+todayISO(),JSON.stringify([...skipped]))}catch(_){}window.scrollTo({top:0,behavior:"smooth"});renderNow();};
+    r.prepend(c);r.append(tt,sw);th.append(r);
+  }
+  $("aiTip").hidden=!!sample||!!myApp()||!!store.profile.aiTipDismissed||!store.profile.onboarded||tasks.filter(x=>x.bucket==="done").length<1;
+  $("aiTipBtn").onclick=()=>openSettings(true);$("aiTipX").onclick=()=>{store.profile.aiTipDismissed=true;persist();renderNow();};
+  // done today
+  const dt=tasks.filter(x=>x.bucket==="done"&&isToday(x.doneAt));
+  $("doneWrap").hidden=!dt.length;const dl=$("doneToday");dl.replaceChildren();dt.forEach(x=>dl.append(el("span","donechip","✓ "+x.title)));
+}
+
+function renderAll(){
+  const s=$("seg");s.replaceChildren();
+  const counts={today:open_("today").length,week:open_("week").length,later:open_("later").length,done:tasks.filter(t=>t.bucket==="done").length};
+  for(const [k,l] of [["today","Today"],["week","This week"],["later","Later"],["done","Done"]]){const b=el("button",k===seg?"on":null,l+" "+counts[k]);b.onclick=()=>{seg=k;renderAll();};s.append(b);}
+  const box=$("allList");box.replaceChildren();
+  let list=seg==="done"?tasks.filter(t=>t.bucket==="done").sort((a,b)=>String(b.doneAt||"").localeCompare(String(a.doneAt||""))).slice(0,50):sorted(open_(seg));
+  if(!list.length)box.append(el("div","muted",seg==="today"?"Nothing in Today yet. Tap Plan my day to pick up to three.":"Empty."));
+  for(const t of list)box.append(card(t));
+  $("leOn").hidden=lowOn()||!writable;$("freshBtn2").hidden=!writable;
+}
+function card(t){
+  const isDone=t.bucket==="done",isOpen=open.has(t.id),subs=subsOf(t);
+  const c=el("div","task"+(isDone?" isdone":""));
+  const r1=el("div","row1");
+  const ck=el("button","circle"+(isDone?" on":""),isDone?"✓":"");ck.setAttribute("aria-label",isDone?"Mark not done":"Mark done");
+  ck.onclick=()=>isDone?write(t,{bucket:t.prevBucket||"today",doneAt:{__delete__:true}}):markDone(t);
+  const bd=el("div","bd");bd.onclick=()=>{isOpen?open.delete(t.id):open.add(t.id);renderAll();};
+  if(t.must&&t.bucket==="today")bd.append(el("span","tag","Must-do"));
+  bd.append(el("b",null,t.title||"Untitled"));
+  if(t.step&&!isDone)bd.append(el("div","stp",t.step));
+  const ch=el("div","chips");if(t.est)ch.append(el("span","chip","⏱ "+t.est));const di=!isDone&&dueInfo(t.due);if(di)ch.append(el("span","chip"+(di.hot?" hot":""),di.t));
+  if(subs.length)ch.append(el("span","chip",subs.filter(s=>s.d).length+"/"+subs.length+" steps"));if(t.area)ch.append(el("span","chip",t.area));
+  if(ch.childNodes.length)bd.append(ch);
+  r1.append(ck,el("div","emo sm",emo(t)),bd);c.append(r1);
+  if(isOpen){
+    const ex=el("div","ex");
+    subs.forEach((s,i)=>ex.append(subRow(t,s,i)));
+    if(writable&&!isDone){
+      const f=el("form","inrow");const inp=el("input");inp.placeholder="Add a step";const b=el("button",null,"Add");
+      f.onsubmit=e=>{e.preventDefault();const v=inp.value.trim();if(!v)return;const n=subsOf(t);n.push({t:v,d:false});write(t,{subs:n});};f.append(inp,b);ex.append(f);
+      const fl=el("div","fields");
+      const f1=el("label","field","How long");const sel=el("select");sel.append(new Option("Not set",""));for(const k of Object.keys(EST))sel.append(new Option(k,k));sel.value=t.est||"";sel.onchange=()=>write(t,{est:sel.value||{__delete__:true}});f1.append(sel);
+      const f2=el("label","field","Due");const di2=el("input");di2.type="date";di2.value=t.due||"";di2.onchange=()=>write(t,{due:di2.value||{__delete__:true}});f2.append(di2);
+      fl.append(f1,f2);ex.append(fl);
+      const mv=el("div","mv");
+      for(const [k,l] of Object.entries(BUCKETS)){if(k===t.bucket)continue;const b2=el("button",null,"→ "+l);b2.onclick=()=>write(t,{bucket:k,must:k==="today"?!!t.must:false});mv.append(b2);}
+      if(t.bucket==="today"&&!t.must){const b3=el("button",null,"Make must-do");b3.onclick=()=>makeMust(t);mv.append(b3);}
+      const b4=el("button",null,"Start now");b4.onclick=()=>startFocus(t.id,dur);mv.append(b4);
+      ex.append(mv);
+    }
+    c.append(ex);
+  }
+  return c;
+}
+function subRow(t,s,i,lock){
+  const r=el("div","sub"+(s.d?" d":""));
+  const c=el("button","sq",s.d?"✓":"");c.setAttribute("aria-label","Toggle step");
+  c.onclick=()=>{const n=subsOf(t);n[i].d=!n[i].d;write(t,{subs:n});if(n[i].d)party(true);};
+  const x=el("button","x","×");x.setAttribute("aria-label","Remove step");x.onclick=()=>{const n=subsOf(t);n.splice(i,1);write(t,{subs:n});};
+  r.append(c,el("span",null,s.t));if(!lock)r.append(x);return r;
+}
+
+/* ---------- Writes ---------- */
+async function write(t,fields){
+  if(!db||busy.has(t.id))return false;busy.add(t.id);
+  try{await db.doc("tasks/"+t.id).update(fields);return true;}
+  catch(e){if(e&&e.code==="invalid_argument"){writable=false;$("status").textContent="This board is read-only for you.";render();}else $("status").textContent="Couldn't save that. Try again in a moment.";return false;}
+  finally{busy.delete(t.id);}
+}
+async function saveMeta(f){
+  try{await db.doc("meta/today").update(f);}
+  catch(_){try{const c={...meta};for(const k in f){if(f[k]&&f[k].__delete__)delete c[k];else c[k]=f[k];}await db.doc("meta/today").set(c);}catch(__){$("status").textContent="Couldn't save that. Try again.";}}
+}
+function markDone(t){write(t,{bucket:"done",prevBucket:t.bucket,must:false,doneAt:new Date().toISOString()});celebrate(t);}
+function celebrate(t){
+  const doneToday=tasks.filter(x=>x.bucket==="done"&&isToday(x.doneAt)&&x.id!==t.id).length+1;
+  const week=tasks.filter(x=>x.bucket==="done"&&x.doneAt&&Date.parse(x.doneAt)>Date.now()-7*864e5&&x.id!==t.id).length+1;
+  const mins=meta.focus&&meta.focus.date===todayISO()?meta.focus.mins||0:0;
+  const left=open_("today").filter(x=>x.id!==t.id).length;
+  const o=el("div","win");
+  o.append(el("div","winEmo",emo(t)),el("div","winH serif",CHEERS[Math.floor(Math.random()*CHEERS.length)]),el("div","winT",t.title));
+  const st=el("div","stats");
+  const stat=(n,l)=>{const b=el("div","stat");b.append(el("b",null,String(n)),el("span",null,l));st.append(b);};
+  stat(doneToday,"done today");if(mins)stat(fmtMin(mins),"focused today");stat(week,"this week");
+  o.append(st);
+  o.append(el("div","winNext",lowOn()?"That was your one thing. Rest now.":left?"Next up is ready when you are.":"That clears today. Rest counts too."));
+  const b=el("button","winBtn",left&&!lowOn()?"Next thing →":"Nice");o.append(b);
+  const close=()=>{o.classList.add("out");setTimeout(()=>o.remove(),250);};b.onclick=close;
+  document.body.append(o);party(true);
+}
+async function makeMust(t){for(const o of tasks)if(o.must&&o.id!==t.id)await write(o,{must:false});await write(t,{must:true,bucket:"today"});}
+const rank=t=>(EST[t.est]||45)+subsOf(t).filter(s=>!s.d).length*5;
+async function pullOne(){
+  const pool=open_("week").length?open_("week"):open_("later");if(!pool.length)return;
+  const pick=pool.slice().sort((a,b)=>(dueInfo(a.due)?.diff??99)-(dueInfo(b.due)?.diff??99)||rank(a)-rank(b))[0];
+  await write(pick,{bucket:"today",must:!open_("today").some(x=>x.must)});
+}
+async function freshStart(){
+  closeSheet();
+  const today=open_("today");
+  const pool=today.length?today:open_("week");
+  if(!pool.length){await pullOne();return;}
+  const keep=pool.slice().sort((a,b)=>(dueInfo(a.due)?.diff??99)-(dueInfo(b.due)?.diff??99)||rank(a)-rank(b))[0];
+  for(const t of today)if(t.id!==keep.id)await write(t,{bucket:"week",must:false});
+  await write(keep,{bucket:"today",must:true});
+  skipped=new Set();try{sessionStorage.removeItem("skipped:"+todayISO())}catch(_){}
+  await saveMeta({date:todayISO(),note:"Fresh start. Just one thing today: "+keep.title+". Everything else is safe in This week.",updatedAt:new Date().toISOString()});
+  view="now";render();party(true);
+}
+async function lowEnergy(on){
+  if(!on){await saveMeta({lowEnergy:{__delete__:true}});return;}
+  const pool=open_("today").concat(open_("week"));
+  if(!pool.length){$("status").textContent="Nothing on your list. Rest up.";return;}
+  const pick=pool.slice().sort((a,b)=>rank(a)-rank(b))[0];
+  await saveMeta({lowEnergy:{date:todayISO(),taskId:pick.id}});view="now";render();
+}
+$("freshBtn").onclick=freshStart;$("planBtn").onclick=()=>maybePlanDay(true);$("planBtn2").onclick=()=>maybePlanDay(true);$("freshBtn2").onclick=freshStart;
+$("leOff").onclick=()=>lowEnergy(false);$("leOn").onclick=()=>lowEnergy(true);
+$("trimBtn").onclick=()=>openTrim();
+$("tabNow").onclick=()=>{view="now";render();};$("tabAll").onclick=()=>{view="all";render();};
+
+/* ---------- Party ---------- */
+function party(small){
+  const p=el("div","party");
+  if(!small)p.append(el("div","msg",CHEERS[Math.floor(Math.random()*CHEERS.length)]));
+  const cs=["#ff4d2e","#2f6bff","#17a35a","#f5b700","#6c5ce7","#ff7a45"];
+  for(let i=0;i<(small?16:44);i++){const b=el("div","bit");b.style.background=cs[i%cs.length];const a=Math.random()*Math.PI*2,d=(small?90:160)+Math.random()*(small?80:160);
+    b.style.setProperty("--dx",Math.cos(a)*d+"px");b.style.setProperty("--dy",Math.sin(a)*d+"px");b.style.setProperty("--r",(Math.random()*900-450)+"deg");p.append(b);}
+  document.body.append(p);setTimeout(()=>p.remove(),2100);
+  try{navigator.vibrate&&navigator.vibrate(small?15:[20,40,30]);}catch(_){}
+}
+
+/* ---------- Sheets ---------- */
+function openSheet(build){
+  closeSheet();const host=$("sheetHost");
+  const s=el("div","scrim");s.onclick=closeSheet;const sh=el("div","sheet");const x=el("button","sclose","×");x.setAttribute("aria-label","Close");x.onclick=closeSheet;sh.append(el("div","grab"),x);build(sh);host.append(s,sh);
+}
+function closeSheet(){$("sheetHost").replaceChildren();}
+
+/* Tell Claude */
+$("plusBtn").onclick=()=>openSheet(sh=>{
+  sh.append(el("h3",null,"What's on your mind?"),el("p","sub2","Tap your keyboard's mic and talk. Messy is fine."));
+  const chips=el("div","sugs");
+  const ta=el("textarea");ta.placeholder="e.g. add buy socks under Tope's wardrobe, I finished the Ifeoma video, and I'm wiped today";
+  for(const [lbl,txt,send] of [["🧭 What should I do next?","What should I do next?",true],["😵 I'm overwhelmed","I'm feeling overwhelmed right now.",true],["✅ I finished something","I finished ",false],["➕ Add for later","Add for later: ",false]]){const c=el("button","sug",lbl);c.onclick=()=>{ta.value=txt;if(send&&sample){b.click();return;}if(send&&myApp()){openHandoff(txt.startsWith("What")?P_NEXT():P_TALK("I'm feeling overwhelmed right now. Help me calm down and pick just one small thing."));return;}if(send){toast("Pick your AI app in Settings and Nudge can ask it for you.");return;}ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length);};chips.append(c);}
+  sh.append(chips,ta);
+  const act=el("div","act");let hint;
+  if(sample)hint=el("span","linkai","✓ "+PROVIDERS[store.ai.provider].name+" connected");
+  else if(myApp())hint=handoffLink("Ask {app} instead",()=>P_TALK(ta.value.trim()||"Help me sort out what's on my mind."));
+  else{hint=el("button","linkai","✦ Pick your AI app");hint.onclick=()=>{closeSheet();openSettings(true);};}
+  const b=el("button","big",sample?"Send":"Add to list");act.append(hint,b);sh.append(act);
+  if(!sample)sh.append(el("p","muted","Each line you type becomes a task in Later."+(myApp()?" Tap Ask "+PROVIDERS[myApp()].name+" to talk it through there instead.":"")));
+  const rep=el("div","reply");rep.hidden=true;sh.append(rep);
+  setTimeout(()=>ta.focus(),300);
+  b.onclick=async()=>{
+    const text=ta.value.trim();if(!text||!db)return;
+    if(!sample){const lines=text.split(/\n|;/).map(x=>x.trim()).filter(Boolean);for(const [i,l] of lines.entries())await db.collection("tasks").add({title:l,bucket:"later",must:false,area:"Inbox",order:Date.now()+i,createdAt:new Date().toISOString()});closeSheet();toast(lines.length===1?"Added to Later.":lines.length+" things added to Later.");return;}
+    b.disabled=true;b.textContent="Thinking…";rep.hidden=true;
+    try{
+      const out=await sample.json(INSTR+"\n\nCurrent board:\n"+JSON.stringify(snap())+"\n\nToday is "+new Date().toDateString()+" ("+todayISO()+").\n\nThe user said:\n"+text,{modelTier:"default",cache:false});
+      const log=await apply(Array.isArray(out&&out.actions)?out.actions:[]);
+      rep.replaceChildren(document.createTextNode((out&&out.reply)||"Done."));if(log.length){const ul=el("ul");log.forEach(l=>ul.append(el("li",null,l)));rep.append(ul);}
+      rep.hidden=false;ta.value="";
+    }catch(e){rep.textContent=aiErrMsg(e);rep.hidden=false;}
+    finally{b.disabled=false;b.textContent="Send";}
+  };
+});
+
+/* Stuck */
+const REASONS=[["🏔️","It feels too big","big"],["🌫️","I don't know where to start","unclear"],["😴","It's boring","boring"],["😬","I'm dreading it","dread"],["🪫","I've got no energy","energy","wide"]];
+const FALLBACK={
+  big:{reframe:"You don't have to do the whole thing. You only have to do the next tiny piece.",steps:["Open the file or app it lives in","Write down the three parts it breaks into","Do the smallest part for five minutes"],tip:"Set the timer to 5 minutes. Stopping after that is allowed."},
+  unclear:{reframe:"Fog means you're missing one piece of information. Find it and the path appears.",steps:["Write one sentence on what done looks like","List what you don't know yet","Ask one person or search one thing to fill the biggest gap"],tip:"Messy notes count as progress."},
+  boring:{reframe:"Boring tasks need a little spice. Make it a game or make it social.",steps:["Put on a playlist you love","Set a 15 minute race against the clock","Promise yourself a small treat when the timer ends"],tip:"Try body doubling. Call a friend and both work quietly."},
+  dread:{reframe:"The dread is almost always bigger than the task. Ten minutes in, it usually shrinks.",steps:["Name the part you're dreading in one sentence","Do the easiest part first","Tell yourself you can stop after 5 minutes"],tip:"Doing it badly still counts. You can fix it later."},
+  energy:{reframe:"Low energy days are real. One small thing is a full win today.",steps:["Drink a glass of water","Do the smallest piece for 5 minutes","Then rest without guilt"],tip:"Switch on low energy mode so the rest of today disappears."}
+};
+function openStuck(t){
+  openSheet(sh=>{
+    sh.append(el("h3",null,"What's in the way?"),el("p","sub2","No judgment. Pick what feels closest."));
+    const g=el("div","reasons");
+    for(const [ic,label,key,wide] of REASONS){const b=el("button","reason"+(wide?" wide":""));b.append(el("span",null,ic),document.createTextNode(label));b.onclick=()=>stuckPlan(sh,t,key,label);g.append(b);}
+    sh.append(g);
+  });
+}
+async function stuckPlan(sh,t,key,label){
+  const xb=el("button","sclose","×");xb.onclick=closeSheet;sh.replaceChildren(el("div","grab"),xb);
+  sh.append(el("h3",null,label),el("p","sub2",t.title));
+  const box=el("div","plan");box.append(el("div","muted","Thinking about this with you…"));sh.append(box);
+  let plan=null;
+  if(sample){
+    try{
+      plan=await sample.json(`You are a warm ADHD coach helping an adult with ADHD get unstuck on one task. They said the blocker is: "${label}".
+Task: ${JSON.stringify({title:t.title,step:t.step||"",est:t.est||"",subs:subsOf(t)})}
+Return JSON only: {"reframe":"one or two short sentences that lower shame and reframe the task for this blocker","steps":["3 to 4 concrete micro-steps for THIS task, each under 10 minutes, the first under 2 minutes, physical and specific"],"tip":"one practical trick matched to the blocker (for boring use novelty, music, a race or body doubling, for dread use do-it-badly permission, for too big use slicing, for unclear use defining done, for energy use rest permission)"}
+Plain words. No em-dashes, no semicolons, no colons used as dashes.`,{modelTier:"default",cache:false});
+    }catch(_){plan=null;}
+  }
+  if(!plan||!Array.isArray(plan.steps)||!plan.steps.length)plan=FALLBACK[key];
+  box.replaceChildren();
+  box.append(el("div","reframe",plan.reframe||""));
+  const ol=el("ol");plan.steps.slice(0,5).forEach(s=>ol.append(el("li",null,String(s))));box.append(ol);
+  if(plan.tip)box.append(el("div","tip","💡 "+plan.tip));
+  const act=el("div","act");
+  const use=el("button","pill ghost","Save these steps");
+  const merged=()=>{const old=subsOf(t);const done=old.filter(x=>x.d),rest=old.filter(x=>!x.d);return done.concat(plan.steps.slice(0,5).map(s=>({t:String(s),d:false})),rest);};
+  use.onclick=async()=>{const n=merged();await write(t,{subs:n,step:String(plan.steps[0])});use.textContent="Saved ✓";use.disabled=true;};
+  const go=el("button","big","Start 5 minutes");
+  go.onclick=async()=>{if(!use.disabled){const n=merged();await write(t,{subs:n,step:String(plan.steps[0])});}closeSheet();startFocus(t.id,5);};
+  act.append(use,go);
+  if(key==="energy"&&!lowOn()){const le=el("button","pill ghost","Low energy mode");le.onclick=()=>{closeSheet();lowEnergy(true);};act.prepend(le);}
+  box.append(act);
+  if(!sample){
+    const more=el("div","handwrap");
+    if(myApp()){
+      more.append(el("p","muted","Want steps made for this exact task?"),handoffLink("Get a plan from {app}",()=>P_STUCK(t,label)));
+      const pb=el("button","linkai","Paste the steps back here");const pw=el("div","pasteback");pw.hidden=true;
+      const pta=el("textarea");pta.placeholder="Paste the reply. Nudge keeps just the steps.";const ps=el("button","big","Save as steps");
+      ps.onclick=async()=>{const st=parseSteps(pta.value);if(!st.length){toast("Couldn't find steps in that. Try pasting just the numbered list.");return;}const old=subsOf(t);const done=old.filter(x=>x.d),rest=old.filter(x=>!x.d);await write(t,{subs:done.concat(st.map(x=>({t:x,d:false})),rest),step:st[0]});closeSheet();toast(st.length+" steps saved. Your first one is on the Now card.");};
+      pb.onclick=()=>{pw.hidden=false;pb.hidden=true;setTimeout(()=>pta.focus(),50);};pw.append(pta,ps);more.append(pb,pw);
+    }else{const pk=el("button","linkai","✦ Pick your AI app for a plan made for this task");pk.onclick=()=>{closeSheet();openSettings(true);};more.append(pk);}
+    box.append(more);
+  }
+}
+
+/* Trim */
+function openTrim(){
+  openSheet(sh=>{
+    sh.append(el("h3",null,"Make today fit"),el("p","sub2","Move a couple of things to later in the week. They're not going anywhere."));
+    const l=el("div","list");
+    for(const t of sorted(open_("today"))){
+      const r=el("div","mini");const tt=el("div","t");tt.append(el("b",null,t.title),el("span",null,[t.est||"no estimate",t.must?"must-do":""].filter(Boolean).join(" · ")));
+      const b=el("button","sw","Later this week");b.onclick=async()=>{await write(t,{bucket:"week",must:false});r.remove();};
+      r.append(tt);if(!t.must)r.append(b);l.append(r);
+    }
+    sh.append(l);const d=el("div","act");const ok=el("button","big","Done");ok.onclick=closeSheet;d.append(el("span"),ok);sh.append(d);
+  });
+}
+
+/* ---------- Focus ---------- */
+let F={id:null,len:900,end:0,paused:0,timer:null,brk:false,pick:null};
+const C=289.03;
+function startFocus(id,mins,noCount){if(noCount)logged=0;
+  if(!noCount){const o=el("div","count");document.body.append(o);let n=3;const step=()=>{if(n===0){o.remove();startFocus(id,mins,true);return;}o.replaceChildren(el("span",null,String(n)));try{navigator.vibrate&&navigator.vibrate(12)}catch(_){}n--;setTimeout(step,650);};step();return;}
+  F={id,len:mins*60,end:Date.now()+mins*6e4,paused:0,timer:null,brk:false,pick:null};$("focus").hidden=false;$("fRun").hidden=false;$("fEnd").hidden=true;$("parkMsg").textContent="It goes to your list for later. Stay with this.";$("buddyText").textContent="Nudge is right here with you";drawFocus();runT();}
+function drawFocus(){
+  const t=tasks.find(x=>x.id===F.id);if(!t&&!F.brk){closeFocus();return;}
+  $("parkToggle").hidden=F.brk;if(F.brk)$("parkBox").hidden=true;
+  const fmtT=ms=>new Date(ms).toLocaleTimeString("en-GB",{hour:"numeric",minute:"2-digit"});
+  $("fRange").textContent=F.paused?"Paused":fmtT(Date.now())+" → "+fmtT(F.end);
+  if(F.brk){
+    $("fTitle").textContent="Break";$("fEmo").textContent="☕";$("fStep").textContent="Pick one. Skip the phone scroll, it eats breaks.";
+    const m=$("fSubs");m.replaceChildren();const menu=el("div","menu");BREAKS.forEach(b=>{const x=el("button",F.pick===b?"on":null,b);x.onclick=()=>{F.pick=b;drawFocus();};menu.append(x);});m.append(menu);
+    const c=$("fCtrls");c.replaceChildren();const back=el("button","ok","Back to it");back.onclick=()=>startFocus(F.id,dur,true);c.append(back);
+    $("arc").style.stroke="var(--calm)";document.querySelector(".core").style.background="var(--calm-soft)";return;
+  }
+  $("arc").style.stroke="var(--hot)";document.querySelector(".core").style.background="var(--hot-soft)";
+  $("fTitle").textContent=t.title;$("fEmo").textContent=emo(t);
+  const st=$("fStep");st.replaceChildren();const subs=subsOf(t),next=subs.find(s=>!s.d);if(!next&&t.step)st.append(el("i",null,"start with "),document.createTextNode(t.step));
+  const fs=$("fSubs");fs.replaceChildren();const ci=subs.findIndex(x=>!x.d);
+  if(ci>=0){const r=subRow(t,subs[ci],ci,true);r.classList.add("cur");r.prepend(el("em",null,"Now"));fs.append(r);
+    const rest=subs.filter(x=>!x.d).length-1,dn=subs.filter(x=>x.d).length;const bits=[];if(rest>0)bits.push(rest+" more after this");if(dn)bits.push(dn+" done ✓");
+    if(bits.length)fs.append(el("div","muted center",bits.join(" · ")));}
+  const c=$("fCtrls");c.replaceChildren();
+  const add=(txt,fn,cls)=>{const b=el("button",cls||null,txt);b.onclick=fn;c.append(b);};
+  add(F.paused?"Resume":"Pause",()=>{if(F.paused){F.end=Date.now()+F.paused;F.paused=0;runT();}else{F.paused=F.end-Date.now();clearInterval(F.timer);}drawFocus();});
+  add("+5 min",()=>{if(F.paused)F.paused+=3e5;else F.end+=3e5;F.len+=300;tickT();});
+  add("Done ✓",()=>{logFocus();markDone(t);closeFocus();},"ok");
+}
+function runT(){clearInterval(F.timer);tickT();F.timer=setInterval(tickT,250);}
+function tickT(){
+  const left=Math.max(0,F.paused||F.end-Date.now());const s=Math.ceil(left/1000);
+  $("fNum").textContent=pad(Math.floor(s/60))+":"+pad(s%60);
+  $("arc").style.strokeDashoffset=C*(1-left/(F.len*1000));
+  if(left<=0&&!F.paused){clearInterval(F.timer);try{navigator.vibrate&&navigator.vibrate([200,100,200]);}catch(_){}F.brk?breakOver():sessionEnd();}
+}
+let logged=0;
+function logFocus(){if(F.brk||!F.id||!db)return;const used=Math.round((F.len*1000-Math.max(0,F.paused||F.end-Date.now()))/6e4)-logged;if(used<1)return;logged+=used;
+  const prev=meta.focus&&meta.focus.date===todayISO()?meta.focus.mins||0:0;saveMeta({focus:{date:todayISO(),mins:prev+used}});}
+function sessionEnd(){logFocus();
+  const t=tasks.find(x=>x.id===F.id);$("fRun").hidden=true;$("fEnd").hidden=false;
+  $("endTitle").textContent="Time.";$("endText").textContent="You showed up. That's the hard part. How did it go?";
+  const c=$("endCtrls");c.replaceChildren();
+  const add=(txt,fn,cls)=>{const b=el("button",cls||null,txt);b.onclick=fn;c.append(b);};
+  if(t)add("Finished it ✓",()=>{closeFocus();markDone(t);},"ok");
+  add("Made progress",()=>{party(true);$("endTitle").textContent="Nice.";$("endText").textContent="Progress is the whole game. Tick any steps you did, then take a break or keep going.";c.replaceChildren();add("Take a 5 min break",()=>startBreak());add("Keep going",()=>startFocus(F.id,dur,true),"ok");});
+  add("Got distracted",()=>{$("endTitle").textContent="That happens.";$("endText").textContent="ADHD brains wander. Coming back is the skill, and you're here. Try just 5 minutes?";c.replaceChildren();add("5 more minutes",()=>startFocus(F.id,5,true),"ok");add("Not now",closeFocus);});
+}
+function startBreak(){F.brk=true;F.len=300;F.end=Date.now()+3e5;F.paused=0;F.pick=null;$("fRun").hidden=false;$("fEnd").hidden=true;$("buddyText").textContent="Break. You earned it.";drawFocus();runT();}
+function breakOver(){$("fRun").hidden=true;$("fEnd").hidden=false;$("endTitle").textContent="Break's over.";$("endText").textContent="Ready for another round?";const c=$("endCtrls");c.replaceChildren();const a=el("button","ok","Another "+dur+" minutes");a.onclick=()=>startFocus(F.id,dur,true);const b=el("button",null,"I'm done for now");b.onclick=closeFocus;c.append(a,b);}
+function closeFocus(){clearInterval(F.timer);$("focus").hidden=true;F.id=null;render();}
+$("fClose").onclick=()=>{logFocus();closeFocus();};
+$("parkToggle").onclick=()=>{$("parkBox").hidden=false;$("parkToggle").hidden=true;setTimeout(()=>$("parkIn").focus(),50);};
+$("parkForm").onsubmit=async e=>{e.preventDefault();const v=$("parkIn").value.trim();if(!v||!db)return;$("parkIn").value="";
+  try{await db.collection("tasks").add({title:v,bucket:"later",must:false,area:"Inbox",source:"board",order:Date.now(),createdAt:new Date().toISOString()});$("parkMsg").textContent="Parked. It's safe. Back to it.";}catch(_){$("parkMsg").textContent="Couldn't park that. Try again.";}};
+
+/* ---------- Claude actions ---------- */
+function snap(){return tasks.filter(t=>t.bucket!=="done"||(t.doneAt&&Date.now()-Date.parse(t.doneAt)<7*864e5)).map(t=>({id:t.id,title:t.title,bucket:t.bucket,must:!!t.must,step:t.step||"",area:t.area||"",est:t.est||"",due:t.due||"",subs:subsOf(t).map((s,i)=>({i,text:s.t,done:s.d}))}));}
+const INSTR=`You manage a person's task board in an app called Nudge. They have ADHD, so keep things small and clear. They often dictate by voice, so expect run-on sentences, filler words and transcription mistakes. Match tasks by meaning, not exact words.
+
+Buckets are "today", "week", "later" and "done". Today holds at most 3 unfinished tasks and at most one has must true. est is one of "15m","30m","1h","2h","half day","day". due is YYYY-MM-DD.
+
+Return JSON only: {"actions":[...],"reply":"..."}. Actions:
+{"op":"add","title":"...","emoji":"one fitting emoji","bucket":"today|week|later","step":"first step under 15 minutes","area":"...","est":"optional","due":"optional","subs":["..."]}
+{"op":"addSub","id":"taskId","text":"..."}
+{"op":"subDone","id":"taskId","i":0,"done":true}
+{"op":"removeSub","id":"taskId","i":0}
+{"op":"done","id":"taskId"}
+{"op":"undone","id":"taskId"}
+{"op":"move","id":"taskId","bucket":"today|week|later"}
+{"op":"must","id":"taskId"}
+{"op":"edit","id":"taskId","title":"optional","step":"optional","area":"optional","est":"optional","due":"optional"}
+{"op":"breakDown","id":"taskId","subs":["..."],"step":"optional"}
+{"op":"lowEnergy","on":true}
+
+Rules. New tasks go to "week" unless they say today or later. Every new task gets a concrete first step and a best-guess est. Turn spoken dates into YYYY-MM-DD using today's date. If today would go over 3 unfinished tasks, still do it, then say so and suggest one to move out. If they sound tired, drained or overwhelmed, use lowEnergy and say one kind sentence. If they ask what to do next or how they're doing, answer with no actions. If something is unclear, skip that part and ask. Never delete tasks.
+
+reply is one to three short, warm sentences confirming what changed. Plain words. No em-dashes, no semicolons, no colons used as dashes.`;
+const okEst=v=>typeof v==="string"&&EST[v]?v:null,okDue=v=>typeof v==="string"&&/^\d{4}-\d{2}-\d{2}$/.test(v)?v:null;
+async function apply(actions){
+  const byId=new Map(tasks.map(t=>[t.id,{...t,subs:subsOf(t)}]));const changed=new Map(),adds=[],log=[];let le=null;
+  const get=id=>{const t=byId.get(id);if(!t)return null;if(!changed.has(id))changed.set(id,{});return t;};
+  const set=(t,f)=>{Object.assign(t,f);Object.assign(changed.get(t.id),f);};
+  for(const a of actions){try{
+    if(a.op==="add"&&a.title){const d={title:String(a.title),bucket:BUCKETS[a.bucket]?a.bucket:"week",must:false,step:String(a.step||""),area:String(a.area||""),subs:(Array.isArray(a.subs)?a.subs:[]).map(s=>({t:String(s),d:false})),order:Date.now()+adds.length,createdAt:new Date().toISOString(),source:"voice"};if(okEst(a.est))d.est=a.est;if(okDue(a.due))d.due=a.due;if(typeof a.emoji==="string"&&a.emoji.length<=8)d.emoji=a.emoji;adds.push(d);log.push("Added "+a.title);continue;}
+    if(a.op==="lowEnergy"){le=a.on!==false;continue;}
+    const t=get(a.id);if(!t)continue;
+    if(a.op==="addSub"&&a.text){set(t,{subs:[...t.subs,{t:String(a.text),d:false}]});log.push("Step on "+t.title+": "+a.text);}
+    else if(a.op==="subDone"&&t.subs[a.i]){const s=t.subs.map(x=>({...x}));s[a.i].d=a.done!==false;set(t,{subs:s});log.push((s[a.i].d?"Ticked ":"Unticked ")+s[a.i].t);}
+    else if(a.op==="removeSub"&&t.subs[a.i]){const s=[...t.subs];const [r]=s.splice(a.i,1);set(t,{subs:s});log.push("Removed step "+r.t);}
+    else if(a.op==="done"&&t.bucket!=="done"){set(t,{bucket:"done",prevBucket:t.bucket,must:false,doneAt:new Date().toISOString()});log.push("Done: "+t.title);}
+    else if(a.op==="undone"&&t.bucket==="done"){set(t,{bucket:t.prevBucket||"today",doneAt:{__delete__:true}});log.push("Back on the list: "+t.title);}
+    else if(a.op==="move"&&BUCKETS[a.bucket]){set(t,{bucket:a.bucket,must:a.bucket==="today"?!!t.must:false});log.push(t.title+" → "+BUCKETS[a.bucket]);}
+    else if(a.op==="must"){for(const o of byId.values())if(o.must&&o.id!==t.id){get(o.id);set(o,{must:false});}set(t,{must:true,bucket:"today"});log.push("Must-do: "+t.title);}
+    else if(a.op==="edit"){const f={};for(const k of ["title","step","area"])if(typeof a[k]==="string"&&a[k])f[k]=a[k];if(okEst(a.est))f.est=a.est;if(okDue(a.due))f.due=a.due;if(Object.keys(f).length){set(t,f);log.push("Updated "+t.title);}}
+    else if(a.op==="breakDown"&&Array.isArray(a.subs)){const f={subs:[...t.subs,...a.subs.map(s=>({t:String(s),d:false}))]};if(a.step)f.step=String(a.step);set(t,f);log.push("Broke "+t.title+" into "+a.subs.length+" steps");}
+  }catch(_){}}
+  let anyDone=false;const doneIds=[...changed].filter(([id,f])=>f.bucket==="done").map(([id])=>id);
+  for(const [id,f] of changed)if(Object.keys(f).length){if(f.bucket==="done")anyDone=true;try{await db.doc("tasks/"+id).update(f);}catch(_){log.push("Couldn't save one change");}}
+  for(const d of adds){try{await db.collection("tasks").add(d);}catch(_){log.push("Couldn't add "+d.title);}}
+  if(le===true&&!lowOn()){await lowEnergy(true);log.push("Low energy mode on");}
+  if(le===false&&lowOn()){await lowEnergy(false);log.push("Back to your normal list");}
+  if(doneIds.length===1){const t=tasks.find(x=>x.id===doneIds[0]);if(t){closeSheet();celebrate(t);}}else if(anyDone)party(false);
+  return log;
+}
+
+/* ---------- On-device storage ---------- */
+const KEY="nudge:v1";
+let store=null;
+try{store=JSON.parse(localStorage.getItem(KEY));}catch(_){store=null;}
+if(!store||typeof store!=="object")store={};
+store.tasks=store.tasks||{};store.meta=store.meta||{};store.profile=store.profile||{};store.ai=store.ai||{};
+let saveWarned=false;
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(store));}catch(_){if(!saveWarned){saveWarned=true;toast("This browser won't save Nudge. Add it to your home screen or use another browser.");}}}
+const listeners={tasks:[],meta:[]};
+function emitTasks(){const snap={docs:Object.entries(store.tasks).map(([id,d])=>({id,data:()=>d})),metadata:{fromCache:false}};listeners.tasks.forEach(f=>f(snap));}
+function emitMeta(){const s={exists:true,data:()=>store.meta};listeners.meta.forEach(f=>f(s));}
+const applyFields=(o,f)=>{for(const k in f){const v=f[k];if(v&&typeof v==="object"&&!Array.isArray(v)&&v.__delete__)delete o[k];else o[k]=JSON.parse(JSON.stringify(v));}};
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const localDB={
+  collection:()=>({
+    onSnapshot:cb=>{listeners.tasks.push(cb);setTimeout(emitTasks,0);return()=>{};},
+    add:async d=>{const id=uid();store.tasks[id]=JSON.parse(JSON.stringify(d));persist();emitTasks();return{id};}
+  }),
+  doc:path=>{const [c,id]=path.split("/");return{
+    onSnapshot:cb=>{listeners.meta.push(cb);setTimeout(emitMeta,0);return()=>{};},
+    update:async f=>{if(c==="meta"){applyFields(store.meta,f);persist();emitMeta();return;}if(!store.tasks[id])throw{code:"unavailable"};applyFields(store.tasks[id],f);persist();emitTasks();},
+    set:async d=>{if(c==="meta"){store.meta=JSON.parse(JSON.stringify(d));persist();emitMeta();return;}store.tasks[id]=JSON.parse(JSON.stringify(d));persist();emitTasks();}
+  };}
+};
+window.addEventListener("storage",e=>{if(e.key!==KEY)return;try{const n=JSON.parse(e.newValue);if(n){store=n;store.tasks=store.tasks||{};store.meta=store.meta||{};store.profile=store.profile||{};store.ai=store.ai||{};sample=aiSample();emitTasks();emitMeta();}}catch(_){}});
+const NAME=()=>(store.profile.name||"").trim();
+
+/* ---------- Link your AI ---------- */
+const PROVIDERS={
+  claude:{name:"Claude",by:"Anthropic",mark:"✳︎",color:"#d97757",model:"claude-haiku-5-5",keyUrl:"https://console.anthropic.com/settings/keys",keyHint:"sk-ant-…"},
+  chatgpt:{name:"ChatGPT",by:"OpenAI",mark:"◎",color:"#10a37f",model:"gpt-4.1-mini",keyUrl:"https://platform.openai.com/api-keys",keyHint:"sk-…"},
+  gemini:{name:"Gemini",by:"Google",mark:"✦",color:"#4285f4",model:"gemini-3.6-flash",keyUrl:"https://aistudio.google.com/apikey",keyHint:"AIza…"},
+  grok:{name:"Grok",by:"xAI",mark:"𝕏",color:"#111111",model:"grok-4.5",keyUrl:"https://console.x.ai",keyHint:"xai-…"}
+};
+function parseJSON(t){t=String(t||"").trim().replace(/^```(?:json)?/i,"").replace(/```$/,"").trim();try{return JSON.parse(t);}catch(_){const m=t.match(/\{[\s\S]*\}/);if(m){try{return JSON.parse(m[0]);}catch(__){}}throw{code:"ai_error",message:"The AI replied in a way Nudge couldn't read."};}}
+async function askAI(prompt,cfg){
+  const a=cfg||store.ai;if(!a||!a.provider||!a.key)throw{code:"not_linked"};
+  const p=PROVIDERS[a.provider],model=(a.model||"").trim()||p.model,sys="Reply with valid JSON only. No markdown, no code fences.";
+  let r,j;
+  try{
+    if(a.provider==="claude"){
+      r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":a.key,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model,max_tokens:1500,system:sys,messages:[{role:"user",content:prompt}]})});
+      j=await r.json();if(!r.ok)throw{code:"ai_error",status:r.status,message:j&&j.error&&j.error.message};
+      return parseJSON((j.content||[]).map(c=>c.text||"").join(""));
+    }
+    if(a.provider==="gemini"){
+      r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(model)+":generateContent",{method:"POST",headers:{"content-type":"application/json","x-goog-api-key":a.key},body:JSON.stringify({systemInstruction:{parts:[{text:sys}]},contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{responseMimeType:"application/json"}})});
+      j=await r.json();if(!r.ok)throw{code:"ai_error",status:r.status,message:j&&j.error&&j.error.message};
+      return parseJSON(((j.candidates||[])[0]||{}).content?.parts?.map(x=>x.text||"").join(""));
+    }
+    const url=a.provider==="grok"?"https://api.x.ai/v1/chat/completions":"https://api.openai.com/v1/chat/completions";
+    r=await fetch(url,{method:"POST",headers:{"content-type":"application/json","authorization":"Bearer "+a.key},body:JSON.stringify({model,messages:[{role:"system",content:sys},{role:"user",content:prompt}],response_format:{type:"json_object"}})});
+    j=await r.json();if(!r.ok)throw{code:"ai_error",status:r.status,message:j&&j.error&&(j.error.message||j.error)};
+    return parseJSON(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content);
+  }catch(e){if(e&&e.code)throw e;throw{code:"network",message:String(e&&e.message||e)};}
+}
+function aiErrMsg(e){
+  if(!e)return"That didn't go through. Try again.";
+  if(e.code==="network")return"Couldn't reach your AI. Check your connection. If you're in the preview, AI linking only works once Nudge is live on its own site.";
+  if(e.status===401||e.status===403)return"Your AI key was turned down. Check it in Settings.";
+  if(e.status===429)return"Your AI says too many requests or no credit left. Give it a minute or check your account.";
+  if(e.status===404)return"That model name wasn't found. Clear the model field in Settings to use the default.";
+  return e.message?("Your AI said: "+e.message):"That didn't go through. Your words are still there, so try again.";
+}
+const aiSample=()=>store.ai&&store.ai.provider&&store.ai.key?{json:p=>askAI(p)}:null;
+
+/* ---------- Hand off to the user's own AI app (no keys) ---------- */
+const APP_URL={chatgpt:q=>"https://chatgpt.com/?q="+encodeURIComponent(q),claude:q=>"https://claude.ai/new?q="+encodeURIComponent(q),gemini:q=>"https://gemini.google.com/app?q="+encodeURIComponent(q),grok:q=>"https://grok.com/?q="+encodeURIComponent(q)};
+const myApp=()=>store.ai&&store.ai.app&&PROVIDERS[store.ai.app]?store.ai.app:null;
+function prepHandoff(a,q){const app=myApp();if(!app)return;a.href=APP_URL[app](q.slice(0,5000));try{navigator.clipboard&&navigator.clipboard.writeText(q).catch(()=>{});}catch(_){}toast("Opening "+PROVIDERS[app].name+". Your question is copied too, in case you need to paste it.");}
+function handoffLink(label,promptFn){const app=myApp();if(!app)return null;const p=PROVIDERS[app];
+  const a=el("a","handoff");const mk=el("span","mark",p.mark);mk.style.background=p.color;a.append(mk,el("span",null,label.replace("{app}",p.name)),el("i",null,"↗"));
+  a.target="_blank";a.rel="noopener";a.href=APP_URL[app]("");a.onclick=()=>prepHandoff(a,promptFn());return a;}
+function openHandoff(q){const a=document.createElement("a");a.target="_blank";a.rel="noopener";prepHandoff(a,q);document.body.append(a);a.click();a.remove();}
+const listText=()=>{const line=t=>"- "+t.title+(t.est?" ("+t.est+")":"")+(t.due?" due "+t.due:"");const sec=(n,b)=>{const l=open_(b).slice(0,12);return l.length?n+":\n"+l.map(line).join("\n"):"";};return [sec("Today","today"),sec("This week","week"),sec("Later","later")].filter(Boolean).join("\n\n");};
+const P_STUCK=(t,label)=>"I have ADHD and I'm stuck on a task.\n\nTask: "+t.title+(t.step?"\nMy first step so far: "+t.step:"")+"\nWhat's in the way: "+label+"\n\nBe warm and brief. Give me one sentence that takes the pressure off. Then 3 to 5 tiny numbered steps for this exact task, the first one under 2 minutes. Then one trick that suits what's in the way.";
+const P_NEXT=()=>"I have ADHD and I use an app called Nudge for my tasks. Help me pick ONE thing to do right now and give me a first step I can start in 2 minutes. Be kind and keep it short.\n\n"+listText();
+const P_TALK=text=>"I have ADHD and I use an app called Nudge for my tasks. Be kind and keep it short.\n\n"+text+"\n\nMy current list:\n"+listText();
+function parseSteps(txt){let lines=String(txt||"").split(/\n+/).map(l=>l.trim()).filter(Boolean);const marked=lines.filter(l=>/^(\d+[.)]|[-*•])\s+/.test(l));if(marked.length)lines=marked;return lines.map(l=>l.replace(/^(\d+[.)]|[-*•])\s+/,"").replace(/\*\*/g,"").trim()).filter(l=>l.length>1&&l.length<160).slice(0,6);}
+
+/* ---------- Small UI helpers ---------- */
+function toast(msg){document.querySelectorAll(".toast").forEach(x=>x.remove());const t=el("div","toast",msg);document.body.append(t);setTimeout(()=>t.classList.add("out"),2600);setTimeout(()=>t.remove(),3000);}
+
+/* ---------- Settings ---------- */
+function openSettings(focusAI){
+  openSheet(sh=>{
+    sh.append(el("h3",null,"Settings"));
+    // name
+    const n=el("label","sfield");n.append(el("span",null,"What should Nudge call you?"));const ni=el("input");ni.value=NAME();ni.placeholder="Your first name";ni.onchange=()=>{store.profile.name=ni.value.trim();persist();render();};n.append(ni);sh.append(n);
+    // AI
+    const ai=el("div","sblock");ai.append(el("h4",null,"✦ Your AI app"),el("p","muted","When you're stuck or need a plan, Nudge opens your AI app with the question already written for you. It uses your own account. No keys, no setup."));
+    const apps=el("div","provs");
+    const drawApps=()=>apps.querySelectorAll(".prov").forEach(b=>b.classList.toggle("on",b.dataset.p===myApp()));
+    for(const [id,p] of Object.entries(PROVIDERS)){const b=el("button","prov");b.dataset.p=id;const mk=el("span","mark",p.mark);mk.style.background=p.color;b.append(mk,el("b",null,p.name),el("small",null,p.by));b.onclick=()=>{store.ai.app=store.ai.app===id?null:id;persist();drawApps();render();if(myApp())toast(p.name+" is your AI app.");};apps.append(b);}
+    ai.append(apps);drawApps();
+    const advAI=el("details","adv advbig");advAI.append(el("summary",null,"Advanced · connect directly with an API key"),el("p","fine","For power users. With a key, Nudge can act on what you say inside the app, like ticking things off and moving tasks. Keys are paid per use by the AI company, separate from your subscription."));
+    if(focusAI==="key")advAI.open=true;
+    const grid=el("div","provs");let chosen=store.ai.provider||null;
+    const form=el("div","aiform");
+    const draw=()=>{grid.querySelectorAll(".prov").forEach(b=>b.classList.toggle("on",b.dataset.p===chosen));form.replaceChildren();if(!chosen)return;const p=PROVIDERS[chosen];
+      const k=el("label","sfield");k.append(el("span",null,p.name+" API key"));const ki=el("input");ki.type="password";ki.autocomplete="off";ki.placeholder=p.keyHint;ki.value=store.ai.provider===chosen?store.ai.key||"":"";k.append(ki);
+      const get=el("a","getkey","Get a "+p.name+" key ↗");get.href=p.keyUrl;get.target="_blank";get.rel="noopener";
+      const adv=el("details","adv");adv.append(el("summary",null,"Advanced"));const m=el("label","sfield");m.append(el("span",null,"Model (leave blank for "+p.model+")"));const mi=el("input");mi.placeholder=p.model;mi.value=store.ai.provider===chosen?store.ai.model||"":"";m.append(mi);adv.append(m);
+      const row=el("div","act");const un=el("button","pill ghost","Unlink");un.hidden=!(store.ai.provider===chosen&&store.ai.key);
+      const save=el("button","big","Test and link");const msg=el("p","muted");
+      un.onclick=()=>{store.ai={app:store.ai.app};persist();sample=null;msg.textContent="Unlinked. Your key was removed from this device.";un.hidden=true;ki.value="";};
+      save.onclick=async()=>{const cfg={provider:chosen,key:ki.value.trim(),model:mi.value.trim()};if(!cfg.key){msg.textContent="Paste your key first.";return;}
+        save.disabled=true;save.textContent="Testing…";msg.textContent="";
+        try{const out=await askAI('Reply with {"ok":true}',cfg);if(!out||out.ok!==true)throw{code:"ai_error",message:"Unexpected reply"};
+          store.ai={...cfg,app:store.ai.app};persist();sample=aiSample();msg.textContent="✓ "+p.name+" is linked. You're all set.";un.hidden=false;party(true);}
+        catch(e){msg.textContent=aiErrMsg(e);}
+        finally{save.disabled=false;save.textContent="Test and link";}};
+      row.append(un,save);form.append(k,get,adv,row,msg,el("p","fine","🔒 Your key stays on this device and goes straight to "+p.by+". Nudge has no servers and never sees it. Usage is billed by "+p.by+" to your account."));};
+    for(const [id,p] of Object.entries(PROVIDERS)){const b=el("button","prov");b.dataset.p=id;const mk=el("span","mark",p.mark);mk.style.background=p.color;b.append(mk,el("b",null,p.name),el("small",null,p.by));b.onclick=()=>{chosen=id;draw();};grid.append(b);}
+    advAI.append(grid,form);ai.append(advAI);sh.append(ai);draw();
+    // backup
+    const bk=el("div","sblock");bk.append(el("h4",null,"Backup"),el("p","muted","Your tasks live only in this browser. Copy a backup now and then, or to move to another device."));
+    const r1=el("div","act");const cp=el("button","pill ghost","Copy backup");const rs=el("button","pill ghost","Restore");r1.append(cp,rs);bk.append(r1);
+    const ta=el("textarea","restore");ta.placeholder="Paste a backup here, then tap Restore again";ta.hidden=true;bk.append(ta);
+    cp.onclick=async()=>{const data=JSON.stringify({tasks:store.tasks,meta:store.meta,profile:store.profile});try{await navigator.clipboard.writeText(data);toast("Backup copied. Paste it somewhere safe.");}catch(_){ta.hidden=false;ta.value=data;ta.select();toast("Copy the text in the box.");}};
+    rs.onclick=()=>{if(ta.hidden||!ta.value.trim()){ta.hidden=false;ta.value="";ta.focus();return;}try{const d=JSON.parse(ta.value);if(!d.tasks)throw 0;store.tasks=d.tasks;store.meta=d.meta||{};store.profile={...store.profile,...(d.profile||{})};persist();emitTasks();emitMeta();closeSheet();toast("Restored.");}catch(_){toast("That doesn't look like a Nudge backup.");}};
+    sh.append(bk);
+    // reset
+    const rz=el("div","sblock");const rb=el("button","danger","Start over");let armed=false;rb.onclick=()=>{if(!armed){armed=true;rb.textContent="Tap again to delete everything on this device";return;}const ai2=store.ai;store={tasks:{},meta:{},profile:{},ai:ai2};persist();closeSheet();emitTasks();emitMeta();startOnboarding();};rz.append(rb);sh.append(rz);
+    sh.append(el("p","fine center","Nudge · made for ADHD brains · nothing leaves your device"));
+    if(focusAI)setTimeout(()=>ai.scrollIntoView({behavior:"smooth",block:"start"}),320);
+  });
+}
+$("gearBtn").onclick=()=>openSettings(false);
+
+/* ---------- Onboarding ---------- */
+function startOnboarding(){
+  const o=el("div","onb");document.body.append(o);let lines=[];const picked=[];
+  const step=(n)=>{o.replaceChildren();const w=el("div","onbIn");o.append(w);
+    if(n===0){w.append(el("div","onbLogo","N"),el("h1","serif","Nudge."),el("p","lead","One thing at a time. A focus app built for ADHD brains."),
+      el("ul","onbList"));const ul=w.querySelector(".onbList");["Shows you one thing, not a wall of tasks","Helps you start when you're stuck","Celebrates every win, no guilt on bad days"].forEach(t=>ul.append(el("li",null,t)));
+      const b=el("button","go","Let's go");b.onclick=()=>step(1);w.append(b);}
+    if(n===1){w.append(el("p","onbStep","1 of 3"),el("h2",null,"What should I call you?"));const i=el("input","onbIn1");i.placeholder="First name";i.value=NAME();w.append(i);setTimeout(()=>i.focus(),100);
+      w.append(el("p","onbQ","Which AI app do you use? Optional."));const ac=el("div","appchips");for(const [id,p] of Object.entries(PROVIDERS)){const c=el("button","appchip");const mk=el("span","mark",p.mark);mk.style.background=p.color;c.append(mk,document.createTextNode(p.name));c.onclick=()=>{store.ai.app=store.ai.app===id?null:id;persist();ac.querySelectorAll(".appchip").forEach((x,j)=>x.classList.toggle("on",Object.keys(PROVIDERS)[j]===store.ai.app));};if(store.ai.app===id)c.classList.add("on");ac.append(c);}w.append(ac);
+      const b=el("button","go","Next");b.onclick=()=>{store.profile.name=i.value.trim();persist();step(2);};i.onkeydown=e=>{if(e.key==="Enter")b.click();};const sk=el("button","alt","Skip");sk.onclick=()=>step(2);w.append(b,sk);}
+    if(n===2){w.append(el("p","onbStep","2 of 3"),el("h2",null,"Empty your head."),el("p","lead","Everything on your mind, big or small. One per line. Tap your keyboard's mic and just talk if that's easier."));
+      const ta=el("textarea","onbTa");ta.placeholder="Reply to Tolu\nBook dentist\nFinish the deck\nBuy groceries";w.append(ta);setTimeout(()=>ta.focus(),100);
+      const b=el("button","go","Next");b.onclick=()=>{lines=ta.value.split(/\n|;/).map(x=>x.replace(/^[-*•\d.)\s]+/,"").trim()).filter(Boolean).slice(0,40);if(!lines.length){ta.placeholder="Even one thing is enough…";ta.focus();return;}step(3);};w.append(b);}
+    if(n===3){w.append(el("p","onbStep","3 of 3"),el("h2",null,"Pick up to three for today."),el("p","lead","The rest is safe for later. Your first pick becomes your must-do."));
+      const l=el("div","pickList");lines.forEach((t,i)=>{const b=el("button","pick");b.append(el("span","emo sm",emo({title:t})),el("span",null,t));b.onclick=()=>{const k=picked.indexOf(i);if(k>=0)picked.splice(k,1);else if(picked.length<3)picked.push(i);else{toast("Three is plenty. Unpick one first.");return;}l.querySelectorAll(".pick").forEach((x,j)=>{const at=picked.indexOf(j);x.classList.toggle("on",at>=0);x.dataset.n=at>=0?at+1:"";});go.disabled=!picked.length;go.textContent=picked.length?"Start my day":"Pick at least one";};l.append(b);});
+      w.append(l);const go=el("button","go","Pick at least one");go.disabled=true;w.append(go);
+      go.onclick=async()=>{const now=Date.now();for(const [i,t] of lines.entries()){const at=picked.indexOf(i);await db.collection("tasks").add({title:t,bucket:at>=0?"today":"later",must:at===0,order:at>=0?at:now+i,createdAt:new Date().toISOString()});}
+        store.profile.onboarded=true;store.meta.planned=todayISO();persist();emitMeta();o.classList.add("out");setTimeout(()=>o.remove(),300);party(false);};}
+  };step(0);
+}
+
+/* ---------- Plan my day (daily ritual) ---------- */
+function maybePlanDay(force){
+  if(!store.profile.onboarded)return;
+  const today=open_("today"),pool=open_("week").concat(open_("later"));
+  if(!force&&(store.meta.planned===todayISO()||today.length||!pool.length)){if(store.meta.planned!==todayISO()&&today.length){store.meta.planned=todayISO();persist();}return;}
+  if(!pool.length){toast("Your list is empty. Add something with +.");return;}
+  const y=new Date(Date.now()-864e5).toDateString();const yWins=tasks.filter(t=>t.bucket==="done"&&t.doneAt&&new Date(t.doneAt).toDateString()===y).length;
+  const picked=[];
+  openSheet(sh=>{
+    const h=new Date().getHours();
+    sh.append(el("h3",null,(h<12?"Good morning":h<17?"Good afternoon":"Good evening")+(NAME()?", "+NAME():"")+"."),el("p","sub2",(yWins?"You finished "+yWins+(yWins===1?" thing":" things")+" yesterday. ":"")+"Pick up to three for today. First pick is your must-do."));
+    const l=el("div","pickList");const ranked=pool.slice().sort((a,b)=>(dueInfo(a.due)?.diff??99)-(dueInfo(b.due)?.diff??99)||(a.bucket==="week"?0:1)-(b.bucket==="week"?0:1)||(a.order||0)-(b.order||0));
+    ranked.slice(0,12).forEach((t,i)=>{const b=el("button","pick");const di=dueInfo(t.due);b.append(el("span","emo sm",emo(t)),el("span",null,t.title));if(di&&di.hot)b.append(el("span","chip hot",di.t));
+      b.onclick=()=>{const k=picked.indexOf(t.id);if(k>=0)picked.splice(k,1);else if(picked.length<3)picked.push(t.id);else{toast("Three is plenty.");return;}l.querySelectorAll(".pick").forEach((x,j)=>{const at=picked.indexOf(ranked[j].id);x.classList.toggle("on",at>=0);x.dataset.n=at>=0?at+1:"";});go.disabled=!picked.length;};l.append(b);});
+    sh.append(l);
+    const act=el("div","act");const auto=el("button","pill ghost","Pick for me");const go=el("button","big","That's my day");go.disabled=true;act.append(auto,go);sh.append(act);
+    const commit=async ids=>{for(const [i,id] of ids.entries()){const t=tasks.find(x=>x.id===id);if(t)await write(t,{bucket:"today",must:i===0,order:i});}store.meta.planned=todayISO();persist();closeSheet();render();};
+    go.onclick=()=>commit(picked);
+    auto.onclick=()=>{const r=ranked.slice();const first=r.find(t=>dueInfo(t.due)&&dueInfo(t.due).diff<=1)||r.slice().sort((a,b)=>rank(a)-rank(b))[0];const rest=r.filter(t=>t.id!==first.id).sort((a,b)=>rank(a)-rank(b)).slice(0,2);commit([first.id,...rest.map(t=>t.id)]);};
+  });
+}
+
+/* ---------- Boot ---------- */
+(function(){
+  db=localDB;sample=aiSample();
+  $("status").textContent="";
+  db.collection("tasks").onSnapshot(s=>{tasks=s.docs.map(d=>({id:d.id,...d.data()}));render();if(F.id&&!$("focus").hidden&&!$("fRun").hidden)drawFocus();});
+  db.doc("meta/today").onSnapshot(s=>{meta=s.exists?s.data():{};render();});
+  setInterval(()=>{if($("focus").hidden)renderDay();},60000);
+  if(!store.profile.onboarded)startOnboarding();else setTimeout(()=>maybePlanDay(false),400);
+  document.addEventListener("visibilitychange",()=>{if(!document.hidden){render();maybePlanDay(false);}});
+  if("serviceWorker" in navigator){try{navigator.serviceWorker.register("sw.js").catch(()=>{});}catch(_){}}
+})();
+
+</script>
+</body>
+</html>
