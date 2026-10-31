@@ -1,10 +1,8 @@
 "use client";
 
 import { useRef } from "react";
-import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { Download, Lock, RotateCcw, Upload } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { State } from "@/lib/nudge";
 import type { Actions } from "@/lib/use-nudge";
 
@@ -19,7 +17,6 @@ const Row = ({ title, hint, children }: { title: string; hint?: string; children
 );
 
 export function Settings({ state, actions }: { state: State; actions: Actions }) {
-  const { theme, setTheme } = useTheme();
   const file = useRef<HTMLInputElement>(null);
 
   const exportData = () => {
@@ -51,24 +48,6 @@ export function Settings({ state, actions }: { state: State; actions: Actions })
               </option>
             ))}
           </select>
-        </Row>
-        <Row title="Appearance">
-          <div className="flex gap-1 rounded-xl bg-muted p-1">
-            {(["system", "light", "dark"] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setTheme(t)}
-                aria-pressed={theme === t}
-                className={cn(
-                  "h-7 rounded-lg px-2.5 text-xs font-medium capitalize transition-all",
-                  theme === t ? "bg-card shadow-sm" : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {t === "system" ? "Auto" : t}
-              </button>
-            ))}
-          </div>
         </Row>
       </div>
 
