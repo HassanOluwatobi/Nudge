@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* =========================================================================
-   NudgeMe design system: "Thread"
+   Shrink my day design system: "Thread"
 
    Idea: a loose thought is a tangle. Each step pulls it straighter.
    Finishing lays it flat and lights the dot at the end.
@@ -1093,7 +1093,7 @@ html.splash-done #splash .splash-inner {
 html[data-theme="dark"] .guide-scrim {
   background: rgb(0 0 0 / 0.62);
 }
-html[data-theme="dark"] [aria-label="How NudgeMe works"] {
+html[data-theme="dark"] [aria-label="How Shrink my day works"] {
   box-shadow: 0 -1px 0 var(--line), 0 -24px 60px -30px rgb(0 0 0 / 0.8) !important;
 }
 /* A new task chip fades in where it lands. Existing chips stay still while you type. */

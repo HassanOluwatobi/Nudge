@@ -22,7 +22,7 @@ export function outlookUrl(e: CalEvent) {
 }
 
 export function ics(events: CalEvent[]) {
-  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//NudgeMe//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
+  const lines = ["BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//Shrink my day//EN", "CALSCALE:GREGORIAN", "METHOD:PUBLISH"];
   for (const e of events) {
     const end = new Date(e.start.getTime() + e.mins * 60000);
     lines.push(

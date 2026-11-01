@@ -9,7 +9,7 @@
   calendar address can be pasted once and is read through the stateless relay.
   Apple and any other calendar: import an .ics file. Nothing leaves the device.
   Notion and Calendly: they block browsers from calling them directly, so a
-  small NudgeMe relay forwards the request with the person's own token and
+  small Shrink my day relay forwards the request with the person's own token and
   stores nothing.
 */
 

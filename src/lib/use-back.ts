@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 
 /**
  * While something is open (a sheet, a step), the phone's Back button closes it
- * instead of leaving NudgeMe.
+ * instead of leaving Shrink my day.
  */
 export function useBackClose(open: boolean, close: () => void) {
   const closeRef = useRef(close);

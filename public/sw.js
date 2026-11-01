@@ -1,5 +1,5 @@
-// NudgeMe service worker: network first, fall back to cache so the app opens offline.
-const CACHE = "nudgeme-v20-6";
+// Shrink my day service worker: network first, fall back to cache so the app opens offline.
+const CACHE = "nudgeme-v21-0";
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/manifest.webmanifest", "/icon-192.png"])));
   self.skipWaiting();
@@ -21,16 +21,16 @@ self.addEventListener("fetch", (e) => {
       .catch(() => caches.match(req).then((r) => r || caches.match("/")))
   );
 });
-// A reminder sent by the NudgeMe reminder sender. The phone sealed it, the push service opened it here.
+// A reminder sent by the Shrink my day reminder sender. The phone sealed it, the push service opened it here.
 self.addEventListener("push", (e) => {
   let d = {};
   try {
     d = e.data ? e.data.json() : {};
   } catch (err) {
-    d = { title: "NudgeMe", body: e.data ? e.data.text() : "" };
+    d = { title: "Shrink my day", body: e.data ? e.data.text() : "" };
   }
   e.waitUntil(
-    self.registration.showNotification(d.title || "NudgeMe", {
+    self.registration.showNotification(d.title || "Shrink my day", {
       body: d.body || "",
       icon: "/icon-192.png",
       badge: "/badge-96.png",
@@ -39,7 +39,7 @@ self.addEventListener("push", (e) => {
     })
   );
 });
-// Tapping a NudgeMe notification opens the app.
+// Tapping a Shrink my day notification opens the app.
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
   const url = (e.notification.data && e.notification.data.url) || "/";

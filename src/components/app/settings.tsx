@@ -145,7 +145,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
       <section className="mt-6">
         <h3 className="t-label">Reminders</h3>
         <p className="t-small mb-3 mt-1 text-ink-2">
-          Add your check-ins to a calendar. It rings every day at {prettyTime(s.morning)} and {prettyTime(s.evening)}, even when NudgeMe is closed.
+          Add your check-ins to a calendar. It rings every day at {prettyTime(s.morning)} and {prettyTime(s.evening)}, even when Shrink my day is closed.
         </p>
         <CalendarButtons events={dailyEvents({ morning: s.morning, evening: s.evening })} file="nudgeme-check-ins" onAdded={() => actions.setSettings({ calendarAdded: ymd() })} label={s.calendarAdded ? "Added. If you change the times, add them again." : ""} />
         <div className="mt-3 rounded-2xl bg-white px-4 ring-1 ring-line">
@@ -155,10 +155,10 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
               label="Notifications"
               hint={
                 pushSupported()
-                  ? "Task reminders and check-ins ring on this phone, even when NudgeMe is closed."
+                  ? "Task reminders and check-ins ring on this phone, even when Shrink my day is closed."
                   : platform() === "ios"
-                    ? "On iPhone, add NudgeMe to your Home Screen and open it from there. Then reminders ring even when it's closed."
-                    : "Alerts while NudgeMe is open or in the background. For alerts when it's fully closed, add them to your calendar above."
+                    ? "On iPhone, add Shrink my day to your Home Screen and open it from there. Then reminders ring even when it's closed."
+                    : "Alerts while Shrink my day is open or in the background. For alerts when it's fully closed, add them to your calendar above."
               }
               checked={s.notify}
               onChange={async (v) => {
@@ -170,7 +170,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
                 const ok = pushSupported() ? await enablePush().catch(() => false) : await askNotify();
                 actions.setSettings({ notify: ok });
                 if (!ok) toast("Notifications are blocked. You can allow them in your phone's settings.");
-                else (feel("save"), toast(pushSupported() ? "Reminders are on. They'll ring even with NudgeMe closed." : "Notifications are on."));
+                else (feel("save"), toast(pushSupported() ? "Reminders are on. They'll ring even with Shrink my day closed." : "Notifications are on."));
               }}
             />
           ) : (
@@ -179,7 +179,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
                 <Bell className="size-4" /> Notifications
               </span>
               <span className="t-small mt-0.5 block text-ink-2">
-                {platform() === "ios" ? "On iPhone, add NudgeMe to your Home Screen first. Then open it from there and turn this on." : "This browser does not offer notifications. Calendar reminders above still work."}
+                {platform() === "ios" ? "On iPhone, add Shrink my day to your Home Screen first. Then open it from there and turn this on." : "This browser does not offer notifications. Calendar reminders above still work."}
               </span>
             </div>
           )}
@@ -188,7 +188,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
 
       <section className="mt-6">
         <h3 className="t-label">Bring in your calendar</h3>
-        <p className="t-small mb-3 mt-1 text-ink-2">Turn your events into tasks with reminders. NudgeMe only reads your calendar, it never edits it.</p>
+        <p className="t-small mb-3 mt-1 text-ink-2">Turn your events into tasks with reminders. Shrink my day only reads your calendar, it never edits it.</p>
         <SourceButtons state={state} onPick={(src) => (onClose(), onImport(src))} />
       </section>
 
@@ -234,9 +234,9 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
                   {[
                     "There's no account. Everything you add lives on this phone.",
                     "Nothing goes to a server. I never see your tasks.",
-                    "If you connect Notion, Calendly or a calendar link, that token or link is saved on this phone as plain text. It passes through a NudgeMe relay that stores nothing. You can remove it any time.",
+                    "If you connect Notion, Calendly or a calendar link, that token or link is saved on this phone as plain text. It passes through a Shrink my day relay that stores nothing. You can remove it any time.",
                     "Voice typing uses your browser's speech feature. Some browsers send the audio to their own online service.",
-                    "If you clear your browser data, NudgeMe gets cleared too. Download a backup first.",
+                    "If you clear your browser data, Shrink my day gets cleared too. Download a backup first.",
                   ].map((t, i) => (
                     <li key={i} className="flex gap-2.5 text-[14px] leading-snug text-ink-2">
                       <span className="grid size-5 shrink-0 place-items-center rounded-full bg-paper text-[11px] font-semibold tabular-nums text-ink">{i + 1}</span>
@@ -284,7 +284,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
       <section className="mt-6">
         <h3 className="t-label">Help</h3>
         <button type="button" className="btn btn-line mt-2 w-full gap-2" onClick={() => (onClose(), onGuide())}>
-          <CircleHelp className="size-[18px]" /> How NudgeMe works
+          <CircleHelp className="size-[18px]" /> How Shrink my day works
         </button>
         <a href="/privacy" className="btn btn-quiet mt-1 w-full text-[14px]">
           Privacy policy

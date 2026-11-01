@@ -241,12 +241,12 @@ function Reminders() {
 }
 
 const PAGES = [
-  { art: Capture, tag: "Brain dump", title: "Empty your head", body: "Type it or say it. One long messy line is fine. NudgeMe splits it into separate tasks so nothing slips." },
+  { art: Capture, tag: "Brain dump", title: "Empty your head", body: "Type it or say it. One long messy line is fine. Shrink my day splits it into separate tasks so nothing slips." },
   { art: AiSteps, tag: "AI helper", title: "Big task? Let AI shrink it", body: "Tap Break it down and your own ChatGPT, Claude, Gemini or Grok turns it into tiny steps. Paste them back and you're set. No sign up, no cost." },
   { art: OneThing, tag: "Home", title: "Just one thing", body: "Home shows you one task and the very next step. That's it. Not feeling it today? Skip to another." },
   { art: Timer, tag: "Focus", title: "One step at a time", body: "Focus hides everything else. Tick a step and the next one slides in. Add a timer if a little pressure helps you." },
   { art: IdeasBack, tag: "Ideas", title: "Ideas come back to you", body: "Drop an idea and stop holding it in your head. It comes back in a few days. Do it, snooze it or let it go." },
-  { art: Reminders, tag: "Reminders", title: "Reminders that actually ring", body: "Send any reminder to Google, Apple or Outlook Calendar. Your phone rings even when NudgeMe is closed." },
+  { art: Reminders, tag: "Reminders", title: "Reminders that actually ring", body: "Send any reminder to Google, Apple or Outlook Calendar. Your phone rings even when Shrink my day is closed." },
 ];
 
 export function Guide({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -293,7 +293,7 @@ export function Guide({ open, onClose }: { open: boolean; onClose: () => void })
             ref={box}
             role="dialog"
             aria-modal="true"
-            aria-label="How NudgeMe works"
+            aria-label="How Shrink my day works"
             tabIndex={-1}
             onKeyDown={(e) => {
               if (e.key === "Escape") close();

@@ -1,13 +1,13 @@
 "use client";
 
 /*
-  Reminders that ring with NudgeMe closed, through standard Web Push.
+  Reminders that ring with Shrink my day closed, through standard Web Push.
 
   The phone seals every message itself (RFC 8291, aes128gcm) with its own push
-  keys, then hands the sealed copy and a send time to the NudgeMe reminder
+  keys, then hands the sealed copy and a send time to the Shrink my day reminder
   sender. The sender cannot read them. It only knows when to pass each one on.
 
-  On iPhone this works once NudgeMe is added to the Home Screen (iOS 16.4+).
+  On iPhone this works once Shrink my day is added to the Home Screen (iOS 16.4+).
 */
 
 export const PUSH_URL = (process.env.NEXT_PUBLIC_PUSH_URL ?? "").replace(/\/+$/, "");

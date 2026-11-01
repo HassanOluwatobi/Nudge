@@ -11,7 +11,7 @@ import { type Task, addDays, prettyWhen, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 
 /**
- * Reminders without a server. NudgeMe pings you while it is open or installed,
+ * Reminders without a server. Shrink my day pings you while it is open or installed,
  * and one tap adds the reminder to your phone's calendar so it rings even when closed.
  * Nothing is set until the person confirms a time.
  */
@@ -45,7 +45,7 @@ export function RemindPicker({ task, actions, compact = false }: { task: Task; a
           </button>
         </div>
         <div className="mt-3 border-t border-line pt-3">
-          <p className="t-small mb-1 text-ink-2">{compact ? "Add it to a calendar so your phone rings." : "Add it to your calendar so your phone rings, even with NudgeMe closed."}</p>
+          <p className="t-small mb-1 text-ink-2">{compact ? "Add it to a calendar so your phone rings." : "Add it to your calendar so your phone rings, even with Shrink my day closed."}</p>
           <CalendarButtons flat events={[taskEvent(task.title, new Date(task.remindAt!))]} file="nudgeme-reminder" label="" />
         </div>
       </div>

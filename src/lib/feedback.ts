@@ -1,7 +1,7 @@
 "use client";
 
 /*
-  NudgeMe's touch feedback. No sounds.
+  Shrink my day's touch feedback. No sounds.
 
   Built on the rules Apple uses for Core Haptics and its system feedback:
   - Use the smallest, system-like feedback for the moment. Ordinary taps get none.

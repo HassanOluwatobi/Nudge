@@ -32,7 +32,7 @@ export function TopBar({ title, onSettings, onAdd, onHelp, dark, onTheme }: { ti
           </button>
         )}
         {onHelp && (
-          <button type="button" className={round} aria-label="How NudgeMe works" onClick={onHelp}>
+          <button type="button" className={round} aria-label="How Shrink my day works" onClick={onHelp}>
             <CircleHelp className="size-[18px]" />
           </button>
         )}

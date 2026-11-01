@@ -57,7 +57,7 @@ export function CalendarButtons({ events, file, onAdded, label, flat }: Props) {
           </motion.li>
         ))}
       </ul>
-      {label !== "" && <p className="t-small mt-2.5 text-ink-2">{label ?? "Your calendar will ring, even with NudgeMe closed."}</p>}
+      {label !== "" && <p className="t-small mt-2.5 text-ink-2">{label ?? "Your calendar will ring, even with Shrink my day closed."}</p>}
     </div>
   );
 }

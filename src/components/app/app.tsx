@@ -115,7 +115,7 @@ export function NudgeApp() {
     window.scrollTo({ top: 0 });
   }, [tab, over]);
 
-  // Ask the browser to keep NudgeMe's data instead of clearing it to save space.
+  // Ask the browser to keep Shrink my day's data instead of clearing it to save space.
   useEffect(() => {
     navigator.storage?.persist?.().catch(() => {});
   }, []);
@@ -132,7 +132,7 @@ export function NudgeApp() {
     setTab("today");
   });
 
-  // Reminders while NudgeMe is open or installed. The calendar covers the rest.
+  // Reminders while Shrink my day is open or installed. The calendar covers the rest.
   const fired = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (!state) return;
@@ -155,7 +155,7 @@ export function NudgeApp() {
       const ring = () => {
         remember(key);
         toast(`Reminder: ${t.title}`, { duration: 10000, action: { label: "Start", onClick: () => (setFocusId(t.id), setTab("focus")) } });
-        if (state.settings.notify && !pushOn()) notify(`NudgeMe: ${t.title}`, "Time for a small step.");
+        if (state.settings.notify && !pushOn()) notify(`Shrink my day: ${t.title}`, "Time for a small step.");
       };
       if (at <= now && now - at < 12 * 3600_000) ring();
       else if (at > now && at - now < 24 * 3600_000) timers.push(setTimeout(ring, at - now));
@@ -204,7 +204,7 @@ export function NudgeApp() {
   }, [notifyOn]);
 
   // Hand the next two weeks of reminders to the reminder sender, sealed on this phone,
-  // so they ring even when NudgeMe is closed.
+  // so they ring even when Shrink my day is closed.
   useEffect(() => {
     if (!state || !state.settings.notify || !pushOn()) return;
     const id = setTimeout(() => {
@@ -334,7 +334,7 @@ export function NudgeApp() {
               <Art mode={0} shift={0.55} />
             </div>
             <h1 className="mt-8 text-[40px] font-medium leading-[1.04] tracking-[-0.04em]">You can stop here.</h1>
-            <p className="t-body mt-3 text-ink-2">Your list is saved on this device. Close NudgeMe whenever you like.</p>
+            <p className="t-body mt-3 text-ink-2">Your list is saved on this device. Close Shrink my day whenever you like.</p>
             <button type="button" className="btn btn-line mt-8 self-start" onClick={() => (setOver(null), setTab("today"))}>
               Back to today
             </button>

@@ -1,7 +1,7 @@
 {
   "id": "/",
-  "name": "NudgeMe",
-  "short_name": "NudgeMe",
+  "name": "Shrink my day",
+  "short_name": "Shrink my day",
   "description": "One calm step at a time.",
   "start_url": "/",
   "scope": "/",

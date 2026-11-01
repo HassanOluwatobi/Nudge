@@ -11,7 +11,7 @@ import type { Actions } from "@/lib/use-tasks";
 
 /**
  * Break it down with your own AI. Two taps: ask, then paste.
- * NudgeMe writes the question and opens ChatGPT, Claude, Gemini or Grok with it.
+ * Shrink my day writes the question and opens ChatGPT, Claude, Gemini or Grok with it.
  * Copy the answer there, come back, tap Paste. Free, and nothing is sent from here.
  */
 export function BreakItDown({ task, actions, ai, announce, compact = false, onAdded }: { task: Task; actions: Actions; ai: Settings["ai"]; announce?: (s: string) => void; compact?: boolean; onAdded?: () => void }) {

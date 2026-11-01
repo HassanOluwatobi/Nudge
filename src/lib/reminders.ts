@@ -2,20 +2,20 @@ import type { CalEvent } from "./calendar";
 
 // Daily nudges without a server or an account.
 // The phone's own calendar rings at the chosen times, so reminders work even
-// when NudgeMe is closed. Free, private, and reliable on every phone.
+// when Shrink my day is closed. Free, private, and reliable on every phone.
 
 export type ReminderTimes = { morning: string; evening: string }; // "HH:MM"
 export const DEFAULT_TIMES: ReminderTimes = { morning: "08:30", evening: "20:00" };
 export const APP_URL = "https://nudgeme-thread.vercel.app";
 
 export const MORNING = {
-  title: "NudgeMe: pick your one thing",
-  body: "Open NudgeMe and choose one small thing for today.",
+  title: "Shrink my day: pick your one thing",
+  body: "Open Shrink my day and choose one small thing for today.",
   url: `${APP_URL}/?from=morning`,
 };
 export const EVENING = {
-  title: "NudgeMe: tick off your day",
-  body: "Open NudgeMe, tick what you did, and let tomorrow wait.",
+  title: "Shrink my day: tick off your day",
+  body: "Open Shrink my day, tick what you did, and let tomorrow wait.",
   url: `${APP_URL}/?from=evening`,
 };
 
@@ -77,7 +77,7 @@ export function icsFile(t: ReminderTimes) {
   return [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//NudgeMe//Daily nudges//EN",
+    "PRODID:-//Shrink my day//Daily nudges//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     vevent("morning", t.morning),
@@ -112,7 +112,7 @@ export function googleLink(kind: "morning" | "evening", hhmm: string) {
   return `https://calendar.google.com/calendar/render?${q.toString()}`;
 }
 
-// ---------- extra nudges while NudgeMe is open or installed ----------
+// ---------- extra nudges while Shrink my day is open or installed ----------
 
 export const canNotify = () => typeof window !== "undefined" && "Notification" in window;
 
@@ -149,8 +149,8 @@ export function setBadge(n: number) {
 
 export function remindOnce(title: string, when: Date) {
   const end = new Date(when.getTime() + 10 * 60000);
-  const name = `NudgeMe: ${title}`;
-  const body = `Time for your step. Open NudgeMe: ${APP_URL}`;
+  const name = `Shrink my day: ${title}`;
+  const body = `Time for your step. Open Shrink my day: ${APP_URL}`;
   if (platform() === "android") {
     const q = new URLSearchParams({ action: "TEMPLATE", text: name, dates: `${stamp(when)}/${stamp(end)}`, details: body });
     window.open(`https://calendar.google.com/calendar/render?${q.toString()}`, "_blank", "noopener");
@@ -159,7 +159,7 @@ export function remindOnce(title: string, when: Date) {
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//NudgeMe//Reminder//EN",
+    "PRODID:-//Shrink my day//Reminder//EN",
     "BEGIN:VEVENT",
     `UID:nudgeme-${Date.now()}@nudgeme`,
     `DTSTAMP:${stamp(new Date())}`,
@@ -210,5 +210,5 @@ export function dailyEvents(t: ReminderTimes): CalEvent[] {
 }
 
 export function taskEvent(title: string, when: Date): CalEvent {
-  return { title: `NudgeMe: ${title}`, body: "Time for a small step. Open NudgeMe.", url: APP_URL, start: when, mins: 10, uid: `nudgeme-task-${when.getTime()}` };
+  return { title: `Shrink my day: ${title}`, body: "Time for a small step. Open Shrink my day.", url: APP_URL, start: when, mins: 10, uid: `nudgeme-task-${when.getTime()}` };
 }

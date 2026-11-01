@@ -16,7 +16,7 @@ const clearOffer = () => {
 export const standalone = () =>
   typeof window !== "undefined" && (matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true);
 
-/** Add to Home Screen. Installed, NudgeMe opens full screen with no address bar. */
+/** Add to Home Screen. Installed, Shrink my day opens full screen with no address bar. */
 export function InstallButton({ compact = false, variant = "button" }: { compact?: boolean; variant?: "button" | "row" }) {
   const [installed, setInstalled] = useState(false);
   const [help, setHelp] = useState(false);
@@ -69,7 +69,7 @@ export function InstallButton({ compact = false, variant = "button" }: { compact
         </button>
       ) : (
         <button type="button" className="btn btn-ink w-full gap-2" onClick={go}>
-          <SquarePlus className="size-[18px]" /> Add NudgeMe to Home Screen
+          <SquarePlus className="size-[18px]" /> Add Shrink my day to Home Screen
         </button>
       )}
       {!compact && variant === "button" && <p className="t-small mt-2 text-center text-ink-3">{ready ? "One tap. Opens full screen, like an app." : plat === "ios" ? "iPhone asks for two taps in Safari. We show you where." : "Opens full screen, like an app. Works offline."}</p>}
@@ -79,12 +79,12 @@ export function InstallButton({ compact = false, variant = "button" }: { compact
             ? [
                 { icon: <Share className="size-5" />, t: "Tap the Share button", s: "At the bottom of Safari, or next to the address." },
                 { icon: <SquarePlus className="size-5" />, t: "Choose Add to Home Screen", s: "Scroll down if you don't see it." },
-                { icon: <Check className="size-5" />, t: "Tap Add", s: "Open NudgeMe from your home screen. It fills the whole screen." },
+                { icon: <Check className="size-5" />, t: "Tap Add", s: "Open Shrink my day from your home screen. It fills the whole screen." },
               ]
             : [
                 { icon: <MoreVertical className="size-5" />, t: "Open the browser menu", s: "The three dots at the top right." },
                 { icon: <SquarePlus className="size-5" />, t: "Choose Install app or Add to Home screen", s: "The name depends on your browser." },
-                { icon: <Check className="size-5" />, t: "Confirm", s: "Open NudgeMe from your home screen. It fills the whole screen." },
+                { icon: <Check className="size-5" />, t: "Confirm", s: "Open Shrink my day from your home screen. It fills the whole screen." },
               ]
           ).map((x, i) => (
             <li key={x.t} className="flex items-start gap-3 rounded-2xl bg-white p-3 ring-1 ring-line">
@@ -107,7 +107,7 @@ export function InstallButton({ compact = false, variant = "button" }: { compact
 }
 
 /**
- * A gentle card on Home from the second day of use, until NudgeMe is on the
+ * A gentle card on Home from the second day of use, until Shrink my day is on the
  * Home Screen. On iPhone, Safari can clear a website's saved data after about
  * a week without a visit. Installed apps keep it.
  */
@@ -130,7 +130,7 @@ export function InstallCard() {
   return (
     <section className="mt-6 rounded-[20px] bg-white p-4 ring-1 ring-line" aria-label="Keep your tasks safe">
       <p className="text-[15px] font-semibold">Keep your tasks safe</p>
-      <p className="t-small mt-1 text-ink-2">Add NudgeMe to your Home Screen. Phones sometimes wipe websites you haven't opened in a while. Home Screen apps keep everything.</p>
+      <p className="t-small mt-1 text-ink-2">Add Shrink my day to your Home Screen. Phones sometimes wipe websites you haven't opened in a while. Home Screen apps keep everything.</p>
       <div className="mt-3">
         <InstallButton compact />
       </div>
@@ -193,7 +193,7 @@ export function InstallPrompt({ open, onClose }: { open: boolean; onClose: () =>
     if (r.outcome === "accepted") (feel("done"), noteAsk(true), onClose());
   };
   const reasons = [
-    { icon: <Bell className="size-5" />, t: "Reminders that actually ring", s: plat === "ios" ? "iPhone only lets NudgeMe ring when it's closed once it's on your Home Screen." : "Your reminders ring even when NudgeMe is closed." },
+    { icon: <Bell className="size-5" />, t: "Reminders that actually ring", s: plat === "ios" ? "iPhone only lets Shrink my day ring when it's closed once it's on your Home Screen." : "Your reminders ring even when Shrink my day is closed." },
     { icon: <ShieldCheck className="size-5" />, t: "Your list stays safe", s: "Phones can wipe websites you haven't opened in a while. Home Screen apps keep everything." },
     { icon: <Maximize2 className="size-5" />, t: "One tap away", s: "It opens full screen, like any other app." },
   ];
@@ -202,7 +202,7 @@ export function InstallPrompt({ open, onClose }: { open: boolean; onClose: () =>
       <div className="flex flex-col items-center pt-1 text-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/icon-192.png" alt="" width={52} height={52} className="size-[52px] rounded-[14px]" />
-        <h2 className="mt-3 font-serif text-[24px] leading-tight tracking-[-0.01em]">Put NudgeMe on your Home Screen</h2>
+        <h2 className="mt-3 font-serif text-[24px] leading-tight tracking-[-0.01em]">Put Shrink my day on your Home Screen</h2>
         <p className="t-small mt-1 text-ink-2">Ten seconds, and everything works better.</p>
       </div>
       <ul className="mt-4 divide-y divide-line/70 overflow-hidden rounded-[18px] bg-white ring-1 ring-line">
@@ -229,12 +229,12 @@ export function InstallPrompt({ open, onClose }: { open: boolean; onClose: () =>
               ? [
                   <>Tap <Share className="inline size-4 -translate-y-0.5 text-ink" /> Share in Safari. If you don&apos;t see it, tap <MoreHorizontal className="inline size-4 -translate-y-0.5 text-ink" /> first.</>,
                   <>Choose <span className="font-semibold text-ink">Add to Home Screen</span>. Scroll down if it&apos;s hidden.</>,
-                  <>Tap <span className="font-semibold text-ink">Add</span>, then open NudgeMe from its new icon.</>,
+                  <>Tap <span className="font-semibold text-ink">Add</span>, then open Shrink my day from its new icon.</>,
                 ]
               : [
                   <>Open the browser menu <MoreVertical className="inline size-4 -translate-y-0.5 text-ink" /> at the top right.</>,
                   <>Choose <span className="font-semibold text-ink">Install app</span> or <span className="font-semibold text-ink">Add to Home screen</span>.</>,
-                  <>Confirm, then open NudgeMe from its new icon.</>,
+                  <>Confirm, then open Shrink my day from its new icon.</>,
                 ]
             ).map((x, i) => (
               <li key={i} className="flex gap-2.5">

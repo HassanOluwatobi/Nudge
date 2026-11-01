@@ -1,4 +1,4 @@
-// NudgeMe data model. Everything lives in this browser. No server, no paid AI.
+// Shrink my day data model. Everything lives in this browser. No server, no paid AI.
 
 export type Bucket = "today" | "week" | "later" | "done";
 export type Part = "anytime" | "morning" | "afternoon" | "evening";

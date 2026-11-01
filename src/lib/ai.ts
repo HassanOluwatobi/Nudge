@@ -1,5 +1,5 @@
 // Use your own AI app. No API keys, no cost to anyone.
-// NudgeMe writes the question, opens your AI with it, and you paste the answer back.
+// Shrink my day writes the question, opens your AI with it, and you paste the answer back.
 
 import type { Settings } from "./tasks";
 

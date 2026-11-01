@@ -46,7 +46,7 @@ async function flow(name, seed, fn) {
   }
 }
 
-console.log(`NudgeMe flows against ${BASE}`);
+console.log(`Shrink my day flows against ${BASE}`);
 
 await flow("capture a task from Home", {}, async (page, saved) => {
   await page.locator("#quick").fill("Buy airtime");

@@ -270,12 +270,12 @@ export function ImportSheet({
               </div>
             )}
             <button type="button" className="btn btn-signal mt-3 w-full" disabled={!picked.size} onClick={add}>
-              {picked.size ? `Add ${picked.size} to NudgeMe` : "Nothing selected"}
+              {picked.size ? `Add ${picked.size} to Shrink my day` : "Nothing selected"}
             </button>
           </motion.div>
         ) : !source ? (
           <motion.div key="pick" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <p className="t-small mt-1 text-ink-2">Events from the next two weeks can become tasks. You choose which ones. NudgeMe only reads, it never changes your calendar.</p>
+            <p className="t-small mt-1 text-ink-2">Events from the next two weeks can become tasks. You choose which ones. Shrink my day only reads, it never changes your calendar.</p>
             <div className="mt-4">
               <SourceButtons state={state} onPick={(s) => (setSource(s), setToken(s === "notion" ? (state.settings.sync.notion ?? "") : s === "calendly" ? (state.settings.sync.calendly ?? "") : ""))} />
             </div>
@@ -290,9 +290,9 @@ export function ImportSheet({
             <div className="mt-2 flex items-center gap-3">
               <LogoTile bleed={TILE[source].bleed} size={48}>{TILE[source].el}</LogoTile>
               <p className="t-small flex-1 text-ink-2">
-                {source === "google" && "Sign in once. NudgeMe then checks your calendar when you open it and adds new events as tasks. It only reads, it never changes anything."}
+                {source === "google" && "Sign in once. Shrink my day then checks your calendar when you open it and adds new events as tasks. It only reads, it never changes anything."}
                 {source === "outlook" && "Sign in with your Microsoft account and allow read-only access to your calendar."}
-                {source === "ics" && "Share a calendar from your iPhone as a link, once. NudgeMe reads it and never changes it."}
+                {source === "ics" && "Share a calendar from your iPhone as a link, once. Shrink my day reads it and never changes it."}
                 {source === "notion" && "Any Notion database with a date column works. Pages dated in the next two weeks turn into tasks."}
                 {source === "calendly" && "Bring in the meetings people have booked with you."}
               </p>
@@ -313,7 +313,7 @@ export function ImportSheet({
                           <p className="flex items-center gap-1.5 text-[15px] font-semibold text-signal-ink">
                             <Check className="size-4" strokeWidth={2.6} /> Fully automatic
                           </p>
-                          <p className="t-small mt-1 text-ink-2">New events show up as tasks every time you open NudgeMe. No sign-in needed.</p>
+                          <p className="t-small mt-1 text-ink-2">New events show up as tasks every time you open Shrink my day. No sign-in needed.</p>
                           <button type="button" className="btn btn-signal mt-4 w-full" disabled={busy} onClick={() => run(() => googleLinkEvents(state.settings.sync.gics!))}>
                             {busy ? <Loader2 className="size-5 animate-spin" /> : "Check now"}
                           </button>
@@ -335,7 +335,7 @@ export function ImportSheet({
                           }}
                         >
                           <p className="text-[15px] font-semibold">Never sign in again</p>
-                          <p className="t-small mt-1 text-ink-2">Google makes the sign-in run out after an hour. Paste your calendar&apos;s private address once and NudgeMe keeps up on its own.</p>
+                          <p className="t-small mt-1 text-ink-2">Google makes the sign-in run out after an hour. Paste your calendar&apos;s private address once and Shrink my day keeps up on its own.</p>
                           <ol className="mt-3 space-y-2.5">
                             {[
                               "On a computer, open calendar.google.com.",
@@ -404,7 +404,7 @@ export function ImportSheet({
                       "On your iPhone, open the Calendar app and tap Calendars.",
                       "Tap the ⓘ next to the calendar you want.",
                       "Turn on Public Calendar, then tap Share Link and Copy.",
-                      "Paste it below. NudgeMe checks it each time you open the app.",
+                      "Paste it below. Shrink my day checks it each time you open the app.",
                     ].map((t, i) => (
                       <li key={i} className="flex gap-2.5 text-[14px] leading-snug text-ink-2">
                         <span className="grid size-5 shrink-0 place-items-center rounded-full bg-paper text-[11px] font-semibold tabular-nums text-ink ring-1 ring-line">{i + 1}</span>
@@ -463,10 +463,10 @@ export function ImportSheet({
                         <a className="font-medium text-signal-ink underline" href="https://www.notion.so/my-integrations" target="_blank" rel="noopener noreferrer">
                           notion.so/my-integrations
                         </a>{" "}
-                        and tap New integration. Call it NudgeMe.
+                        and tap New integration. Call it Shrink my day.
                       </li>
                       <li>Copy the secret it gives you and paste it below.</li>
-                      <li>In Notion, open the database with your dates. Tap ••• then Connections, and add NudgeMe.</li>
+                      <li>In Notion, open the database with your dates. Tap ••• then Connections, and add Shrink my day.</li>
                     </>
                   ) : (
                     <>
@@ -486,7 +486,7 @@ export function ImportSheet({
                   {source === "notion" ? "Notion secret" : "Calendly token"}
                 </label>
                 <input id="ext-token" value={token} onChange={(e) => setToken(e.target.value)} autoComplete="off" spellCheck={false} placeholder={source === "notion" ? "ntn_…" : "eyJ…"} className="field mt-1.5 font-mono text-[16px]" />
-                <p className="t-small mt-1.5 text-ink-3">Connect once and NudgeMe checks {source === "notion" ? "Notion" : "Calendly"} every time you open it. The {source === "notion" ? "secret" : "token"} stays on this phone and passes through a relay that stores nothing.</p>
+                <p className="t-small mt-1.5 text-ink-3">Connect once and Shrink my day checks {source === "notion" ? "Notion" : "Calendly"} every time you open it. The {source === "notion" ? "secret" : "token"} stays on this phone and passes through a relay that stores nothing.</p>
                 <button type="submit" className="btn btn-signal mt-4 w-full" disabled={busy || !token.trim()}>
                   {busy ? <Loader2 className="size-5 animate-spin" /> : "Connect and check"}
                 </button>
@@ -507,5 +507,5 @@ export function ImportSheet({
 }
 
 function SetupNote({ name }: { name: string }) {
-  return <p className="mt-5 rounded-2xl bg-paper px-4 py-3 text-[15px] text-ink-2">{name} needs a one-time setup by the person running NudgeMe. Until then, use the file option for any calendar.</p>;
+  return <p className="mt-5 rounded-2xl bg-paper px-4 py-3 text-[15px] text-ink-2">{name} needs a one-time setup by the person running Shrink my day. Until then, use the file option for any calendar.</p>;
 }
