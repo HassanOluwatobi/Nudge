@@ -21,6 +21,7 @@ const X_URL = "https://x.com/Art_sassin";
 const EYEBROW = "text-[13px] font-semibold uppercase tracking-[0.12em] text-signal-ink";
 const H2 = "font-serif text-[40px] leading-[1.04] tracking-[-0.025em] text-ink sm:text-[56px]";
 const BTN = "group inline-flex h-12 items-center gap-2 rounded-full bg-ink px-6 text-[16px] font-medium text-white transition-colors duration-200 hover:bg-[#1c2552] active:bg-[#0f1638]";
+const BTN_GHOST = "inline-flex h-11 items-center gap-2 rounded-full bg-white px-5 text-[15px] font-medium text-ink ring-1 ring-line transition-colors duration-200 hover:bg-[#f7f4ec]";
 const BTN_SM = "inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-[14px] font-medium text-white transition-colors duration-200 hover:bg-[#1c2552]";
 const SUPPORT_URL = "https://selar.com/showlove/hassanx";
 
@@ -480,28 +481,50 @@ function Final() {
   );
 }
 
+function XMark({ className = "size-4" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+      <path d="M18.9 2H22l-6.8 7.8L23 22h-6.2l-4.8-6.3L6.4 22H3.3l7.3-8.3L1 2h6.3l4.4 5.8L18.9 2Zm-1.1 18h1.7L6.3 3.9H4.5L17.8 20Z" />
+    </svg>
+  );
+}
+
 function Footer() {
   return (
-    <footer className="mx-auto mt-16 max-w-6xl px-5 pb-10 sm:px-6">
-      <div className="flex flex-col gap-6 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
+    <footer className="mx-auto mt-8 max-w-6xl px-5 pb-10 sm:px-6">
+      {/* The person behind it */}
+      <div className="flex flex-col gap-6 rounded-[24px] bg-white p-6 ring-1 ring-line sm:flex-row sm:items-center sm:justify-between sm:p-8">
+        <div className="flex items-start gap-4 sm:items-center sm:gap-5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/hassan.jpg" alt="Hassan" width={64} height={64} className="size-14 shrink-0 rounded-full object-cover ring-1 ring-line sm:size-16" />
+          <div>
+            <p className="font-serif text-[26px] leading-none tracking-[-0.02em] text-ink sm:text-[30px]">Made by Hassan</p>
+            <p className="mt-2 max-w-[46ch] text-[15px] leading-snug text-ink-2">Hi, I&apos;m a designer and I built Shrink my day. Tell me what you love, what&apos;s broken, or what you&apos;d like next.</p>
+          </div>
+        </div>
+        <div className="grid gap-2 sm:flex sm:shrink-0">
+          <a href={X_URL} target="_blank" rel="noopener noreferrer" className={`${BTN_SM} h-11 justify-center gap-2 px-5 text-[15px]`}>
+            <XMark /> Say hi on X
+          </a>
+          <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer" className={`${BTN_GHOST} justify-center`}>
+            <span aria-hidden>☕</span> Buy me a coffee
+          </a>
+        </div>
+      </div>
+
+      <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <Logo className="size-6" />
           <span className="wordmark font-serif text-[18px] tracking-[-0.01em]">Shrink my day</span>
-          <span className="ml-2 text-[14px] text-ink-3">Made by Hassan</span>
         </div>
-        <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[14px] text-ink-2 sm:flex sm:items-center">
+        <div className="flex items-center gap-6 text-[14px] text-ink-2">
           <a href="/app" className="transition-colors hover:text-ink">
             Open the app
           </a>
           <a href="/privacy" className="transition-colors hover:text-ink">
             Privacy
           </a>
-          <a href={X_URL} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-ink">
-            Say hi on X
-          </a>
-          <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-ink">
-            Buy me a coffee
-          </a>
+          <span className="text-ink-3">© {new Date().getFullYear()}</span>
         </div>
       </div>
     </footer>
