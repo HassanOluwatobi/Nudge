@@ -307,7 +307,6 @@ export function Devices() {
     ];
     return () => ts.forEach(clearTimeout);
   }, [reduce]);
-  const ARC = "M3 26 C 12 3, 34 3, 43 26";
   return (
     <div className="flex h-full items-center justify-center px-3">
       <div className="flex items-end">
@@ -319,26 +318,34 @@ export function Devices() {
           </div>
         </motion.div>
 
-        {/* The sync between them, locked on the way */}
-        <div className="relative mx-0.5 mb-[56px] h-[30px] w-[46px] shrink-0">
-          <svg viewBox="0 0 46 30" className="absolute inset-0 size-full" fill="none" aria-hidden>
-            <motion.path d={ARC} stroke="var(--ink-3)" strokeOpacity={0.45} strokeWidth={1.6} strokeLinecap="round" strokeDasharray="1.5 4" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.3, duration: 0.6 }} />
-          </svg>
-          <span className="absolute left-1/2 top-[-9px] grid size-[18px] -translate-x-1/2 place-items-center rounded-full bg-white shadow-sm ring-1 ring-line">
-            <Lock className="size-[10px] text-ink-2" strokeWidth={2.5} />
-          </span>
+        {/* The sync between them: a dot runs along the line and through the lock */}
+        <div className="relative mx-1 mb-[57px] h-[22px] w-[48px] shrink-0">
+          <motion.span
+            className="absolute inset-x-0 top-1/2 h-px -translate-y-1/2 bg-[linear-gradient(90deg,var(--ink-3)_45%,transparent_0)] bg-[length:5px_1px] opacity-50"
+            initial={{ scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={{ delay: 0.3, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          />
           <AnimatePresence>
             {send > 0 && (
               <motion.span
                 key={send}
-                className="absolute left-0 top-0 z-10 size-[10px] rounded-full bg-signal shadow-[0_0_0_4px_rgba(29,77,245,0.22),0_0_12px_rgba(29,77,245,0.6)]"
-                style={{ offsetPath: `path("${ARC}")`, offsetRotate: "0deg", marginLeft: -5, marginTop: -5 }}
-                initial={{ offsetDistance: send === 1 ? "0%" : "100%", opacity: 0 }}
-                animate={{ offsetDistance: send === 1 ? "100%" : "0%", opacity: [0, 1, 1, 1, 0] }}
+                className="absolute top-1/2 size-[8px] -translate-y-1/2 rounded-full bg-signal shadow-[0_0_10px_2px_rgba(29,77,245,0.45)]"
+                initial={{ left: send === 1 ? -4 : 44, opacity: 0 }}
+                animate={{ left: send === 1 ? 44 : -4, opacity: [0, 1, 1, 1, 0] }}
                 transition={{ duration: 0.8, ease: [0.65, 0, 0.35, 1] }}
               />
             )}
           </AnimatePresence>
+          <motion.span
+            key={`lock-${send}`}
+            className="absolute left-1/2 top-1/2 z-10 grid size-[22px] -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-white shadow-[0_2px_8px_-2px_rgba(6,11,43,0.25)] ring-1 ring-line"
+            initial={{ scale: send ? 1 : 0 }}
+            animate={{ scale: send ? [1, 1, 1.18, 1] : 1 }}
+            transition={send ? { duration: 0.8, times: [0, 0.4, 0.55, 1] } : { delay: 0.5, type: "spring", bounce: 0.4, duration: 0.5 }}
+          >
+            <Lock className="size-[11px] text-signal-ink" strokeWidth={2.5} />
+          </motion.span>
         </div>
 
         {/* Laptop */}
