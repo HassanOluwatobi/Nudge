@@ -136,10 +136,71 @@ export function Today({
     announce(`Finished: ${t.title}`);
   };
 
+  // On a keyboard: N or / jumps straight to the capture box.
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || (e.key !== "n" && e.key !== "N" && e.key !== "/")) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.closest("input, textarea, select, [contenteditable='true']") || document.querySelector("dialog[open], [aria-modal='true']"))) return;
+      e.preventDefault();
+      document.getElementById("quick")?.focus();
+    };
+    window.addEventListener("keydown", on);
+    return () => window.removeEventListener("keydown", on);
+  }, []);
+
+  // Up next and Done. Under the main card on phones, in their own column on wide screens.
+  const lists = (k: string) => (
+    <>
+      {rest.length > 0 && (
+        <section className="mt-7" aria-labelledby={`next-h-${k}`}>
+          <button type="button" className="mb-2.5 flex items-center gap-2 px-1" aria-expanded={showNext} onClick={() => (setShowNext((v) => !v), feel("tap"))}>
+            <span id={`next-h-${k}`} className="pill pill-anytime">
+              Up next ({rest.length})
+            </span>
+            <ChevronDown className={`size-4 text-ink-3 transition-transform ${showNext ? "rotate-180" : ""}`} />
+          </button>
+          <AnimatePresence initial={false}>
+            {showNext && (
+              <motion.ul initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.36 }} className="space-y-2 overflow-hidden">
+                <AnimatePresence initial={false}>
+                  {rest.map((t) => (
+                    <TaskRow key={t.id} task={t} actions={actions} onOpen={onOpen} onMenu={onMenu} onFinished={finishedOne} />
+                  ))}
+                </AnimatePresence>
+              </motion.ul>
+            )}
+          </AnimatePresence>
+        </section>
+      )}
+
+      {finished.length > 0 && (
+        <section className="mt-7" aria-labelledby={`done-h-${k}`}>
+          <button type="button" className="mb-2.5 flex items-center gap-2 px-1" aria-expanded={showDone} onClick={() => setShowDone((v) => !v)}>
+            <span id={`done-h-${k}`} className="pill pill-done">
+              Done ({finished.length})
+            </span>
+            <ChevronDown className={`size-4 text-ink-3 transition-transform ${showDone ? "rotate-180" : ""}`} />
+          </button>
+          <AnimatePresence initial={false}>
+            {showDone && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.36 }} className="overflow-hidden">
+                <DoneList tasks={finished} actions={actions} onOpen={onOpen} onMenu={onMenu} />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </section>
+      )}
+
+    </>
+  );
+
   return (
-    <div className="mx-auto w-full max-w-md px-4 pb-36 safe-t">
+    <div className="mx-auto w-full max-w-md px-4 pb-36 safe-t md:max-w-2xl md:px-8 lg:max-w-6xl lg:px-10 lg:pb-16">
       <TopBar dark={dark} onTheme={onTheme} title={<span className="block leading-tight"><span className="block text-[13px] font-medium text-ink-3">{date}</span><span className="block font-serif text-[28px] leading-none tracking-[-0.02em]">{day}</span></span>} onSettings={onSettings} onHelp={onHelp} />
 
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1fr)_380px] xl:gap-12">
+      <div className="min-w-0">
       {/* One toggle for everything. What you type lands in the list you are looking at. */}
       <div className="seg mt-6 grid grid-cols-3 p-1" role="tablist" aria-label="Show">
         {VIEWS.map(([k, name, count]) => (
@@ -258,49 +319,18 @@ export function Today({
 
       <BackupNudge state={state} actions={actions} />
 
-      {rest.length > 0 && (
-        <section className="mt-7" aria-labelledby="next-h">
-          <button type="button" className="mb-2.5 flex items-center gap-2 px-1" aria-expanded={showNext} onClick={() => (setShowNext((v) => !v), feel("tap"))}>
-            <span id="next-h" className="pill pill-anytime">
-              Up next ({rest.length})
-            </span>
-            <ChevronDown className={`size-4 text-ink-3 transition-transform ${showNext ? "rotate-180" : ""}`} />
-          </button>
-          <AnimatePresence initial={false}>
-            {showNext && (
-              <motion.ul initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.36 }} className="space-y-2 overflow-hidden">
-                <AnimatePresence initial={false}>
-                  {rest.map((t) => (
-                    <TaskRow key={t.id} task={t} actions={actions} onOpen={onOpen} onMenu={onMenu} onFinished={finishedOne} />
-                  ))}
-                </AnimatePresence>
-              </motion.ul>
-            )}
-          </AnimatePresence>
-        </section>
-      )}
-
-      {finished.length > 0 && (
-        <section className="mt-7" aria-labelledby="done-h">
-          <button type="button" className="mb-2.5 flex items-center gap-2 px-1" aria-expanded={showDone} onClick={() => setShowDone((v) => !v)}>
-            <span id="done-h" className="pill pill-done">
-              Done ({finished.length})
-            </span>
-            <ChevronDown className={`size-4 text-ink-3 transition-transform ${showDone ? "rotate-180" : ""}`} />
-          </button>
-          <AnimatePresence initial={false}>
-            {showDone && (
-              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.36 }} className="overflow-hidden">
-                <DoneList tasks={finished} actions={actions} onOpen={onOpen} onMenu={onMenu} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </section>
-      )}
+      <div className="lg:hidden">{lists("m")}</div>
 
       </motion.div>
       )}
       </AnimatePresence>
+      </div>
+
+      {/* Wide screens: today's list sits beside the main card. */}
+      <aside className="hidden lg:sticky lg:top-6 lg:mt-6 lg:block [&>section:first-child]:mt-0" aria-label="Today's list">
+        {rest.length || finished.length ? lists("d") : <p className="t-small mt-7 px-1 text-ink-3">Your other tasks for today will show up here.</p>}
+      </aside>
+      </div>
 
       <MiniCredit />
 

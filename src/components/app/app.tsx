@@ -340,7 +340,7 @@ export function NudgeApp() {
             </button>
           </motion.div>
         ) : (
-          <motion.div key={tab} custom={dir} variants={tabMotion} initial="enter" animate="center" exit="exit" transition={{ type: "spring", bounce: 0, duration: 0.34 }}>
+          <motion.div key={tab} custom={dir} variants={tabMotion} initial="enter" animate="center" exit="exit" transition={{ type: "spring", bounce: 0, duration: 0.34 }} className="lg:pl-56 xl:pl-64">
             {tab === "today" && (
               <Today {...common} {...themeProps} onGoogleSetup={() => setImporter({ source: "google" })} view={homeView} onView={setHomeView} onAddTo={(part) => setCapture({ part, bucket: "today" })} onFocus={startFocus} onCheckin={setCheckin} />
             )}

@@ -1109,3 +1109,21 @@ html[data-theme="dark"] [aria-label="How Shrink my day works"] {
 .tabbar-float {
   bottom: max(1rem, env(safe-area-inset-bottom));
 }
+
+/* Mouse and trackpad: quiet hover feedback. Touch screens never see it. */
+@media (hover: hover) and (pointer: fine) {
+  .side-item:hover {
+    color: var(--ink);
+  }
+  .task-row {
+    transition: box-shadow 160ms ease, transform 160ms ease;
+  }
+  .task-row:hover {
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--line) 50%, var(--ink-3));
+  }
+  .chip:hover,
+  .btn-line:hover,
+  .btn-quiet:hover {
+    filter: brightness(0.98);
+  }
+}

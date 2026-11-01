@@ -77,7 +77,7 @@ export function Focus({
 
   return (
     <div className="min-h-dvh bg-paper text-ink">
-      <div className="mx-auto w-full max-w-md px-5 pb-36 safe-t">
+      <div className="mx-auto w-full max-w-md px-5 pb-36 safe-t md:max-w-2xl md:px-8 lg:max-w-5xl lg:px-10 lg:pb-16">
         {/* What you are focusing on. Tap to switch. */}
         <TopBar
           dark={dark}
@@ -87,11 +87,18 @@ export function Focus({
           title={<span className="block font-serif text-[32px] leading-none tracking-[-0.02em]">Focus</span>}
         />
 
+        <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
+        <div className="min-w-0">
         {task ? <NowCard task={task} actions={actions} ai={state.settings.ai} onFinish={finish} onSwitch={() => setPicker(true)} announce={announce} /> : <NoTaskCard onPick={() => setPicker(true)} />}
 
+        {task && <div className="hidden lg:block"><MoreSubtasks task={task} actions={actions} onFinish={finish} /></div>}
+        </div>
+        <div className="min-w-0">
         <TimerCard state={state} actions={actions} task={task} announce={announce} />
+        </div>
+        </div>
 
-        {task && <MoreSubtasks task={task} actions={actions} onFinish={finish} />}
+        {task && <div className="lg:hidden"><MoreSubtasks task={task} actions={actions} onFinish={finish} /></div>}
       </div>
 
       <Sheet open={picker} onClose={() => setPicker(false)} title="Focus on">
@@ -258,7 +265,7 @@ function TimerCard({ state, actions, task, announce }: { state: State; actions: 
   const label = !timer ? "Ready" : over ? "Time is up" : paused ? "Paused" : `Ends ${clock(timer.end)}`;
 
   return (
-    <section className="mt-3 rounded-[24px] bg-white p-5 ring-1 ring-line" aria-label="Timer">
+    <section className="mt-3 rounded-[24px] bg-white p-5 ring-1 ring-line lg:mt-5" aria-label="Timer">
       <div className="flex items-center gap-5">
         <div className="relative size-[132px] shrink-0">
           <svg viewBox="0 0 200 200" className="size-full -rotate-90" aria-hidden>

@@ -52,12 +52,13 @@ export function Todo({
   };
 
   return (
-    <div className="mx-auto w-full max-w-md px-4 pb-36 safe-t">
+    <div className="mx-auto w-full max-w-md px-4 pb-36 safe-t md:max-w-2xl md:px-8 lg:max-w-5xl lg:px-10 lg:pb-16">
       <TopBar onSettings={onSettings} onHelp={onHelp} dark={dark} onTheme={onTheme} title={<span className="block font-serif text-[32px] leading-none tracking-[-0.02em]">Plan</span>} />
 
 
+      <div className="lg:grid lg:grid-cols-2 lg:items-start lg:gap-8">
       {groups.map(([b, items]) => (
-        <section key={b} className="mt-6 first-of-type:mt-4" aria-labelledby={`b-${b}`}>
+        <section key={b} className="mt-6 first-of-type:mt-4 lg:mt-6 lg:first-of-type:mt-6" aria-labelledby={`b-${b}`}>
           <div className="mb-2.5 flex items-center justify-between px-1">
             <button type="button" className="flex items-center gap-1.5" aria-expanded={!collapsed[b]} onClick={() => (setCollapsed((c) => ({ ...c, [b]: !c[b] })), feel("tap"))}>
               <span id={`b-${b}`} className={`pill pill-${b}`}>
@@ -87,6 +88,7 @@ export function Todo({
           </AnimatePresence>
         </section>
       ))}
+      </div>
 
       {/* Today's tasks and today's done list live on Home. Plan keeps the history. */}
       {earlier.length > 0 && (
