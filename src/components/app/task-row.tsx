@@ -1,8 +1,9 @@
 "use client";
 
-import { Bell, ChevronDown } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { Bell, ChevronDown, Trash2 } from "lucide-react";
+import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion } from "motion/react";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 import { feel, haptic } from "@/lib/feedback";
 import { type Hue, type Task, fmtMins, prettyDue, stepsDone, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
@@ -34,10 +35,10 @@ export function StepCheck({ done, hue, size = 24 }: { done: boolean; hue: Hue; s
   return (
     <motion.span
       aria-hidden
-      className={`hue-${hue} grid shrink-0 place-items-center rounded-full border-2`}
-      style={{ width: size, height: size }}
+      className="grid shrink-0 place-items-center border-2"
+      style={{ width: size, height: size, borderRadius: Math.round(size * 0.3) }}
       initial={false}
-      animate={{ backgroundColor: done ? "var(--h)" : "rgba(255,255,255,0)", borderColor: done ? "var(--h)" : "rgba(95,101,132,0.55)", scale: done ? [1, 0.84, 1.08, 1] : 1 }}
+      animate={{ backgroundColor: done ? "var(--signal)" : "rgba(255,255,255,0)", borderColor: done ? "var(--signal)" : "var(--ink-3)", scale: done ? [1, 0.84, 1.08, 1] : 1 }}
       transition={{ duration: 0.34, ease: [0.22, 1, 0.36, 1] }}
     >
       {done && <Tick size={size * 0.6} />}
@@ -73,15 +74,15 @@ export function CheckButton({ task, onDone, label }: { task: Task; onDone: () =>
       {/* A soft ring that blooms outward on tick. */}
       <AnimatePresence>
         {ticked && !reduce && (
-          <motion.span className="absolute size-[26px] rounded-full border-2" style={{ borderColor: "var(--h)" }} initial={{ scale: 1, opacity: 0.6 }} animate={{ scale: 2.1, opacity: 0 }} transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }} />
+          <motion.span className="absolute size-[26px] rounded-full border-2" style={{ borderColor: "var(--signal)" }} initial={{ scale: 1, opacity: 0.6 }} animate={{ scale: 2.1, opacity: 0 }} transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }} />
         )}
       </AnimatePresence>
       <motion.span
         className="grid size-[26px] place-items-center rounded-full border-2"
         initial={false}
         animate={{
-          backgroundColor: done ? "var(--h)" : "rgba(255,255,255,0)",
-          borderColor: done ? "var(--h)" : "var(--ink)",
+          backgroundColor: done ? "var(--signal)" : "rgba(255,255,255,0)",
+          borderColor: done ? "var(--signal)" : "var(--ink)",
           scale: ticked ? [1, 0.78, 1.12, 1] : 1,
         }}
         whileTap={{ scale: 0.86 }}
@@ -90,6 +91,55 @@ export function CheckButton({ task, onDone, label }: { task: Task; onDone: () =>
         {done && <Tick />}
       </motion.span>
     </button>
+  );
+}
+
+/**
+ * Swipe a row left to show Delete, like iOS lists. A long swipe deletes at
+ * once. Every delete can be undone from the toast.
+ */
+export function SwipeDelete({ children, onDelete, label, onDragStart }: { children: React.ReactNode; onDelete: () => void; label: string; onDragStart?: () => void }) {
+  const x = useMotionValue(0);
+  const moved = useRef(false);
+  const [open, setOpen] = useState(false);
+  const spring = { type: "spring" as const, bounce: 0, duration: 0.32 };
+  const close = () => (animate(x, 0, spring), setOpen(false));
+  return (
+    <div className="relative overflow-hidden">
+      <button type="button" tabIndex={open ? 0 : -1} aria-label={`Delete ${label}`} onClick={() => (feel("undo", "warning"), onDelete())} className="absolute inset-y-0 right-0 flex w-[92px] flex-col items-center justify-center gap-0.5 bg-danger text-[12px] font-semibold text-white">
+        <Trash2 className="size-[18px]" /> Delete
+      </button>
+      <motion.div
+        style={{ x }}
+        drag="x"
+        dragDirectionLock
+        dragConstraints={{ left: -92, right: 0 }}
+        dragElastic={{ left: 0.5, right: 0 }}
+        onDragStart={() => ((moved.current = true), onDragStart?.())}
+        onDragEnd={(_, i) => {
+          if (i.offset.x < -200) {
+            feel("undo", "warning");
+            return onDelete();
+          }
+          const go = i.offset.x < -46 || i.velocity.x < -320;
+          animate(x, go ? -92 : 0, spring);
+          setOpen(go);
+          if (go) haptic("light");
+        }}
+        onClickCapture={(e) => {
+          if (moved.current || open) {
+            e.stopPropagation();
+            e.preventDefault();
+            moved.current = false;
+            if (open) close();
+          }
+        }}
+        onPointerDown={() => (moved.current = false)}
+        className="relative touch-pan-y bg-white"
+      >
+        {children}
+      </motion.div>
+    </div>
   );
 }
 
@@ -141,6 +191,14 @@ export function TaskRow({
       transition={{ type: "spring", bounce: 0, duration: pressing ? 0.46 : 0.36 }}
       className="task-row overflow-hidden"
     >
+      <SwipeDelete
+        label={task.title}
+        onDragStart={endHold}
+        onDelete={() => {
+          const gone = actions.remove(task.id);
+          if (gone) toast("Task deleted.", { action: { label: "Undo", onClick: () => actions.put(gone) } });
+        }}
+      >
       <div className="flex items-center gap-3 pl-3 pr-1">
         <button
           type="button"
@@ -190,11 +248,12 @@ export function TaskRow({
           }}
         />
       </div>
+      </SwipeDelete>
       {n > 0 && !done && (
         <>
           <button type="button" onClick={() => (setOpen((v) => !v), feel("tap"))} aria-expanded={open} aria-label={`${k} of ${n} steps done. ${open ? "Hide" : "Show"} steps`} className="flex h-9 w-full items-center gap-3 border-t border-line/70 bg-[#fbf9f4] px-3.5">
             <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#ebe6db]">
-              <motion.span className={`hue-${task.hue} block h-full rounded-full`} style={{ background: "var(--h)" }} initial={false} animate={{ width: `${(k / n) * 100}%` }} transition={{ type: "spring", bounce: 0.15, duration: 0.6 }} />
+              <motion.span className="block h-full rounded-full" style={{ background: "var(--signal)" }} initial={false} animate={{ width: `${(k / n) * 100}%` }} transition={{ type: "spring", bounce: 0.15, duration: 0.6 }} />
             </span>
             <span className="t-small tabular-nums text-ink-3">
               {k}/{n}
@@ -248,7 +307,14 @@ export function DoneList({ tasks, actions, onOpen }: { tasks: Task[]; actions: A
       <AnimatePresence initial={false}>
         {tasks.map((t, i) => (
           <motion.li key={t.id} layout="position" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }} className="relative">
-            {i > 0 && <span aria-hidden className="absolute left-[52px] right-0 top-0 h-px bg-line/80" />}
+            {i > 0 && <span aria-hidden className="pointer-events-none absolute left-[52px] right-0 top-0 z-10 h-px bg-line/80" />}
+            <SwipeDelete
+              label={t.title}
+              onDelete={() => {
+                const gone = actions.remove(t.id);
+                if (gone) toast("Task deleted.", { action: { label: "Undo", onClick: () => actions.put(gone) } });
+              }}
+            >
             <div className="flex min-h-[52px] items-center pl-1 pr-4">
               <span className="scale-[0.85]">
                 <CheckButton task={t} onDone={() => actions.restore(t.id)} label={`Put back: ${t.title}`} />
@@ -258,6 +324,7 @@ export function DoneList({ tasks, actions, onOpen }: { tasks: Task[]; actions: A
               </button>
               <span className="pl-3 text-[13px] tabular-nums text-ink-3">{day(t)}</span>
             </div>
+            </SwipeDelete>
           </motion.li>
         ))}
       </AnimatePresence>

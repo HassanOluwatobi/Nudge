@@ -10,6 +10,7 @@ import { useSpeech } from "@/lib/use-speech";
 import { feel } from "@/lib/feedback";
 import { RemindPicker } from "./remind";
 import { Sheet } from "./sheet";
+import { StepEditor, keepFocus } from "./steps";
 import { Tile } from "./task-row";
 
 const readDraft = () => {
@@ -140,7 +141,7 @@ export function Capture({
                 save();
               }
             }}
-            className="t-title mt-4 w-full resize-none rounded-[18px] border border-line bg-white px-4 py-3.5 text-[24px] shadow-[0_1px_2px_rgb(6_11_43/0.04)] transition-[border-color,box-shadow] placeholder:text-ink-3/70 focus:border-signal focus:shadow-[0_0_0_4px_rgb(29_77_245/0.12)] focus:outline-none"
+            className="t-title mt-4 w-full resize-none rounded-[18px] border border-line bg-white px-4 py-3.5 text-[24px] transition-[border-color,box-shadow] placeholder:text-ink-3/70 focus:border-signal focus:shadow-[0_0_0_4px_rgb(29_77_245/0.12)] focus:outline-none"
           />
           <p className="t-small mt-2 min-h-5 px-1 text-ink-3">
             {speech.listening
@@ -155,7 +156,7 @@ export function Capture({
           </p>
           <div className="mt-4 flex gap-2">
             {speech.supported && (
-              <button type="button" onClick={() => (speech.toggle(), feel("tap", "light"))} aria-pressed={speech.listening} aria-label={speech.listening ? "Stop listening" : "Speak instead"} className={`grid size-[52px] shrink-0 place-items-center rounded-full transition-colors ${speech.listening ? "bg-coral text-white" : "bg-[#ece6da] text-ink"}`}>
+              <button type="button" onClick={() => (speech.toggle(), feel("tap", "light"))} aria-pressed={speech.listening} aria-label={speech.listening ? "Stop listening" : "Speak instead"} className={`btn btn-icon size-[52px] ${speech.listening ? "btn-danger" : "btn-line"}`}>
                 {speech.listening ? (
                   <motion.span animate={{ scale: [1, 1.18, 1] }} transition={{ repeat: Infinity, duration: 1.1 }}>
                     <Mic className="size-5" />
@@ -165,7 +166,7 @@ export function Capture({
                 )}
               </button>
             )}
-            <button type="submit" className="btn btn-signal flex-1 text-[17px]" disabled={!text.trim()}>
+            <button type="submit" {...keepFocus} className="btn btn-signal flex-1 text-[17px]" disabled={!text.trim()}>
               Save
             </button>
           </div>
@@ -185,7 +186,6 @@ const KIND_HINT: Record<Kind, string> = {
 };
 
 function TaskDetails({ task, actions, onDone, onAnother }: { task: Task; actions: Actions; onDone: () => void; onAnother: () => void }) {
-  const tip = suggestStep(task.title);
   return (
     <div>
       <div className="flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-line">
@@ -194,19 +194,13 @@ function TaskDetails({ task, actions, onDone, onAnother }: { task: Task; actions
           <p className="truncate text-[16px] font-semibold">{task.title}</p>
           <p className="t-small text-ink-3">Saved to {BUCKET_NAME[task.bucket]}</p>
         </div>
-        <span className="grid size-7 place-items-center rounded-full bg-success text-white">
+        <span className="grid size-7 place-items-center rounded-full bg-signal text-white">
           <Check className="size-4" strokeWidth={3} />
         </span>
       </div>
 
-      <p className="t-label mt-6">First step <span className="font-medium normal-case tracking-normal">(optional)</span></p>
-      {task.steps.length ? (
-        <p className="mt-2 text-[16px]">{task.steps[0].t}</p>
-      ) : (
-        <button type="button" className="chip mt-2 gap-1.5 text-left" onClick={() => (actions.addStep(task.id, tip), feel("step", "light"))}>
-          <Sparkles className="size-3.5 shrink-0 text-signal" /> Add: {tip}
-        </button>
-      )}
+      <p className="t-label mt-6">Steps <span className="font-medium normal-case tracking-normal">(optional)</span></p>
+      <StepEditor task={task} actions={actions} />
 
       <p className="t-label mt-6">When</p>
       <div className="mt-2 flex flex-wrap gap-2">

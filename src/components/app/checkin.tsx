@@ -249,9 +249,9 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
                   <li key={t.id} className="flex items-center gap-2 rounded-2xl bg-white p-2.5 ring-1 ring-line">
                     <Tile task={t} size={30} />
                     <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{t.title}</span>
-                    <div className="flex shrink-0 rounded-full bg-paper p-0.5">
+                    <div className="seg flex shrink-0 p-0.5">
                       {(["week", "later"] as Exclude<Bucket, "done">[]).map((b) => (
-                        <button key={b} type="button" aria-pressed={t.bucket === b} onClick={() => actions.move(t.id, b)} className={`h-8 rounded-full px-2.5 text-[13px] font-semibold ${t.bucket === b ? "bg-ink text-white" : "text-ink-3"}`}>
+                        <button key={b} type="button" aria-pressed={t.bucket === b} onClick={() => actions.move(t.id, b)} className={`h-8 rounded-full px-2.5 text-[13px] font-semibold ${t.bucket === b ? "seg-knob text-ink" : "text-ink-3"}`}>
                           {b === "week" ? "Week" : "Later"}
                         </button>
                       ))}

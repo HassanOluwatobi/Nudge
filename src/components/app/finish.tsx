@@ -37,7 +37,7 @@ export function Finish({ task, onStop, onToday, onAnother, onUndo }: { task: Tas
           initial={reduce ? false : { opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ type: "spring", bounce: 0.15, duration: 0.7 }}
-          className="relative mt-4 h-[min(44dvh,360px)] overflow-hidden rounded-[32px] shadow-[0_30px_60px_-36px_rgb(6_11_43/0.55)]"
+          className="relative mt-4 h-[min(44dvh,360px)] overflow-hidden rounded-[32px]"
         >
           <Art mode={1} />
           <div className="pointer-events-none absolute inset-0 grid place-items-center">

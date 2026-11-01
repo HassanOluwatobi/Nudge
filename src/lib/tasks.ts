@@ -50,7 +50,7 @@ export type Settings = {
   calendarAdded?: string;
   /** Connected calendars. Tokens for Notion and Calendly stay on this device. */
   sync: { google?: boolean; outlook?: boolean; notion?: string; calendly?: string; ics?: string; last?: string; skipped?: string[] };
-  theme?: "light" | "dark" | "system";
+  theme?: "light" | "dark" | "auto";
 };
 
 export type Meta = {
@@ -323,7 +323,8 @@ export function sanitize(raw: unknown): State {
     sound: st.sound !== false,
     haptics: st.haptics !== false,
     calendarAdded: str(st.calendarAdded),
-    theme: st.theme === "dark" || st.theme === "light" ? st.theme : "system",
+    // Light unless someone chose otherwise. Older saves said "system" by default, so those start light too.
+    theme: st.theme === "dark" || st.theme === "auto" ? st.theme : "light",
     sync: (() => {
       const y = (st.sync && typeof st.sync === "object" ? st.sync : {}) as Settings["sync"];
       return {

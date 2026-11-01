@@ -188,10 +188,10 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
             [
               ["light", "Light"],
               ["dark", "Dark"],
-              ["system", "Match phone"],
+              ["auto", "Match phone"],
             ] as const
           ).map(([k, name]) => {
-            const on = (s.theme ?? "system") === k;
+            const on = (s.theme ?? "light") === k;
             return (
               <button key={k} type="button" role="radio" aria-checked={on} onClick={() => (actions.setSettings({ theme: k }), feel("tick", "light"))} className="relative h-10 rounded-full text-[14px] font-semibold">
                 {on && <motion.span layoutId="theme-seg" className="seg-knob absolute inset-0" transition={{ type: "spring", bounce: 0, duration: 0.3 }} />}

@@ -1,19 +1,18 @@
 "use client";
 
-import { ArrowRight, CalendarSync, ChevronDown, CircleHelp, Feather, Lightbulb, Moon, Plus, Settings2, Sparkles, Sun } from "lucide-react";
+import { ArrowRight, CalendarSync, ChevronRight, ChevronDown, CircleHelp, Feather, Lightbulb, Moon, Plus, Settings2, Sparkles, Sun } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { type Part, type State, type Task, PARTS, PART_NAME, checkinDue, doneToday, dueIdeas, nextStep, partNow, suggestion, todayTasks, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { feel } from "@/lib/feedback";
-import { Art } from "./art";
 import { Credit } from "./settings";
 import { TaskRow, Tile, DoneList } from "./task-row";
 
 export function Counter({ done, total }: { done: number; total: number }) {
   return (
-    <span className="inline-flex h-10 items-center gap-1.5 overflow-hidden rounded-full bg-white px-3.5 text-[14px] font-semibold tabular-nums shadow-[0_1px_2px_rgb(6_11_43/0.06),0_6px_16px_-10px_rgb(6_11_43/0.3)]" aria-label={`${done} of ${total} done today`}>
+    <span className="inline-flex h-10 items-center gap-1.5 overflow-hidden rounded-full bg-white px-3.5 text-[14px] font-semibold tabular-nums ring-1 ring-line" aria-label={`${done} of ${total} done today`}>
       <motion.span key={`e${done}`} aria-hidden initial={{ scale: 1, rotate: 0 }} animate={done ? { scale: [1, 1.35, 1], rotate: [0, -12, 0] } : {}} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
         🎉
       </motion.span>
@@ -53,9 +52,9 @@ export function TopBar({ done, total, onSettings, onAdd, onHelp }: { done: numbe
 }
 
 const CHECKIN = {
-  morning: { icon: Sun, title: "Morning kickoff", body: "Two minutes to pick what matters today.", hue: "hue-peach" },
-  evening: { icon: Moon, title: "Evening wrap-up", body: "See what you did and let the rest wait.", hue: "hue-lilac" },
-  weekly: { icon: CalendarSync, title: "Weekly reset", body: "Clear the week and set up the next one.", hue: "hue-blue" },
+  morning: { icon: Sun, title: "Morning kickoff", body: "2 min", hue: "hue-peach" },
+  evening: { icon: Moon, title: "Evening wrap-up", body: "2 min", hue: "hue-lilac" },
+  weekly: { icon: CalendarSync, title: "Weekly reset", body: "5 min", hue: "hue-blue" },
 } as const;
 
 export function Today({
@@ -95,7 +94,6 @@ export function Today({
   const now = partNow();
   const day = new Date().toLocaleDateString(undefined, { weekday: "long" });
   const date = new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
-  const shift = { morning: 0, afternoon: 0.25, evening: 0.55 }[now as "morning" | "afternoon" | "evening"] ?? 0;
   const step = pick ? nextStep(pick) : undefined;
 
   const finishedOne = (t: Task) => {
@@ -118,34 +116,27 @@ export function Today({
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => onCheckin(due)}
-          className={`${CHECKIN[due].hue} tile mt-6 flex w-full items-center gap-3 rounded-[20px] p-3.5 text-left`}
+          className="mt-6 flex min-h-[56px] w-full items-center gap-3 rounded-[18px] bg-white px-3 text-left ring-1 ring-line transition-transform active:scale-[0.99]"
         >
-          <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/70 shadow-[0_1px_2px_rgb(6_11_43/0.06),0_4px_10px_-6px_rgb(6_11_43/0.25)]">
+          <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-signal-soft text-signal-ink">
             {(() => {
               const I = CHECKIN[due].icon;
-              return <I className="size-5" />;
+              return <I className="size-[18px]" />;
             })()}
           </span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[16px] font-semibold text-ink">{CHECKIN[due].title}</span>
-            <span className="t-small block text-ink-2">{CHECKIN[due].body}</span>
-          </span>
-          <ArrowRight className="size-5 shrink-0" />
+          <span className="min-w-0 flex-1 truncate text-[15px] font-semibold text-ink">{CHECKIN[due].title}</span>
+          <span className="text-[13px] text-ink-3">{CHECKIN[due].body}</span>
+          <ChevronRight className="size-4 shrink-0 text-ink-3" />
         </motion.button>
       )}
 
 
       {/* The one painted moment, with the suggested task under it. */}
       {pick ? (
-        <section aria-label="Start here" className="mt-6 overflow-hidden rounded-[26px] bg-white shadow-[0_24px_50px_-34px_rgb(6_11_43/0.5)] ring-1 ring-line/60">
-          <div className="relative h-[150px] overflow-hidden">
-            <Art mode={0} shift={shift} />
-            <span className="absolute left-3.5 top-3.5 rounded-full bg-white/90 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink backdrop-blur-sm">
-              {easy ? "Today is easy" : "Start here"}
-            </span>
-          </div>
+        <section aria-label="Start here" className="mt-6 overflow-hidden rounded-[24px] bg-white ring-1 ring-line">
+          <p className="t-label px-4 pt-4 text-signal-ink">{easy ? "Today is easy" : "Start here"}</p>
           <AnimatePresence mode="popLayout" initial={false}>
-            <motion.div key={pick.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ type: "spring", bounce: 0, duration: 0.4 }} className="px-4 pb-3 pt-4">
+            <motion.div key={pick.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ type: "spring", bounce: 0, duration: 0.4 }} className="px-4 pb-3 pt-3">
               <button type="button" onClick={() => onOpen(pick)} className="flex w-full items-start gap-3 text-left">
                 <Tile task={pick} size={44} />
                 <span className="min-w-0 flex-1">
@@ -157,7 +148,7 @@ export function Today({
                         {step.t}
                       </>
                     ) : (
-                      "No steps yet. You can add one when you start."
+                      pick.steps.length ? "Every step is done. Finish it when you are ready." : "No steps yet. You can add one when you start."
                     )}
                   </span>
                 </span>
@@ -196,10 +187,7 @@ export function Today({
           </AnimatePresence>
         </section>
       ) : (
-        <section className="mt-6 overflow-hidden rounded-[26px] bg-white shadow-[0_24px_50px_-34px_rgb(6_11_43/0.5)]">
-          <div className="relative h-[150px]">
-            <Art mode={0} shift={shift} />
-          </div>
+        <section className="mt-6 overflow-hidden rounded-[24px] bg-white ring-1 ring-line">
           <div className="p-5">
             <h2 className="t-title">{finished.length ? "Today is clear." : "What is on your mind?"}</h2>
             <p className="t-body mt-2 text-ink-2">
@@ -213,8 +201,8 @@ export function Today({
       )}
 
       {idea && (
-        <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="hue-lime mt-8 rounded-[20px] border border-[#dfe9c8] bg-[#f6fbe9] p-4" aria-label="An idea came back">
-          <p className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#4d7a12]">
+        <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-8 rounded-[20px] bg-white p-4 ring-1 ring-line" aria-label="An idea came back">
+          <p className="t-label flex items-center gap-1.5 text-signal-ink">
             <Lightbulb className="size-3.5" /> An idea came back
           </p>
           <p className="mt-2 text-[16px] leading-snug [overflow-wrap:anywhere]">{idea.text}</p>

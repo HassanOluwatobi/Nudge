@@ -7,7 +7,7 @@ import { feel, installTapHaptics, setFeedback } from "@/lib/feedback";
 import { notify, setBadge } from "@/lib/reminders";
 import { type Bucket, type Part, type Task, doneToday, hhmmToday, suggestion, todayTasks, ymd } from "@/lib/tasks";
 import { useBackClose } from "@/lib/use-back";
-import { type ExtEvent, type Source, calendlyEvents, linkEvents, extKey, notionEvents, outlookEvents } from "@/lib/sync";
+import { type ExtEvent, type Source, calendlyEvents, linkEvents, extKey, outlookEvents } from "@/lib/sync";
 import { useKeyboardInset } from "@/lib/use-keyboard";
 import { useTasks } from "@/lib/use-tasks";
 import { Art } from "./art";
@@ -82,12 +82,12 @@ export function NudgeApp() {
     }
   }, [state]);
   // Light, dark, or follow the phone. The status bar colour follows too.
-  const theme = state?.settings.theme ?? "system";
+  const theme = state?.settings.theme ?? "light";
   useEffect(() => {
     document.documentElement.dataset.view = over?.name === "finish" ? "finish" : "page";
     const mq = matchMedia("(prefers-color-scheme: dark)");
     const apply = () => {
-      const resolved = theme === "system" ? (mq.matches ? "dark" : "light") : theme;
+      const resolved = theme === "auto" ? (mq.matches ? "dark" : "light") : theme;
       document.documentElement.dataset.theme = resolved;
       let m = document.querySelector('meta[name="theme-color"]');
       if (!m) {
@@ -95,7 +95,7 @@ export function NudgeApp() {
         m.setAttribute("name", "theme-color");
         document.head.appendChild(m);
       }
-      m.setAttribute("content", resolved === "dark" ? "#070b22" : "#f3eee4");
+      m.setAttribute("content", resolved === "dark" ? "#08090a" : "#f3eee4");
     };
     apply();
     mq.addEventListener("change", apply);
@@ -172,7 +172,6 @@ export function NudgeApp() {
     const y = state.settings.sync;
     const jobs: Promise<ExtEvent[]>[] = [];
     if (y.outlook) jobs.push(outlookEvents(false).catch(() => []));
-    if (y.notion) jobs.push(notionEvents(y.notion).catch(() => []));
     if (y.calendly) jobs.push(calendlyEvents(y.calendly).catch(() => []));
     if (y.ics) jobs.push(linkEvents(y.ics).catch(() => []));
     if (!jobs.length) return;

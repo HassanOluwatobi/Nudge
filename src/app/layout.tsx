@@ -37,7 +37,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{var t=(JSON.parse(localStorage.getItem('nudgeme.v11')||'{}').settings||{}).theme||'system';if(t==='system')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}",
+              "try{var t=(JSON.parse(localStorage.getItem('nudgeme.v11')||'{}').settings||{}).theme||'light';if(t==='auto')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}",
           }}
         />
         {/* Catch Chrome's install offer as early as possible, so the Install button can use it with one tap. */}
