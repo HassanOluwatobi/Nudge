@@ -117,7 +117,7 @@ export async function syncPush(items: PushItem[]) {
   if (sig === lastSent) return;
   const j = sub.toJSON() as { keys?: { p256dh: string; auth: string } };
   if (!j.keys) return;
-  const sealed = await Promise.all(items.map(async (i) => ({ at: i.at, body: await seal(j.keys!, JSON.stringify({ title: i.title, body: i.body, url: i.url ?? "/", tag: i.tag })) })));
+  const sealed = await Promise.all(items.map(async (i) => ({ at: i.at, body: await seal(j.keys!, JSON.stringify({ title: i.title, body: i.body, url: i.url ?? "/app", tag: i.tag })) })));
   const r = await fetch(`${PUSH_URL}/sync`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ endpoint: sub.endpoint, items: sealed }) }).catch(() => null);
   if (r?.ok) lastSent = sig;
 }

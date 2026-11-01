@@ -3,7 +3,7 @@
   "name": "Shrink my day",
   "short_name": "Shrink my day",
   "description": "One calm step at a time.",
-  "start_url": "/",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f3eee4",

@@ -1,7 +1,7 @@
 // Shrink my day service worker: network first, fall back to cache so the app opens offline.
-const CACHE = "nudgeme-v24-1";
+const CACHE = "nudgeme-v25-0";
 self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/manifest.webmanifest", "/icon-192.png"])));
+  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/app", "/", "/manifest.webmanifest", "/icon-192.png"])));
   self.skipWaiting();
 });
 self.addEventListener("activate", (e) => {
@@ -18,7 +18,7 @@ self.addEventListener("fetch", (e) => {
         caches.open(CACHE).then((c) => c.put(req, copy));
         return res;
       })
-      .catch(() => caches.match(req).then((r) => r || caches.match("/")))
+      .catch(() => caches.match(req).then((r) => r || caches.match("/app")))
   );
 });
 // A reminder sent by the Shrink my day reminder sender. The phone sealed it, the push service opened it here.
@@ -35,18 +35,18 @@ self.addEventListener("push", (e) => {
       icon: "/icon-192.png",
       badge: "/badge-96.png",
       tag: d.tag || undefined,
-      data: { url: d.url || "/" },
+      data: { url: d.url || "/app" },
     })
   );
 });
 // Tapping a Shrink my day notification opens the app.
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
-  const url = (e.notification.data && e.notification.data.url) || "/";
+  const url = (e.notification.data && e.notification.data.url) || "/app";
   e.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((cs) => {
       const c = cs.find((x) => "focus" in x);
-      if (c) return c.focus().then((w) => (w && "navigate" in w && url !== "/" ? w.navigate(url) : w));
+      if (c) return c.focus().then((w) => (w && "navigate" in w && url !== "/app" ? w.navigate(url) : w));
       return self.clients.openWindow(url);
     })
   );

@@ -225,7 +225,7 @@ export function NudgeApp() {
       for (const t of state.tasks) {
         if (!t.remindAt || t.bucket === "done") continue;
         const at = Date.parse(t.remindAt);
-        if (at > now && at < until) items.push({ at, title: t.title, body: "Time for this one.", url: "/", tag: `task-${t.id}` });
+        if (at > now && at < until) items.push({ at, title: t.title, body: "Time for this one.", url: "/app", tag: `task-${t.id}` });
       }
       for (let d = 0; d < 14; d++) {
         const day = new Date(now + d * 864e5);

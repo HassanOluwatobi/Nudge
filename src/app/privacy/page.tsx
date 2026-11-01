@@ -28,7 +28,7 @@ export default function Privacy() {
   return (
     <main className="min-h-dvh bg-paper text-ink">
       <div className="mx-auto w-full max-w-2xl px-5 pb-24 pt-[max(2.5rem,env(safe-area-inset-top))]">
-        <Link href="/" className="text-[15px] font-medium text-signal-ink">
+        <Link href="/app" className="text-[15px] font-medium text-signal-ink">
           ← Back to Shrink my day
         </Link>
         <h1 className="mt-6 font-serif text-[40px] leading-none tracking-[-0.02em]">Privacy policy</h1>

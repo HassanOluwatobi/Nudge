@@ -6,17 +6,17 @@ import type { CalEvent } from "./calendar";
 
 export type ReminderTimes = { morning: string; evening: string }; // "HH:MM"
 export const DEFAULT_TIMES: ReminderTimes = { morning: "08:30", evening: "20:00" };
-export const APP_URL = "https://shrinkmyday.com";
+export const APP_URL = "https://shrinkmyday.com/app";
 
 export const MORNING = {
   title: "Shrink my day: pick your one thing",
   body: "Open Shrink my day and choose one small thing for today.",
-  url: `${APP_URL}/?from=morning`,
+  url: `${APP_URL}?from=morning`,
 };
 export const EVENING = {
   title: "Shrink my day: look back on today",
   body: "Open Shrink my day, tick what you did, and let tomorrow wait.",
-  url: `${APP_URL}/?from=evening`,
+  url: `${APP_URL}?from=evening`,
 };
 
 export type Platform = "ios" | "android" | "other";
@@ -127,7 +127,7 @@ export async function askNotify(): Promise<boolean> {
   }
 }
 
-export async function notify(title: string, body: string, url = "/") {
+export async function notify(title: string, body: string, url = "/app") {
   if (!canNotify() || Notification.permission !== "granted") return;
   try {
     const reg = await navigator.serviceWorker?.getRegistration();

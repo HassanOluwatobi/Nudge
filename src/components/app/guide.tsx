@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Bell, Lightbulb, Sparkles } from "lucide-react";
+import { ArrowRight, Bell, Lightbulb, Lock, Sparkles } from "lucide-react";
 import { AppleMark, GoogleMark, LogoTile, OutlookMark } from "./brands";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
@@ -34,7 +34,7 @@ function Row({ emoji, text, hue, delay, done = false }: { emoji: string; text: s
 
 const DUMP = "pay rent, email Sade, book the dentist";
 
-function Capture() {
+export function Capture() {
   const reduce = useReducedMotion();
   const [n, setN] = useState(reduce ? DUMP.length : 0);
   useEffect(() => {
@@ -60,7 +60,7 @@ function Capture() {
   );
 }
 
-function AiSteps() {
+export function AiSteps() {
   const steps = ["Find last year's forms", "Make a folder for receipts", "Log in to the tax site", "Fill in page one"];
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -93,7 +93,7 @@ function AiSteps() {
   );
 }
 
-function OneThing() {
+export function OneThing() {
   return (
     <div className="flex h-full flex-col justify-center px-6">
       <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", bounce: 0.15, duration: 0.6 }} className="rounded-[20px] bg-white p-4 ring-1 ring-line">
@@ -111,7 +111,7 @@ function OneThing() {
   );
 }
 
-function Timer() {
+export function Timer() {
   const reduce = useReducedMotion();
   const ring = useRef<HTMLDivElement>(null);
   const [done, setDone] = useState(false);
@@ -186,7 +186,7 @@ function Timer() {
   );
 }
 
-function IdeasBack() {
+export function IdeasBack() {
   return (
     <div className="flex h-full flex-col items-center justify-center px-6">
       <motion.div initial={{ opacity: 0, y: 30, rotate: -4 }} animate={{ opacity: 1, y: [30, -6, 0], rotate: [-4, 2, 0] }} transition={{ duration: 0.9, ease }} className="w-full rounded-[16px] bg-white p-3 ring-1 ring-line">
@@ -209,7 +209,7 @@ function IdeasBack() {
   );
 }
 
-function Reminders() {
+export function Reminders() {
   const marks = [
     { el: <GoogleMark className="size-7" />, bleed: false, name: "Google" },
     { el: <AppleMark className="size-full" />, bleed: true, name: "Apple" },
@@ -240,57 +240,119 @@ function Reminders() {
   );
 }
 
-function Devices() {
+type Mini = { e: string; t: string; hue: string };
+const MINI: Mini[] = [
+  { e: "🏋️", t: "Gym", hue: "lime" },
+  { e: "💳", t: "Pay rent", hue: "cyan" },
+  { e: "📞", t: "Call mum", hue: "peach" },
+];
+
+function MiniRow({ m, done, size }: { m: Mini; done: boolean; size: "s" | "m" }) {
+  const s = size === "s";
+  return (
+    <div className={`flex items-center rounded-[8px] bg-white ring-1 ring-line ${s ? "gap-1 px-1 py-[3px]" : "gap-1.5 px-1.5 py-1"}`}>
+      <span className={`hue-${m.hue} tile grid shrink-0 place-items-center ${s ? "size-3.5 rounded-[4px] text-[7px]" : "size-4 rounded-[5px] text-[9px]"}`}>{m.e}</span>
+      <motion.span animate={{ opacity: done ? 0.4 : 1 }} className={`flex-1 truncate font-semibold ${s ? "text-[8px]" : "text-[10px]"}`}>
+        {m.t}
+      </motion.span>
+      <motion.span
+        className={`grid shrink-0 place-items-center rounded-full border-[1.5px] ${s ? "size-2.5" : "size-3"}`}
+        initial={false}
+        animate={{ backgroundColor: done ? "var(--signal)" : "rgba(0,0,0,0)", borderColor: done ? "var(--signal)" : "var(--ink-3)", scale: done ? [1, 1.35, 1] : 1 }}
+        transition={{ duration: 0.35 }}
+      >
+        {done && (
+          <svg viewBox="0 0 16 16" className="size-[70%]" fill="none">
+            <motion.path d="M3.5 8.4 6.6 11.4 12.6 4.8" stroke="#fff" strokeWidth={3} strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 0.25 }} />
+          </svg>
+        )}
+      </motion.span>
+    </div>
+  );
+}
+
+function Screen({ done, size, label }: { done: boolean[]; size: "s" | "m"; label?: boolean }) {
+  return (
+    <div className={`flex h-full flex-col bg-paper ${size === "s" ? "gap-[3px] p-1.5 pt-4" : "gap-1 p-2"}`}>
+      {label && <span className="mb-0.5 font-serif text-[11px] leading-none">Today</span>}
+      {MINI.map((m, i) => (
+        <MiniRow key={m.t} m={m} done={done[i]} size={size} />
+      ))}
+      {size === "s" && (
+        <div className="mx-auto mb-0.5 mt-auto flex items-center gap-2.5 rounded-full bg-white px-2.5 py-1 ring-1 ring-line">
+          <span className="size-[5px] rounded-full bg-signal" />
+          <span className="size-[5px] rounded-full bg-ink-3/40" />
+          <span className="size-[5px] rounded-full bg-ink-3/40" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Tick a task on the phone, and the laptop ticks it too. */
+export function Devices() {
   const reduce = useReducedMotion();
-  const [stage, setStage] = useState(reduce ? 2 : 0);
+  const [phone, setPhone] = useState(reduce ? [false, true, false] : [false, false, false]);
+  const [laptop, setLaptop] = useState(reduce ? [false, true, false] : [false, false, false]);
+  const [send, setSend] = useState(0);
   useEffect(() => {
     if (reduce) return;
-    const a = setTimeout(() => setStage(1), 700);
-    const b = setTimeout(() => (setStage(2), feel("tick")), 1900);
-    return () => (clearTimeout(a), clearTimeout(b));
+    const ts = [
+      setTimeout(() => (setPhone([false, true, false]), feel("tick")), 900),
+      setTimeout(() => setSend(1), 1150),
+      setTimeout(() => setLaptop([false, true, false]), 1950),
+      setTimeout(() => setLaptop([true, true, false]), 2900),
+      setTimeout(() => setSend(2), 3150),
+      setTimeout(() => (setPhone([true, true, false]), feel("tick")), 3950),
+    ];
+    return () => ts.forEach(clearTimeout);
   }, [reduce]);
-  const row = (
-    <span className="flex items-center gap-1.5 rounded-[8px] bg-paper px-1.5 py-1">
-      <span className="hue-lime tile grid size-4 place-items-center rounded-[5px] text-[9px]">🏋️</span>
-      <span className="truncate text-[10px] font-semibold">Gym</span>
-    </span>
-  );
+  const ARC = "M3 26 C 12 3, 34 3, 43 26";
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 px-6">
-      <div className="flex w-full items-center justify-center gap-2">
+    <div className="flex h-full items-center justify-center px-3">
+      <div className="flex items-end">
         {/* Phone */}
-        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} className="flex h-[118px] w-[76px] flex-col gap-1 rounded-[14px] bg-white p-1.5 pt-3 ring-1 ring-line">
-          {row}
-          <span className="h-2 w-3/4 rounded-full bg-paper" />
-          <span className="h-2 w-1/2 rounded-full bg-paper" />
-        </motion.div>
-        {/* The link between them */}
-        <svg className="h-6 w-12 shrink-0" viewBox="0 0 64 24" fill="none" aria-hidden>
-          <motion.path d="M4 12 C 20 2, 44 22, 60 12" stroke="var(--signal)" strokeWidth={2} strokeLinecap="round" strokeDasharray="3 5" initial={{ pathLength: 0, opacity: 0 }} animate={stage >= 1 ? { pathLength: 1, opacity: 1 } : {}} transition={{ duration: 0.6 }} />
-        </svg>
-        {/* Laptop */}
-        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: "spring", bounce: 0.2, duration: 0.6 }} className="flex flex-col items-center">
-          <div className="flex h-[86px] w-[132px] flex-col gap-1 rounded-t-[10px] bg-white p-2 ring-1 ring-line">
-            <AnimatePresence>
-              {stage >= 2 && (
-                <motion.div initial={{ opacity: 0, x: -24, scale: 0.9 }} animate={{ opacity: 1, x: 0, scale: 1 }} transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}>
-                  {row}
-                </motion.div>
-              )}
-            </AnimatePresence>
-            <span className="h-2 w-2/3 rounded-full bg-paper" />
-            <span className="h-2 w-1/2 rounded-full bg-paper" />
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", bounce: 0.2, duration: 0.7 }} className="relative h-[156px] w-[96px] rounded-[22px] bg-white p-[4px] shadow-[0_10px_30px_-12px_rgba(6,11,43,0.35)] ring-1 ring-line">
+          <div className="relative h-full overflow-hidden rounded-[18px]">
+            <span className="absolute left-1/2 top-[4px] z-10 h-[7px] w-[24px] -translate-x-1/2 rounded-full bg-ink" />
+            <Screen done={phone} size="s" />
           </div>
-          <div className="h-[7px] w-[156px] rounded-b-[6px] bg-line" />
+        </motion.div>
+
+        {/* The sync between them, locked on the way */}
+        <div className="relative mx-0.5 mb-[56px] h-[30px] w-[46px] shrink-0">
+          <svg viewBox="0 0 46 30" className="absolute inset-0 size-full" fill="none" aria-hidden>
+            <motion.path d={ARC} stroke="var(--ink-3)" strokeOpacity={0.45} strokeWidth={1.6} strokeLinecap="round" strokeDasharray="1.5 4" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.3, duration: 0.6 }} />
+          </svg>
+          <span className="absolute left-1/2 top-[-9px] grid size-[18px] -translate-x-1/2 place-items-center rounded-full bg-white shadow-sm ring-1 ring-line">
+            <Lock className="size-[10px] text-ink-2" strokeWidth={2.5} />
+          </span>
+          <AnimatePresence>
+            {send > 0 && (
+              <motion.span
+                key={send}
+                className="absolute left-0 top-0 z-10 size-[10px] rounded-full bg-signal shadow-[0_0_0_4px_rgba(29,77,245,0.22),0_0_12px_rgba(29,77,245,0.6)]"
+                style={{ offsetPath: `path("${ARC}")`, offsetRotate: "0deg", marginLeft: -5, marginTop: -5 }}
+                initial={{ offsetDistance: send === 1 ? "0%" : "100%", opacity: 0 }}
+                animate={{ offsetDistance: send === 1 ? "100%" : "0%", opacity: [0, 1, 1, 1, 0] }}
+                transition={{ duration: 0.8, ease: [0.65, 0, 0.35, 1] }}
+              />
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Laptop */}
+        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08, type: "spring", bounce: 0.2, duration: 0.7 }} className="flex flex-col items-center">
+          <div className="h-[118px] w-[148px] rounded-t-[12px] bg-white p-[5px] pb-[4px] shadow-[0_10px_30px_-12px_rgba(6,11,43,0.35)] ring-1 ring-line">
+            <div className="h-full overflow-hidden rounded-[7px]">
+              <Screen done={laptop} size="m" label />
+            </div>
+          </div>
+          <div className="relative h-[8px] w-[172px] rounded-b-[8px] rounded-t-[2px] bg-white shadow-[0_6px_14px_-8px_rgba(6,11,43,0.4)] ring-1 ring-line">
+            <span className="absolute left-1/2 top-0 h-[3px] w-[30px] -translate-x-1/2 rounded-b-[3px] bg-line" />
+          </div>
         </motion.div>
       </div>
-      <AnimatePresence>
-        {stage >= 1 && (
-          <motion.span initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", bounce: 0.25, duration: 0.5 }} className="rounded-full bg-white px-3 py-1.5 font-mono text-[14px] font-semibold tracking-[0.08em] ring-1 ring-line">
-            7KQ2-M9XA-P4TD
-          </motion.span>
-        )}
-      </AnimatePresence>
     </div>
   );
 }
