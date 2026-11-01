@@ -49,7 +49,8 @@ export type Settings = {
   haptics: boolean;
   calendarAdded?: string;
   /** Connected calendars. Tokens for Notion and Calendly stay on this device. */
-  sync: { google?: boolean; outlook?: boolean; notion?: string; calendly?: string; last?: string; skipped?: string[] };
+  sync: { google?: boolean; outlook?: boolean; notion?: string; calendly?: string; ics?: string; last?: string; skipped?: string[] };
+  theme?: "light" | "dark" | "system";
 };
 
 export type Meta = {
@@ -322,6 +323,7 @@ export function sanitize(raw: unknown): State {
     sound: st.sound !== false,
     haptics: st.haptics !== false,
     calendarAdded: str(st.calendarAdded),
+    theme: st.theme === "dark" || st.theme === "light" ? st.theme : "system",
     sync: (() => {
       const y = (st.sync && typeof st.sync === "object" ? st.sync : {}) as Settings["sync"];
       return {
@@ -329,6 +331,7 @@ export function sanitize(raw: unknown): State {
         outlook: !!y.outlook,
         notion: typeof y.notion === "string" && y.notion ? y.notion : undefined,
         calendly: typeof y.calendly === "string" && y.calendly ? y.calendly : undefined,
+        ics: typeof y.ics === "string" && /^(https|webcals?):\/\//i.test(y.ics) ? y.ics : undefined,
         last: typeof y.last === "string" ? y.last : undefined,
         skipped: Array.isArray(y.skipped) ? y.skipped.filter((x) => typeof x === "string").slice(-500) : [],
       };

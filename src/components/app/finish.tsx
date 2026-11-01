@@ -52,7 +52,7 @@ export function Finish({ task, onStop, onToday, onAnother, onUndo }: { task: Tas
                 <motion.path
                   d="M13 25.5l7 7L35.5 16"
                   fill="none"
-                  stroke="var(--night)"
+                  stroke="var(--ink)"
                   strokeWidth={4.5}
                   strokeLinecap="round"
                   strokeLinejoin="round"

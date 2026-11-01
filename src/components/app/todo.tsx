@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { type Bucket, type State, type Task, BUCKET_NAME, doneEarlier, doneToday, todayTasks, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { feel } from "@/lib/feedback";
-import { TaskRow } from "./task-row";
+import { TaskRow, DoneList } from "./task-row";
 import { TopBar } from "./today";
 
 const HINT: Record<Exclude<Bucket, "done">, string> = {
@@ -108,22 +108,16 @@ export function Todo({
           </button>
           {!collapsed.done && (
             <>
-              <ul className="space-y-2">
-                {finished.map((t) => (
-                  <TaskRow key={t.id} task={t} actions={actions} onOpen={onOpen} onMenu={onMenu} />
-                ))}
-              </ul>
+              {finished.length > 0 && <DoneList tasks={finished} actions={actions} onOpen={onOpen} />}
               {earlier.length > 0 && (
                 <>
                   <button type="button" className="btn btn-quiet mt-2 gap-1 px-1 text-[14px]" aria-expanded={older} onClick={() => setOlder((v) => !v)}>
                     <ChevronDown className={`size-4 transition-transform ${older ? "rotate-180" : ""}`} /> Finished before today ({earlier.length})
                   </button>
                   {older && (
-                    <ul className="mt-1 space-y-2">
-                      {earlier.slice(0, 60).map((t) => (
-                        <TaskRow key={t.id} task={t} actions={actions} onOpen={onOpen} onMenu={onMenu} />
-                      ))}
-                    </ul>
+                    <div className="mt-1">
+                      <DoneList tasks={earlier.slice(0, 60)} actions={actions} onOpen={onOpen} />
+                    </div>
                   )}
                 </>
               )}

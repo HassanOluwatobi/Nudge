@@ -65,6 +65,7 @@
   --ivory: #fbf8f1; /* sheets */
   --sheet: #ffffff; /* inputs, the one primary card */
   --line: #e3ddd0; /* hairlines on cream */
+  --hi: #fff; /* top-edge catch light */
 
   /* Text */
   --ink: #060b2b;
@@ -127,10 +128,6 @@
   html[data-view="focus"],
   html[data-view="focus"] body {
     background: var(--night);
-  }
-  html[data-view="finish"],
-  html[data-view="finish"] body {
-    background: var(--signal);
   }
 
   button,
@@ -369,6 +366,13 @@
   .btn-quiet:active::after {
     opacity: 1;
   }
+  /* Round and square icon buttons share the same construction. */
+  .btn-icon {
+    min-height: 0;
+    padding: 0;
+    gap: 0;
+    flex-shrink: 0;
+  }
   @media (hover: hover) and (pointer: fine) {
     .btn:hover::after {
       opacity: 1;
@@ -416,20 +420,23 @@
     min-height: 40px;
     padding: 0 0.95rem;
     border-radius: 999px;
-    border: 1px solid var(--line);
-    background: var(--sheet);
+    border: 1px solid color-mix(in oklab, var(--line) 82%, var(--ink-3));
+    background: linear-gradient(180deg, var(--sheet), color-mix(in oklab, var(--sheet) 92%, var(--paper)));
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), inset 0 -1px 0 rgb(6 11 43 / 0.04);
     color: var(--ink-2);
     font-size: 15px;
     font-weight: 500;
     transition: background-color 180ms, color 180ms, border-color 180ms, transform 240ms cubic-bezier(0.32, 0.72, 0, 1);
   }
   .chip:active {
-    transform: scale(0.94);
+    transform: translateY(1px) scale(0.97);
+    box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.1);
     transition-duration: 80ms;
   }
   .chip[aria-pressed="true"] {
-    background: var(--night);
-    border-color: var(--night);
+    background: linear-gradient(180deg, color-mix(in oklab, var(--night) 82%, white), var(--night));
+    border-color: color-mix(in oklab, var(--night) 70%, black);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16), inset 0 -1px 0 rgb(0 0 0 / 0.3);
     color: var(--paper);
   }
 
@@ -566,6 +573,63 @@ dialog.sheet {
 html[data-kb="open"] dialog.sheet .safe-b {
   padding-bottom: 0.75rem;
 }
+/* Toggle: a pressed-in groove with a raised, embossed knob. */
+.switch-track {
+  position: relative;
+  height: 32px;
+  width: 52px;
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--line) 70%, var(--ink-3));
+  background: linear-gradient(180deg, color-mix(in oklab, var(--line) 92%, var(--ink-3)), var(--line));
+  box-shadow: inset 0 1px 2px rgb(6 11 43 / 0.16), inset 0 -1px 0 rgb(255 255 255 / 0.5);
+  transition: background 200ms, border-color 200ms;
+}
+.switch-track::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff, color-mix(in oklab, #fff 90%, var(--paper)));
+  border: 1px solid rgb(6 11 43 / 0.14);
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 rgb(6 11 43 / 0.06);
+  transition: transform 300ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+input:checked + .switch-track {
+  border-color: color-mix(in oklab, var(--signal-ink) 80%, black);
+  background: linear-gradient(180deg, color-mix(in oklab, var(--signal) 90%, var(--signal-ink)), color-mix(in oklab, var(--signal) 86%, white));
+  box-shadow: inset 0 1px 2px rgb(6 11 43 / 0.28), inset 0 -1px 0 rgb(255 255 255 / 0.18);
+}
+input:checked + .switch-track::after {
+  transform: translateX(20px);
+}
+input:focus-visible + .switch-track {
+  outline: 2.5px solid var(--signal);
+  outline-offset: 3px;
+}
+
+/* Segmented toggle: same groove and knob as the switch. */
+.seg {
+  border-radius: 999px;
+  border: 1px solid color-mix(in oklab, var(--line) 80%, var(--ink-3));
+  background: linear-gradient(180deg, color-mix(in oklab, var(--line) 85%, var(--ink-3)), color-mix(in oklab, var(--line) 70%, var(--paper)));
+  box-shadow: inset 0 1px 2px rgb(6 11 43 / 0.12), inset 0 -1px 0 rgb(255 255 255 / 0.5);
+}
+.seg-knob {
+  border-radius: 999px;
+  background: linear-gradient(180deg, var(--sheet), color-mix(in oklab, var(--sheet) 92%, var(--paper)));
+  border: 1px solid rgb(6 11 43 / 0.12);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9), inset 0 -1px 0 rgb(6 11 43 / 0.05);
+}
+
+/* The top of a sheet (grabber, title, close) stays put while the content scrolls. */
+dialog.sheet .sheet-head {
+  background: var(--ivory);
+  padding-bottom: 0.5rem;
+}
 dialog.sheet::backdrop {
   background: rgb(6 11 43 / 0.34);
 }
@@ -671,4 +735,141 @@ dialog.sheet.closing::backdrop {
     animation-duration: 1ms !important;
     transition-duration: 1ms !important;
   }
+}
+
+/* ---------- Dark mode ----------
+   Same brand, lights off. Midnight surfaces from the existing navy, the same
+   electric blue, softer text. Everything reads from tokens, so most of the
+   app follows by itself. The rules below cover the few hand-set colours. */
+html[data-theme="dark"] {
+  --paper: #070b22;
+  --ivory: #0c1230;
+  --sheet: #121a3d;
+  --line: #242d57;
+  --ink: #eef1ff;
+  --ink-2: #b9c0de;
+  --ink-3: #8c94ba;
+  --signal-ink: #8ea9ff;
+  --signal-soft: #17235c;
+  --success: #3fc495;
+  --warning: #f0a54a;
+  --danger: #e2533f;
+  --danger-soft: #3a1714;
+  --hi: rgb(255 255 255 / 0.06);
+  color-scheme: dark;
+}
+html[data-theme="dark"] .bg-white,
+html[data-theme="dark"] .task-row {
+  background-color: var(--sheet);
+}
+html[data-theme="dark"] .bg-white\/95,
+html[data-theme="dark"] .bg-white\/90 {
+  background-color: color-mix(in oklab, var(--sheet) 92%, transparent);
+}
+html[data-theme="dark"] .bg-white\/70,
+html[data-theme="dark"] .bg-white\/60 {
+  background-color: color-mix(in oklab, var(--sheet) 70%, transparent);
+}
+html[data-theme="dark"] .bg-\[\#fbf9f4\],
+html[data-theme="dark"] .bg-\[\#efe9dd\] {
+  background-color: var(--ivory);
+}
+html[data-theme="dark"] .bg-\[\#ebe6db\] {
+  background-color: var(--line);
+}
+html[data-theme="dark"] .bg-\[\#f6fbe9\] {
+  background-color: color-mix(in oklab, #5f9a12 16%, var(--sheet));
+}
+html[data-theme="dark"] .border-\[\#dfe9c8\] {
+  border-color: color-mix(in oklab, #5f9a12 34%, var(--sheet));
+}
+html[data-theme="dark"] .text-\[\#4d7a12\],
+html[data-theme="dark"] .text-\[\#5f9a12\] {
+  color: #a6d86a;
+}
+html[data-theme="dark"] [class*="hue-"] {
+  --ht: color-mix(in oklab, var(--h) 26%, var(--sheet));
+}
+html[data-theme="dark"] .pill {
+  background: color-mix(in oklab, var(--ink-3) 18%, var(--paper));
+  color: var(--ink-2);
+}
+html[data-theme="dark"] .pill-morning,
+html[data-theme="dark"] .pill-week {
+  background: color-mix(in oklab, #e07a35 22%, var(--paper));
+  color: #ffc49a;
+}
+html[data-theme="dark"] .pill-afternoon,
+html[data-theme="dark"] .pill-today {
+  background: color-mix(in oklab, #1d4df5 30%, var(--paper));
+  color: #b3c5ff;
+}
+html[data-theme="dark"] .pill-evening,
+html[data-theme="dark"] .pill-later {
+  background: color-mix(in oklab, #6d4fe0 28%, var(--paper));
+  color: #cfc2ff;
+}
+html[data-theme="dark"] .add-row {
+  border-color: var(--line);
+}
+html[data-theme="dark"] .task-row,
+html[data-theme="dark"] .float-card {
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+/* Buttons: the ink button flips to light so it stays the strong choice. */
+html[data-theme="dark"] .btn-ink {
+  --b-top: #fff;
+  --b-bot: color-mix(in oklab, var(--ink) 92%, var(--ink-3));
+  --b-edge: rgb(255 255 255 / 0.5);
+  --b-hi: #fff;
+  --b-lo: rgb(6 11 43 / 0.1);
+  --b-tint: rgb(6 11 43 / 0.05);
+  --b-text-shadow: none;
+  color: var(--night);
+}
+html[data-theme="dark"] .btn-line,
+html[data-theme="dark"] .chip,
+html[data-theme="dark"] .seg-knob {
+  --b-top: color-mix(in oklab, var(--sheet) 88%, white);
+  --b-bot: var(--sheet);
+  --b-edge: color-mix(in oklab, var(--line) 80%, white);
+  --b-hi: rgb(255 255 255 / 0.08);
+  --b-lo: rgb(0 0 0 / 0.25);
+  --b-tint: rgb(255 255 255 / 0.05);
+}
+html[data-theme="dark"] .chip,
+html[data-theme="dark"] .seg-knob {
+  background: linear-gradient(180deg, var(--b-top), var(--b-bot));
+  border-color: var(--b-edge);
+  box-shadow: inset 0 1px 0 var(--b-hi), inset 0 -1px 0 var(--b-lo);
+}
+html[data-theme="dark"] .chip[aria-pressed="true"] {
+  background: linear-gradient(180deg, #fff, color-mix(in oklab, var(--ink) 92%, var(--ink-3)));
+  border-color: rgb(255 255 255 / 0.5);
+  color: var(--night);
+}
+html[data-theme="dark"] .btn-quiet {
+  --b-tint: rgb(255 255 255 / 0.06);
+}
+html[data-theme="dark"] .switch-track,
+html[data-theme="dark"] .seg {
+  background: linear-gradient(180deg, color-mix(in oklab, var(--paper) 80%, black), var(--paper));
+  border-color: var(--line);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.4), inset 0 -1px 0 rgb(255 255 255 / 0.05);
+}
+html[data-theme="dark"] input:checked + .switch-track {
+  border-color: color-mix(in oklab, var(--signal) 60%, black);
+  background: linear-gradient(180deg, color-mix(in oklab, var(--signal) 80%, black), var(--signal));
+}
+html[data-theme="dark"] .icon-btn:hover,
+html[data-theme="dark"] .row:hover {
+  background: rgb(255 255 255 / 0.06);
+}
+html[data-theme="dark"] [data-sonner-toaster] [data-sonner-toast] {
+  background: color-mix(in oklab, var(--sheet) 82%, white) !important;
+  color: var(--ink) !important;
+  box-shadow: inset 0 0 0 1px var(--line), 0 16px 40px -18px rgb(0 0 0 / 0.8) !important;
+}
+html[data-theme="dark"] dialog.sheet::backdrop {
+  background: rgb(0 0 0 / 0.55);
 }

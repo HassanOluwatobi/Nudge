@@ -4,11 +4,12 @@ import { useEffect, useRef } from "react";
 
 /*
   The flowing gradient. A small WebGL shader that paints iridescent silk:
-  pink, violet, blue and peach bands that fold slowly over each other, with a
+  midnight, electric blue, sky and ice bands that flow over each other, with a
   soft sheen and fine grain.
 
   Touch and cursor: moving over it bends the silk like a lens, and every tap
-  or quick move sends out a ripple that fades as it travels.
+  or quick move sends out a ripple that fades as it travels. Ripples
+  also arrive on their own, and they spread unevenly rather than in circles.
 
   Smoothness: it renders below screen resolution (silk stays soft), runs on
   one shared clock, and stops whenever it is off screen or the tab is hidden.
@@ -30,20 +31,22 @@ float n2(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
 float fbm(vec2 p){ float v=0., a=.5; mat2 m=mat2(1.6,1.2,-1.2,1.6); for(int i=0;i<3;i++){ v+=a*n2(p); p=m*p; a*=.5; } return v; }
 vec3 C(float r,float g,float b){ return vec3(r,g,b)/255.; }
 vec3 silk(float x){
-  vec3 c0=C(255.,138.,216.), c1=C(171.,104.,255.), c2=C(92.,108.,255.), c3=C(126.,196.,255.), c4=C(255.,182.,140.);
-  x = fract(x) * 5.;
+  // NudgeMe blues: midnight, electric, sky, ice and near-white.
+  vec3 c0=C(16.,26.,77.), c1=C(18.,54.,194.), c2=C(29.,77.,245.), c3=C(111.,151.,255.), c4=C(226.,234.,255.), c5=C(150.,190.,255.);
+  x = fract(x) * 6.;
   float f = smoothstep(0., 1., fract(x));
   if (x < 1.) return mix(c0, c1, f);
   if (x < 2.) return mix(c1, c2, f);
   if (x < 3.) return mix(c2, c3, f);
   if (x < 4.) return mix(c3, c4, f);
-  return mix(c4, c0, f);
+  if (x < 5.) return mix(c4, c5, f);
+  return mix(c5, c0, f);
 }
 void main(){
   vec2 uv = gl_FragCoord.xy / R;
   float asp = R.x / R.y;
   vec2 p = (uv - .5) * vec2(asp, 1.);
-  float t = T * .11;
+  float t = T * .24;
 
   // Ripples: a ring that travels out from each touch and fades.
   float glow = 0.;
@@ -52,8 +55,12 @@ void main(){
     float age = T - w.z;
     if (w.w > 0. && age > 0. && age < 2.6) {
       vec2 dv = p - w.xy;
-      float d = length(dv);
-      float front = d - age * .62;
+      // Uneven spread: stretch, then let noise push the front in and out.
+      float ang = atan(dv.y, dv.x);
+      float d = length(dv * vec2(1., 1.4));
+      d *= 1. + (n2(vec2(ang * 1.7 + w.z * 3.1, w.z)) - .5) * .9;
+      d += (fbm(p * 2.4 + w.z) - .5) * .22;
+      float front = d - age * .55;
       float env = exp(-front * front * 38.) * exp(-age * 1.5) * w.w;
       p += (dv / (d + .001)) * sin(front * 34.) * env * .07;
       glow += env * (.5 + .5 * sin(front * 34.));
@@ -83,9 +90,8 @@ void main(){
 
   if (M > 1.5) {
     // Focus ring: deeper silk behind white numbers.
-    col = mix(col, C(46.,40.,170.), .32) * .9;
-    col = mix(vec3(dot(col, vec3(.299,.587,.114))), col, 1.25);
-    col += sheen * .1;
+    col = mix(col, C(10.,18.,70.), .38);
+    col += sheen * .08;
   } else if (M > .5) {
     // Finish: a touch softer, with a light top for the headline area.
     col = mix(col, vec3(1.), smoothstep(.55, 1., uv.y) * .1);
@@ -109,7 +115,7 @@ export function Art({ mode, shift = 0, className }: { mode: 0 | 1 | 2; shift?: n
     if (!cv) return;
     const gl = cv.getContext("webgl", { antialias: false, alpha: false, preserveDrawingBuffer: false, powerPreference: "low-power" });
     if (!gl) {
-      cv.style.background = "linear-gradient(135deg,#ff8ad8,#ab68ff 40%,#5c6cff 70%,#ffb68c)";
+      cv.style.background = "linear-gradient(135deg,#101a4d,#1d4df5 40%,#6f97ff 70%,#e2eaff)";
       return;
     }
     const sh = (type: number, src: string) => {
@@ -226,6 +232,15 @@ export function Art({ mode, shift = 0, className }: { mode: 0 | 1 | 2; shift?: n
     function kick() {
       if (!raf && visible && !document.hidden && !reduce) raf = requestAnimationFrame(loop);
     }
+    // Ripples also arrive on their own, at uneven times and places.
+    let auto = 0;
+    const drift = () => {
+      const r = cv.getBoundingClientRect();
+      const asp = r.width / Math.max(1, r.height);
+      ripple((Math.random() - 0.5) * asp * 0.9, (Math.random() - 0.5) * 0.8, 0.7 + Math.random() * 0.4);
+      auto = window.setTimeout(drift, 1400 + Math.random() * 1600);
+    };
+    if (!reduce) auto = window.setTimeout(drift, 600 + Math.random() * 900);
     const io = new IntersectionObserver(([e]) => {
       visible = e.isIntersecting;
       kick();
@@ -238,6 +253,7 @@ export function Art({ mode, shift = 0, className }: { mode: 0 | 1 | 2; shift?: n
 
     return () => {
       cancelAnimationFrame(raf);
+      clearTimeout(auto);
       io.disconnect();
       ro.disconnect();
       document.removeEventListener("visibilitychange", kick);

@@ -116,7 +116,7 @@ export function Sheet({
       }}
     >
       <div className="safe-b">
-        <div className="touch-none" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
+        <div className="sheet-head sticky top-0 z-10 touch-none" onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}>
         <div className="grabber" aria-hidden />
         <div className="flex items-center justify-between px-5 pt-2">
           <h2 className={hideTitle ? "sr-only" : "text-[17px] font-semibold"}>{title}</h2>

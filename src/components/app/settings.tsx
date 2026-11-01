@@ -6,7 +6,7 @@ import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { AI_NAME } from "@/lib/ai";
 import { feel } from "@/lib/feedback";
-import { askNotify, canNotify, dailyEvents, prettyTime } from "@/lib/reminders";
+import { askNotify, canNotify, dailyEvents, platform, prettyTime } from "@/lib/reminders";
 import { type Settings as S, type State, sanitize, ymd } from "@/lib/tasks";
 import type { Source } from "@/lib/sync";
 import type { Actions } from "@/lib/use-tasks";
@@ -20,7 +20,7 @@ const X_URL = "https://x.com/Art_sassin";
 
 function Switch({ label, hint, checked, onChange, icon }: { label: string; hint: string; checked: boolean; onChange: (v: boolean) => void; icon?: React.ReactNode }) {
   return (
-    <label className="flex cursor-pointer items-center justify-between gap-3 py-3">
+    <label className="flex cursor-pointer items-center justify-between gap-3 py-4">
       <span>
         <span className="flex items-center gap-1.5 font-medium">
           {icon}
@@ -29,7 +29,7 @@ function Switch({ label, hint, checked, onChange, icon }: { label: string; hint:
         <span className="t-small block text-ink-2">{hint}</span>
       </span>
       <input type="checkbox" role="switch" checked={checked} onChange={(e) => onChange(e.target.checked)} className="peer sr-only" />
-      <span aria-hidden className="relative h-8 w-[52px] shrink-0 rounded-full bg-[#ddd6c8] transition-colors duration-200 peer-checked:bg-signal peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-signal after:absolute after:left-1 after:top-1 after:size-6 after:rounded-full after:bg-white after:shadow-[0_2px_4px_rgb(6_11_43/0.25)] after:transition-transform after:duration-300 after:[transition-timing-function:cubic-bezier(0.32,0.72,0,1)] peer-checked:after:translate-x-5" />
+      <span aria-hidden className="switch-track" />
     </label>
   );
 }
@@ -108,7 +108,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
         <h3 className="t-label">Daily check-ins</h3>
         <div className="mt-2 divide-y divide-line rounded-2xl bg-white ring-1 ring-line">
           {(["morning", "evening"] as const).map((k) => (
-            <div key={k} className="flex min-h-[60px] items-center justify-between px-4">
+            <div key={k} className="flex min-h-[72px] items-center justify-between px-4 py-2.5">
               <span>
                 <span className="block font-medium">{k === "morning" ? "Morning kickoff" : "Evening wrap-up"}</span>
                 <button type="button" className="t-small text-signal-ink" onClick={() => (onClose(), onCheckin(k))}>
@@ -118,7 +118,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
               <input type="time" value={s[k]} onChange={(e) => e.target.value && actions.setSettings({ [k]: e.target.value } as Partial<S>)} className="rounded-xl bg-white px-3 py-2 text-[16px] font-medium tabular-nums ring-1 ring-line" aria-label={`${k} check-in time`} />
             </div>
           ))}
-          <div className="flex min-h-[60px] items-center justify-between px-4">
+          <div className="flex min-h-[72px] items-center justify-between px-4 py-2.5">
             <span>
               <span className="block font-medium">Weekly reset</span>
               <button type="button" className="t-small text-signal-ink" onClick={() => (onClose(), onCheckin("weekly"))}>
@@ -153,25 +153,53 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
           Add your check-ins to a calendar. It rings every day at {prettyTime(s.morning)} and {prettyTime(s.evening)}, even when NudgeMe is closed.
         </p>
         <CalendarButtons events={dailyEvents({ morning: s.morning, evening: s.evening })} file="nudgeme-check-ins" onAdded={() => actions.setSettings({ calendarAdded: ymd() })} label={s.calendarAdded ? "Added. If you change the times, add them again." : ""} />
-        {canNotify() && (
-          <div className="mt-3 rounded-2xl bg-white px-4 ring-1 ring-line">
-            <div>
-              <Switch
-                icon={<Bell className="size-4" />}
-                label="Notifications"
-                hint="Task reminders and check-ins while NudgeMe is open or installed."
-                checked={s.notify}
-                onChange={async (v) => {
-                  if (!v) return actions.setSettings({ notify: false });
-                  const ok = await askNotify();
-                  actions.setSettings({ notify: ok });
-                  if (!ok) toast("Notifications are blocked in this browser's settings.");
-                  else feel("save", "success");
-                }}
-              />
+        <div className="mt-3 rounded-2xl bg-white px-4 ring-1 ring-line">
+          {canNotify() ? (
+            <Switch
+              icon={<Bell className="size-4" />}
+              label="Notifications"
+              hint="Phone alerts for task reminders and check-ins while NudgeMe is open or in the background. For alerts when it is fully closed, add them to your calendar above."
+              checked={s.notify}
+              onChange={async (v) => {
+                if (!v) return actions.setSettings({ notify: false });
+                const ok = await askNotify();
+                actions.setSettings({ notify: ok });
+                if (!ok) toast("Notifications are blocked in this browser's settings.");
+                else feel("save", "success");
+              }}
+            />
+          ) : (
+            <div className="py-4">
+              <span className="flex items-center gap-1.5 font-medium">
+                <Bell className="size-4" /> Notifications
+              </span>
+              <span className="t-small mt-0.5 block text-ink-2">
+                {platform() === "ios" ? "On iPhone, add NudgeMe to your Home Screen first. Then open it from there and turn this on." : "This browser does not offer notifications. Calendar reminders above still work."}
+              </span>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      </section>
+
+      <section className="mt-6">
+        <h3 className="t-label">Appearance</h3>
+        <div className="seg mt-2 grid grid-cols-3 p-1" role="radiogroup" aria-label="Appearance">
+          {(
+            [
+              ["light", "Light"],
+              ["dark", "Dark"],
+              ["system", "Match phone"],
+            ] as const
+          ).map(([k, name]) => {
+            const on = (s.theme ?? "system") === k;
+            return (
+              <button key={k} type="button" role="radio" aria-checked={on} onClick={() => (actions.setSettings({ theme: k }), feel("tick", "light"))} className="relative h-10 rounded-full text-[14px] font-semibold">
+                {on && <motion.span layoutId="theme-seg" className="seg-knob absolute inset-0" transition={{ type: "spring", bounce: 0, duration: 0.3 }} />}
+                <span className={`relative ${on ? "text-ink" : "text-ink-3"}`}>{name}</span>
+              </button>
+            );
+          })}
+        </div>
       </section>
 
       <section className="mt-6">
@@ -203,7 +231,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
       </section>
 
       <section className="mt-6 rounded-2xl bg-white ring-1 ring-line">
-        <button type="button" aria-expanded={dataOpen} onClick={() => (setDataOpen((v) => !v), feel("tap", "light"))} className="flex min-h-[60px] w-full items-center justify-between px-4 text-left">
+        <button type="button" aria-expanded={dataOpen} onClick={() => (setDataOpen((v) => !v), feel("tap", "light"))} className="flex min-h-[72px] w-full items-center justify-between px-4 py-3 text-left">
           <span>
             <span className="block font-medium">Your data</span>
             <span className="t-small text-ink-2">Stays on this device. Backup, restore, clear.</span>

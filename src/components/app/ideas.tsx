@@ -42,10 +42,10 @@ export function Ideas({ state, actions, onAdd, onSettings, onHelp, doneCount, to
       <h1 className="mt-4 text-center font-serif text-[44px] leading-none tracking-[-0.025em]">Ideas</h1>
       <p className="t-small mt-2 text-center text-ink-3">Ideas come back on Today later. Notes stay here.</p>
 
-      <div className="mx-auto mt-6 grid w-full max-w-[260px] grid-cols-2 rounded-full bg-[#e8e2d6] p-1" role="tablist" aria-label="Ideas or notes">
+      <div className="mx-auto mt-6 seg grid w-full max-w-[260px] grid-cols-2 p-1" role="tablist" aria-label="Ideas or notes">
         {(["idea", "note"] as EntryKind[]).map((k) => (
           <button key={k} type="button" role="tab" aria-selected={kind === k} onClick={() => (setKind(k), feel("tap"))} className="relative h-10 rounded-full text-[15px] font-semibold">
-            {kind === k && <motion.span layoutId="seg" className="absolute inset-0 rounded-full bg-white shadow-[0_2px_8px_-4px_rgb(6_11_43/0.3)]" transition={{ type: "spring", bounce: 0, duration: 0.35 }} />}
+            {kind === k && <motion.span layoutId="seg" className="seg-knob absolute inset-0" transition={{ type: "spring", bounce: 0, duration: 0.35 }} />}
             <span className={`relative ${kind === k ? "text-ink" : "text-ink-3"}`}>{k === "idea" ? "Ideas" : "Notes"}</span>
           </button>
         ))}
@@ -80,7 +80,7 @@ export function Ideas({ state, actions, onAdd, onSettings, onHelp, doneCount, to
             <Mic className="size-5" />
           </button>
         )}
-        <button type="submit" disabled={!text.trim()} aria-label={kind === "idea" ? "Save idea" : "Save note"} className="grid size-11 shrink-0 place-items-center rounded-full bg-signal text-white disabled:opacity-40">
+        <button type="submit" disabled={!text.trim()} aria-label={kind === "idea" ? "Save idea" : "Save note"} className="btn btn-signal btn-icon size-11 shrink-0">
           <ArrowUp className="size-5" />
         </button>
       </form>

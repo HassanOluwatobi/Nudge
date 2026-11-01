@@ -20,7 +20,7 @@ export function TabBar({ tab, onTab, dark, running }: { tab: Tab; onTab: (t: Tab
       <nav
         aria-label="Main"
         className={`pointer-events-auto relative mx-auto grid w-[calc(100%-2rem)] max-w-[23rem] grid-cols-4 gap-1 rounded-[26px] p-1.5 backdrop-blur-xl ${
-          dark ? "bg-white/[0.08] ring-1 ring-white/10" : "bg-white/90 shadow-[0_1px_0_#fff_inset,0_16px_40px_-18px_rgb(6_11_43/0.45)] ring-1 ring-line/60"
+          dark ? "bg-white/[0.08] ring-1 ring-white/10" : "bg-white/90 shadow-[0_1px_0_var(--hi)_inset,0_16px_40px_-18px_rgb(6_11_43/0.45)] ring-1 ring-line/60"
         }`}
       >
         {ITEMS.map(({ id, label, icon: Icon }) => {

@@ -25,14 +25,21 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#0d2a8c",
+  themeColor: "#f3eee4",
   interactiveWidget: "resizes-content",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${GeistSans.variable} ${GeistSerif.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${GeistSans.variable} ${GeistSerif.variable}`}>
       <body>
+        {/* Set light or dark before the first paint, so there is no flash. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var t=(JSON.parse(localStorage.getItem('nudgeme.v11')||'{}').settings||{}).theme||'system';if(t==='system')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}",
+          }}
+        />
         {/* Catch Chrome's install offer as early as possible, so the Install button can use it with one tap. */}
         <script
           dangerouslySetInnerHTML={{
