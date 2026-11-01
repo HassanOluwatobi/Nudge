@@ -42,7 +42,8 @@ const XMark = () => (
 export function Credit({ compact = false }: { compact?: boolean }) {
   return (
     <a href={X_URL} target="_blank" rel="noopener noreferrer" onClick={() => feel("tap", "light")} className={`flex items-center gap-3 rounded-2xl bg-white ring-1 ring-line transition-transform active:scale-[0.98] ${compact ? "p-2.5 pl-3" : "p-3"}`}>
-      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-signal to-[#7b5cff] text-[15px] font-semibold text-white">H</span>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/hassan.jpg" alt="Hassan" width={40} height={40} className="size-10 shrink-0 rounded-full object-cover ring-1 ring-line" />
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-semibold">Made by Hassan</span>
         <span className="t-small block text-ink-2">Say hi or share feedback</span>
