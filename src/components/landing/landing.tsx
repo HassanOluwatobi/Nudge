@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useInView, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
 import { ArrowRight, Check, Lock, Moon, ShieldCheck, Smartphone, WifiOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Devices, IdeasBack, Reminders } from "@/components/app/guide";
+import { AiSteps, Capture, Devices, IdeasBack, OneThing, Reminders, Timer } from "@/components/app/guide";
 import { Petals } from "@/components/app/petals";
 
 /*
@@ -313,15 +313,16 @@ function Word({ p, at, bold, children }: { p: MotionValue<number>; at: number; b
 }
 
 const HOW = [
-  { title: "Dump it all out", body: "Type it or say it in one go. It splits into separate tasks as you go, so nothing gets lost.", img: "/landing/how-1.webp", alt: "Typing three things at once, split into three tasks", sky: "blue" as SkyName },
-  { title: "Shrink the big ones", body: "Ask the AI you already use to break a scary task into tiny steps. Paste them back in.", img: "/landing/how-2.webp", alt: "Breaking a big task down with Claude", sky: "lime" as SkyName },
-  { title: "See one thing", body: "Home shows one task and its next step. Not feeling it? Pick another.", img: "/landing/how-3.webp", alt: "Home, showing one task and its next step", sky: "violet" as SkyName },
-  { title: "Do one step", body: "Focus hides everything else. Tick a step and the next one shows up. Add a timer if it helps.", img: "/landing/how-4.webp", alt: "Focus, with one step and a timer running", sky: "night" as SkyName },
+  { title: "Dump it all out", body: "Type it or say it in one go. Every pause becomes its own task, so nothing gets lost.", art: Capture, sky: "blue" as SkyName },
+  { title: "Shrink the big ones", body: "Ask the AI you already use to break a scary task into tiny steps. Paste them back in.", art: AiSteps, sky: "violet" as SkyName },
+  { title: "See one thing", body: "Home shows one task and its next step. Not feeling it? Pick another.", art: OneThing, sky: "blue" as SkyName },
+  { title: "Do one step", body: "Focus hides everything else. Tick a step and the next one shows up. Add a timer if it helps.", art: Timer, sky: "night" as SkyName },
 ];
 
 function How() {
   const [on, setOn] = useState(0);
   const [paused, setPaused] = useState(false);
+  const Pic = HOW[on].art;
   const ref = useRef<HTMLDivElement>(null);
   const seen = useInView(ref, { amount: 0.4 });
   const ever = useInView(ref, { once: true, amount: 0.2 });
@@ -336,9 +337,9 @@ function How() {
         <div>
           <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-signal-ink">How it works</p>
           <h2 className="mt-4 font-serif text-[40px] leading-[1.02] tracking-[-0.02em] sm:text-[56px]">From a full head to a first step</h2>
-          <div className="mt-8 border-t border-line">
+          <div className="mt-8 rounded-[24px] bg-white px-5 ring-1 ring-line">
             {HOW.map((h, i) => (
-              <button key={h.title} type="button" onClick={() => (setOn(i), setPaused(true))} className="block w-full border-b border-line py-5 text-left">
+              <button key={h.title} type="button" onClick={() => (setOn(i), setPaused(true))} className={`block w-full py-5 text-left ${i ? "border-t border-line" : ""}`}>
                 <span className="flex items-baseline gap-3">
                   <span className={`text-[13px] font-semibold tabular-nums transition-colors ${i === on ? "text-signal-ink" : "text-ink-3"}`}>0{i + 1}</span>
                   <span className={`text-[20px] font-semibold tracking-[-0.01em] transition-colors ${i === on ? "text-ink" : "text-ink-3"}`}>{h.title}</span>
@@ -365,14 +366,14 @@ function How() {
               <Sky name={HOW[on].sky} />
             </motion.div>
           </AnimatePresence>
-          <div className="absolute inset-x-0 top-[9%] flex justify-center">
-            <div className="relative w-[46%] max-w-[300px]">
-              {HOW.map((h, i) => (
-                <div key={h.img} className={`${i === 0 ? "relative" : "absolute inset-0"} transition-[opacity,transform] duration-500 ease-out ${i === on ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"}`} aria-hidden={i !== on}>
-                  {ever && <Phone src={h.img} alt={i === on ? h.alt : ""} />}
-                </div>
-              ))}
-            </div>
+          <div className="absolute inset-[7%] flex items-center justify-center">
+            <AnimatePresence mode="wait">
+              <motion.div key={on} initial={{ opacity: 0, y: 18, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, transition: { duration: 0.15 } }} transition={{ type: "spring", bounce: 0.15, duration: 0.6 }} className="w-full max-w-[420px]">
+                <Window>
+                  <div className="h-[250px] bg-paper">{ever && <Pic />}</div>
+                </Window>
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
       </div>
