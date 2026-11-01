@@ -81,7 +81,7 @@ export function NudgeApp() {
   useEffect(() => {
     if (state && !state.meta.intro && !introShown.current) {
       introShown.current = true;
-      setTimeout(() => setGuide(true), (window as unknown as { __splashAt?: number }).__splashAt ? 1500 : 500);
+      setTimeout(() => setGuide(true), (window as unknown as { __splashAt?: number }).__splashAt ? 2500 : 500);
     }
   }, [state]);
   // Light, dark, or follow the phone. The status bar colour follows too.
@@ -181,7 +181,7 @@ export function NudgeApp() {
   useEffect(() => {
     if (!loaded) return;
     const at = (window as unknown as { __splashAt?: number }).__splashAt;
-    const wait = at ? Math.max(0, 1000 - (Date.now() - at)) : 0;
+    const wait = at ? Math.max(0, 2000 - (Date.now() - at)) : 0;
     const id = setTimeout(() => document.documentElement.classList.add("splash-done"), wait);
     return () => clearTimeout(id);
   }, [loaded]);

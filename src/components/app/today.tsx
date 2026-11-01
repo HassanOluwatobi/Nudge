@@ -367,10 +367,6 @@ function MiniCredit() {
       <a href="https://selar.com/showlove/hassanx" target="_blank" rel="noopener noreferrer" className="font-medium text-ink-2 underline-offset-2 hover:underline">
         Buy me a coffee
       </a>
-      <span aria-hidden>·</span>
-      <a href="/privacy" className="font-medium text-ink-2 underline-offset-2 hover:underline">
-        Privacy
-      </a>
     </p>
   );
 }
