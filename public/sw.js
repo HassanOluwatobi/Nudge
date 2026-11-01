@@ -1,5 +1,5 @@
 // Shrink my day service worker: network first, fall back to cache so the app opens offline.
-const CACHE = "nudgeme-v22-5";
+const CACHE = "nudgeme-v22-6";
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/manifest.webmanifest", "/icon-192.png"])));
   self.skipWaiting();

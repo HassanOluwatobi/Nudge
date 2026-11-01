@@ -53,7 +53,7 @@ export function Credit({ compact = false, stacked = false }: { compact?: boolean
         <img src="/hassan.jpg" alt="Hassan" width={40} height={40} className="size-10 shrink-0 rounded-full object-cover ring-1 ring-line" />
         <span className="min-w-0 flex-1">
           <span className="block text-[15px] font-semibold">Made by Hassan</span>
-          <span className="t-small block truncate whitespace-nowrap text-ink-2">Say hi or share feedback</span>
+          <span className="t-small block leading-snug text-ink-2">Say hi or share feedback</span>
         </span>
       </div>
       <div className={`mt-3 grid gap-2 ${stacked ? "grid-cols-1" : "grid-cols-2"}`}>
