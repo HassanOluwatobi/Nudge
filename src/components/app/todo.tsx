@@ -70,27 +70,23 @@ export function Todo({
               </span>
               <ChevronDown className={`size-4 text-ink-3 transition-transform ${collapsed[b] ? "-rotate-90" : ""}`} />
             </button>
-            <button type="button" className="icon-btn size-9" aria-label={`Add to ${BUCKET_NAME[b]}`} onClick={() => onAddTo(b)}>
-              <Plus className="size-4" />
-            </button>
           </div>
           <AnimatePresence initial={false}>
             {!collapsed[b] && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }} className="-m-2 overflow-hidden p-2">
-                {items.length ? (
-                  <ul className="space-y-2">
+                {items.length > 0 && (
+                  <ul className="mb-2 space-y-2">
                     <AnimatePresence initial={false}>
                       {items.map((t) => (
                         <TaskRow key={t.id} task={t} actions={actions} onOpen={onOpen} onMenu={onMenu} onFinished={finishedOne} />
                       ))}
                     </AnimatePresence>
                   </ul>
-                ) : (
-                  <button type="button" onClick={() => onAddTo(b)} className="add-row flex h-14 w-full items-center justify-between px-4 text-[15px]">
-                    {HINT[b]}
-                    <Plus className="size-4" />
-                  </button>
                 )}
+                <button type="button" onClick={() => onAddTo(b)} className="add-row flex h-14 w-full items-center justify-between px-4 text-[15px]">
+                  {items.length ? `Add to ${BUCKET_NAME[b]}` : HINT[b]}
+                  <Plus className="size-4" />
+                </button>
               </motion.div>
             )}
           </AnimatePresence>
