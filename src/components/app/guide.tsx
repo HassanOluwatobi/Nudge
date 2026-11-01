@@ -9,7 +9,7 @@ import { Art } from "./art";
 import { burstFrom } from "./petals";
 
 /*
-  The user guide. Six short pages, each with a small live illustration.
+  The user guide. Seven short pages, each with a small live illustration.
   Swipe, tap Next, or use the arrow keys. It opens on first visit and from the
   help button. Enter and exit ride springs, so it never snaps.
 */
@@ -240,6 +240,61 @@ function Reminders() {
   );
 }
 
+function Devices() {
+  const reduce = useReducedMotion();
+  const [stage, setStage] = useState(reduce ? 2 : 0);
+  useEffect(() => {
+    if (reduce) return;
+    const a = setTimeout(() => setStage(1), 700);
+    const b = setTimeout(() => (setStage(2), feel("tick")), 1900);
+    return () => (clearTimeout(a), clearTimeout(b));
+  }, [reduce]);
+  const row = (
+    <span className="flex items-center gap-1.5 rounded-[8px] bg-paper px-1.5 py-1">
+      <span className="hue-lime tile grid size-4 place-items-center rounded-[5px] text-[9px]">🏋️</span>
+      <span className="truncate text-[10px] font-semibold">Gym</span>
+    </span>
+  );
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-4 px-6">
+      <div className="flex w-full items-center justify-center gap-2">
+        {/* Phone */}
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", bounce: 0.2, duration: 0.6 }} className="flex h-[118px] w-[76px] flex-col gap-1 rounded-[14px] bg-white p-1.5 pt-3 ring-1 ring-line">
+          {row}
+          <span className="h-2 w-3/4 rounded-full bg-paper" />
+          <span className="h-2 w-1/2 rounded-full bg-paper" />
+        </motion.div>
+        {/* The link between them */}
+        <svg className="h-6 w-12 shrink-0" viewBox="0 0 64 24" fill="none" aria-hidden>
+          <motion.path d="M4 12 C 20 2, 44 22, 60 12" stroke="var(--signal)" strokeWidth={2} strokeLinecap="round" strokeDasharray="3 5" initial={{ pathLength: 0, opacity: 0 }} animate={stage >= 1 ? { pathLength: 1, opacity: 1 } : {}} transition={{ duration: 0.6 }} />
+        </svg>
+        {/* Laptop */}
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1, type: "spring", bounce: 0.2, duration: 0.6 }} className="flex flex-col items-center">
+          <div className="flex h-[86px] w-[132px] flex-col gap-1 rounded-t-[10px] bg-white p-2 ring-1 ring-line">
+            <AnimatePresence>
+              {stage >= 2 && (
+                <motion.div initial={{ opacity: 0, x: -24, scale: 0.9 }} animate={{ opacity: 1, x: 0, scale: 1 }} transition={{ type: "spring", bounce: 0.3, duration: 0.6 }}>
+                  {row}
+                </motion.div>
+              )}
+            </AnimatePresence>
+            <span className="h-2 w-2/3 rounded-full bg-paper" />
+            <span className="h-2 w-1/2 rounded-full bg-paper" />
+          </div>
+          <div className="h-[7px] w-[156px] rounded-b-[6px] bg-line" />
+        </motion.div>
+      </div>
+      <AnimatePresence>
+        {stage >= 1 && (
+          <motion.span initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", bounce: 0.25, duration: 0.5 }} className="rounded-full bg-white px-3 py-1.5 font-mono text-[14px] font-semibold tracking-[0.08em] ring-1 ring-line">
+            7KQ2-M9XA-P4TD
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 const PAGES = [
   { art: Capture, tag: "Brain dump", title: "Get it out of your head", body: "Type it or say it, all in one go. I'll split it into tasks so nothing gets lost." },
   { art: AiSteps, tag: "AI helper", title: "Big task? Let AI shrink it", body: "Your own ChatGPT, Claude, Gemini or Grok splits it into tiny steps. Paste them back and you're good. No sign up, no cost." },
@@ -247,6 +302,7 @@ const PAGES = [
   { art: Timer, tag: "Focus", title: "One step at a time", body: "Focus hides everything else. Tick a step and the next one shows up. Add a timer if it helps." },
   { art: IdeasBack, tag: "Ideas", title: "Save ideas for later", body: "Write it down and stop holding it in your head. I'll bring it back in a few days." },
   { art: Reminders, tag: "Reminders", title: "Timely reminders", body: "Your phone notifies you when it's time, even with the site closed." },
+  { art: Devices, tag: "Devices", title: "Your phone and laptop, in step", body: "In Settings, tap Show a code and type it on your other device. Your tasks stay the same on both. No account, and I still can't see them." },
 ];
 
 export function Guide({ open, onClose }: { open: boolean; onClose: () => void }) {
