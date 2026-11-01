@@ -37,7 +37,7 @@ export function Ideas({ state, actions }: { state: State; actions: Actions }) {
   return (
     <div>
       <header className="px-1">
-        <p className="text-[13px] text-muted-foreground">Your rough pad</p>
+        <p className="text-[13px] text-muted-foreground">Saved for later</p>
         <h1 className="mt-0.5 font-serif text-[30px] leading-tight tracking-tight">Ideas and notes</h1>
         <p className="mt-1.5 text-sm text-muted-foreground text-pretty">
           Ideas come back now and then so you remember them. Notes stay quiet until you need them.

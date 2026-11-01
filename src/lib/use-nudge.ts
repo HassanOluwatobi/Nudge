@@ -12,7 +12,9 @@ import {
   NUDGE_DAYS,
   type Parsed,
   rollover,
+  sanitize,
   shrinkStep,
+  suggestStep,
   type State,
   type Task,
   ymd,
@@ -23,19 +25,7 @@ const KEY = "nudgeme.v1";
 function read(): State {
   try {
     const raw = localStorage.getItem(KEY);
-    if (raw) {
-      const s = JSON.parse(raw) as State;
-      // Older subtasks may be plain strings.
-      s.tasks = (s.tasks ?? []).map((t) => ({
-        ...t,
-        subs: (t.subs ?? []).map((x: unknown) =>
-          typeof x === "string" ? { t: x, d: false } : (x as Task["subs"][number])
-        ),
-      }));
-      s.entries = s.entries ?? [];
-      s.meta = { ...s.meta, eveningHour: s.meta?.eveningHour ?? 18 };
-      return s;
-    }
+    if (raw) return sanitize(JSON.parse(raw));
   } catch {}
   return freshState();
 }
@@ -54,9 +44,20 @@ export function useNudge() {
     if (!state) return;
     memory.current = state;
     try {
-      localStorage.setItem(KEY, JSON.stringify(state));
+      const next = JSON.stringify(state);
+      if (localStorage.getItem(KEY) !== next) localStorage.setItem(KEY, next);
     } catch {}
   }, [state]);
+
+  // Another tab changed things. Take its version so nothing gets lost.
+  useEffect(() => {
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== KEY) return;
+      setState(e.newValue ? sanitize(JSON.parse(e.newValue)) : freshState());
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
 
   const update = useCallback((fn: (s: State) => State) => {
     setState((s) => (s ? fn(s) : s));
@@ -99,7 +100,7 @@ export function useNudge() {
         const e = s.entries.find((x) => x.id === ref.id);
         if (!e) return s;
         if (to === "task") {
-          const t = makeTask({ kind: "task", title: e.text, bucket: bucket ?? "week", step: "Set a 10 minute timer and just begin." });
+          const t = makeTask({ kind: "task", title: e.text, bucket: bucket ?? "week", step: suggestStep(e.text) });
           newId = t.id;
           return { ...s, entries: s.entries.filter((x) => x.id !== e.id), tasks: [...s.tasks, t] };
         }
@@ -144,7 +145,7 @@ export function useNudge() {
         ...s,
         meta: (() => {
           const t = s.tasks.find((x) => x.id === id);
-          return t?.must ? { ...s.meta, win: { date: ymd(), title: t.title } } : s.meta;
+          return t?.must ? { ...s.meta, timer: undefined, win: { date: ymd(), title: t.title } } : s.meta;
         })(),
         tasks: s.tasks.map((t) =>
           t.id === id && t.bucket !== "done"
@@ -170,6 +171,32 @@ export function useNudge() {
       update((s) => ({
         ...s,
         tasks: s.tasks.map((t) => (t.id === id ? { ...t, step: shrinkStep(t) } : t)),
+      }));
+    },
+
+    /** A small step is done. Count it, then move to the next step. */
+    stepDone(id: string) {
+      update((s) => ({
+        ...s,
+        meta: { ...s.meta, stepWins: (s.meta.stepWins ?? 0) + 1, timer: undefined },
+        tasks: s.tasks.map((t) => {
+          if (t.id !== id) return t;
+          const i = t.subs.findIndex((x) => !x.d);
+          if (i >= 0) {
+            const subs = t.subs.map((x, j) => (j === i ? { ...x, d: true } : x));
+            const nx = subs.find((x) => !x.d);
+            return { ...t, subs, step: nx ? `Start with: ${nx.t}` : "Keep going for 10 more minutes." };
+          }
+          return { ...t, step: "Keep going for 10 more minutes." };
+        }),
+      }));
+    },
+
+    undoStep(id: string, prev: Task) {
+      update((s) => ({
+        ...s,
+        meta: { ...s.meta, stepWins: Math.max(0, (s.meta.stepWins ?? 1) - 1) },
+        tasks: s.tasks.map((t) => (t.id === id ? { ...t, step: prev.step, subs: prev.subs } : t)),
       }));
     },
 
@@ -219,7 +246,7 @@ export function useNudge() {
       update((s) => {
         const e = s.entries.find((x) => x.id === id);
         if (!e) return s;
-        const t = makeTask({ kind: "task", title: e.text, bucket: "week", step: "Set a 10 minute timer and just begin." });
+        const t = makeTask({ kind: "task", title: e.text, bucket: "week", step: suggestStep(e.text) });
         return {
           ...s,
           tasks: [...s.tasks, t],

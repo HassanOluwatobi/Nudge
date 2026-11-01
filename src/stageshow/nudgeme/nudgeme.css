@@ -1,0 +1,414 @@
+/* All rules belong to this example. NudgeMe's brand: forest ink, cream paper, golden progress. */
+.nm {
+  & .ss-stage {
+    --nm-forest: #17401f;
+    --nm-cream: #fbf6ec;
+    --nm-paper: #f6f1e6;
+    --nm-gold: #f8bd2e;
+    --nm-ink2: rgba(23, 64, 31, 0.66);
+    --nm-ink3: rgba(23, 64, 31, 0.44);
+    --nm-ease: cubic-bezier(0.23, 1, 0.32, 1);
+    overflow: hidden;
+    border-radius: 24px;
+    background: #45cde8;
+    font-family: "Geist", -apple-system, system-ui, sans-serif;
+  }
+
+  /* The ground: the brand's own painted world, the phone stands in it */
+  .nm-ground {
+    position: absolute;
+    inset: 0;
+  }
+  .nm-ground__art {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Stage with gutters: centered, inset from both sides, off the bottom */
+  .nm-phone {
+    position: absolute;
+    top: 36px;
+    left: 140px;
+    filter: drop-shadow(0 30px 40px rgba(10, 40, 20, 0.35));
+  }
+
+  /* ---- The app, in screen points ---- */
+  .nm-app {
+    position: absolute;
+    inset: 0;
+    background: var(--nm-paper);
+    color: var(--nm-forest);
+  }
+
+  .nm-scene {
+    position: absolute;
+    top: 60px;
+    left: 12px;
+    right: 12px;
+    height: 236px;
+    overflow: hidden;
+    border-radius: 34px;
+  }
+  .nm-scene__art {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .nm-chip {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px 8px 12px;
+    border-radius: 999px;
+    background: rgba(251, 246, 236, 0.88);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .nm-chip__bird {
+    width: 20px;
+    height: 20px;
+  }
+
+  .nm-card {
+    position: absolute;
+    top: 236px;
+    left: 24px;
+    right: 24px;
+    padding: 24px 24px 24px;
+    border-radius: 30px;
+    background: #fffdf8;
+    box-shadow: 0 1px 2px rgba(23, 64, 31, 0.06), 0 24px 48px -28px rgba(23, 64, 31, 0.4);
+  }
+  .nm-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--nm-ink3);
+  }
+  .nm-dot {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--nm-gold);
+  }
+  .nm-title {
+    display: block;
+    margin-top: 10px;
+    font-size: 40px;
+    line-height: 1.05;
+    font-weight: 600;
+    letter-spacing: -0.035em;
+  }
+
+  /* The step and the question share one slot; they cross with a soft blur */
+  .nm-swap {
+    position: relative;
+    margin-top: 16px;
+    height: 112px;
+  }
+  .nm-step,
+  .nm-ask {
+    position: absolute;
+    inset: 0 0 auto 0;
+    transition: opacity 260ms var(--nm-ease), filter 260ms var(--nm-ease), transform 260ms var(--nm-ease);
+  }
+  .nm-step {
+    display: grid;
+    gap: 6px;
+    padding: 18px 20px;
+    border-radius: 22px;
+    background: #f1ebdd;
+  }
+  .nm-step__meta {
+    font-size: 15px;
+    color: var(--nm-ink3);
+  }
+  .nm-step__text {
+    font-size: 21px;
+    line-height: 1.3;
+    font-weight: 600;
+    letter-spacing: -0.012em;
+  }
+  .nm-ask {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(6px);
+  }
+  .nm-swap[data-ask] .nm-step {
+    opacity: 0;
+    filter: blur(4px);
+  }
+  .nm-swap[data-ask] .nm-ask {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+  .nm-ask__ok {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 21px;
+    font-weight: 600;
+    color: #23944a;
+  }
+  .nm-ask__q {
+    display: block;
+    margin-top: 4px;
+    font-size: 19px;
+    color: var(--nm-ink2);
+  }
+  .nm-ask__row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 18px;
+  }
+  .nm-btn {
+    display: grid;
+    place-items: center;
+    height: 60px;
+    border-radius: 999px;
+    font-size: 18px;
+    font-weight: 600;
+    transition: transform 160ms var(--nm-ease);
+  }
+  .nm-btn[data-pressed] {
+    transform: scale(0.96);
+  }
+  .nm-btn--quiet {
+    background: #f1ebdd;
+  }
+  .nm-btn--gold {
+    background: var(--nm-gold);
+  }
+
+  /* Press and hold: the fill carries its own copy of the label */
+  .nm-hold {
+    position: absolute;
+    top: 548px;
+    left: 24px;
+    right: 24px;
+    height: 66px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--nm-forest);
+    color: var(--nm-cream);
+    font-size: 19px;
+    font-weight: 600;
+    transition: transform 200ms var(--nm-ease), opacity 260ms var(--nm-ease);
+  }
+  .nm-hold[data-holding] {
+    transform: scale(0.985);
+  }
+  .nm-hold[data-gone],
+  .nm-hint[data-gone] {
+    opacity: 0;
+  }
+  .nm-hold__label,
+  .nm-hold__fill {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .nm-hold__fill {
+    background: var(--nm-gold);
+    color: var(--nm-forest);
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 220ms var(--nm-ease);
+  }
+  .nm-hold[data-holding] .nm-hold__fill {
+    clip-path: inset(0 0 0 0);
+    transition: clip-path 720ms linear;
+  }
+  .nm-answer {
+    position: absolute;
+    top: 548px;
+    left: 24px;
+    right: 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    opacity: 0;
+    transform: translateY(8px);
+    pointer-events: none;
+    transition: opacity 260ms var(--nm-ease) 120ms, transform 260ms var(--nm-ease) 120ms;
+    will-change: transform;
+  }
+  .nm-answer[data-on] {
+    opacity: 1;
+    transform: none;
+  }
+  .nm-answer .nm-btn {
+    height: 66px;
+    font-size: 19px;
+  }
+  .nm-hint {
+    position: absolute;
+    top: 624px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 15px;
+    color: var(--nm-ink3);
+    transition: opacity 260ms var(--nm-ease);
+  }
+
+  /* Done: a forest bloom from where the thumb was */
+  .nm-done {
+    position: absolute;
+    inset: 0;
+    background: var(--nm-forest);
+    color: var(--nm-cream);
+    clip-path: circle(0% at 70% 70%);
+    transition: clip-path 560ms var(--nm-ease);
+  }
+  .nm-done[data-on] {
+    clip-path: circle(150% at 70% 70%);
+  }
+  .nm-done__scene {
+    position: absolute;
+    top: 60px;
+    left: 12px;
+    right: 12px;
+    height: 330px;
+    overflow: hidden;
+    border-radius: 34px;
+  }
+  .nm-done__word {
+    position: absolute;
+    top: 430px;
+    left: 32px;
+    font-size: 84px;
+    line-height: 1;
+    font-weight: 600;
+    letter-spacing: -0.05em;
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(6px);
+    transition: opacity 420ms var(--nm-ease) 180ms, transform 420ms var(--nm-ease) 180ms, filter 420ms var(--nm-ease) 180ms;
+  }
+  .nm-done__word i {
+    font-style: normal;
+    color: var(--nm-gold);
+  }
+  .nm-done__task {
+    position: absolute;
+    top: 530px;
+    left: 34px;
+    font-size: 22px;
+    font-weight: 500;
+    color: rgba(251, 246, 236, 0.8);
+    opacity: 0;
+    transition: opacity 360ms ease 320ms;
+  }
+  .nm-done__note {
+    position: absolute;
+    top: 574px;
+    left: 34px;
+    font-size: 18px;
+    color: #ffd966;
+    opacity: 0;
+    transition: opacity 360ms ease 900ms;
+  }
+  .nm-done[data-on] .nm-done__word {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  .nm-done[data-on] .nm-done__task,
+  .nm-done[data-on] .nm-done__note {
+    opacity: 1;
+  }
+
+  /* The morning reminder drops in under the island */
+  .nm-banner {
+    position: absolute;
+    inset: 0 0 auto 0;
+    z-index: 3;
+    will-change: transform;
+    transform: translateY(-140px);
+    opacity: 0;
+    transition: transform 520ms cubic-bezier(0.32, 0.72, 0, 1), opacity 300ms ease;
+  }
+  .nm-banner[data-on] {
+    transform: none;
+    opacity: 1;
+  }
+  .nm-banner .ss-notification {
+    animation: none;
+  }
+  .nm-icon {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 22%;
+    background: var(--nm-forest);
+  }
+  .nm-icon__bird {
+    width: 74%;
+    height: 74%;
+  }
+
+  /* The phone sleeps, and wakes to the next morning */
+  .nm-sleep {
+    position: absolute;
+    inset: 0;
+    background: #000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 500ms ease;
+  }
+  .nm-sleep[data-on] {
+    opacity: 1;
+  }
+
+  /* Landscape motion: stones glow, Nudge flies on and hovers */
+  .nmls-bird {
+    transition: transform 900ms cubic-bezier(0.34, 1.3, 0.64, 1);
+  }
+  .nmls-bob {
+    animation: nm-bob 2.4s ease-in-out infinite;
+  }
+  .nm-flap {
+    transform-box: view-box;
+    animation: nm-flap 160ms ease-in-out infinite;
+  }
+  .nm-flap-b {
+    transform-box: view-box;
+    animation: nm-flap 160ms ease-in-out 40ms infinite;
+  }
+
+  /* Compact: the same phone, a little smaller, whole across */
+  &[data-layout="compact"] .nm-phone,
+  & .ss-stage[data-layout="compact"] .nm-phone {
+    left: 16px;
+  }
+}
+
+@keyframes nm-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+@keyframes nm-flap {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-38deg) scaleY(0.6); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nm .nmls-bob,
+  .nm .nm-flap,
+  .nm .nm-flap-b {
+    animation: none;
+  }
+}

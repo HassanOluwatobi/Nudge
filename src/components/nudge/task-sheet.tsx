@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Feather, Plus, Star, Trash2 } from "lucide-react";
+import { Bell, Feather, Plus, Star, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { type Bucket, EST_OPTIONS, type Task } from "@/lib/nudge";
+import { addDays, type Bucket, EST_OPTIONS, prettyDue, type Task, ymd } from "@/lib/nudge";
+import { remindChoices, remindOnce } from "@/lib/reminders";
 import type { Actions } from "@/lib/use-nudge";
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
 import { DoneCircle } from "./done-circle";
@@ -15,6 +16,8 @@ const BUCKETS: { id: Bucket; label: string }[] = [
   { id: "week", label: "This week" },
   { id: "later", label: "Later" },
 ];
+
+const EST_TEXT: Record<string, string> = { "15m": "15 min", "30m": "30 min", "1h": "1 hour", "2h": "2 hours", "half day": "Half a day", day: "A full day" };
 
 const Label = ({ children }: { children: React.ReactNode }) => (
   <p className="mb-2 text-xs font-medium text-muted-foreground">{children}</p>
@@ -40,6 +43,9 @@ export function TaskSheet({
 
 function SheetBody({ task, actions, onClose }: { task: Task; actions: Actions; onClose: () => void }) {
   const [sub, setSub] = useState("");
+  const [title, setTitle] = useState(task.title);
+  const [reminded, setReminded] = useState<string | null>(null);
+  const today = ymd();
   const done = task.bucket === "done";
 
   return (
@@ -62,8 +68,14 @@ function SheetBody({ task, actions, onClose }: { task: Task; actions: Actions; o
           />
         </div>
         <textarea
-          value={task.title}
-          onChange={(e) => actions.patchTask(task.id, { title: e.target.value.replace(/\n/g, " ") })}
+          value={title}
+          maxLength={140}
+          onChange={(e) => {
+            const v = e.target.value.replace(/\n/g, " ");
+            setTitle(v);
+            if (v.trim()) actions.patchTask(task.id, { title: v });
+          }}
+          onBlur={() => !title.trim() && setTitle(task.title)}
           rows={1}
           aria-label="Task title"
           className="field-sizing-content min-h-10 w-full resize-none bg-transparent font-serif text-[24px] leading-tight tracking-tight outline-none"
@@ -73,7 +85,7 @@ function SheetBody({ task, actions, onClose }: { task: Task; actions: Actions; o
       {!done && (
         <>
           <div className="mt-5">
-            <Label>First step, under 15 minutes</Label>
+            <Label>First step (keep it small)</Label>
             <div className="rounded-2xl bg-calm/70 p-3">
               <textarea
                 value={task.step}
@@ -123,9 +135,9 @@ function SheetBody({ task, actions, onClose }: { task: Task; actions: Actions; o
             </button>
           </div>
 
-          <div className="mt-5 grid grid-cols-[1fr_auto] gap-4">
+          <div className="mt-5 flex flex-col gap-4">
             <div>
-              <Label>Size</Label>
+              <Label>Whole task takes about</Label>
               <div className="flex flex-wrap gap-1.5">
                 {EST_OPTIONS.map((e) => (
                   <button
@@ -134,24 +146,66 @@ function SheetBody({ task, actions, onClose }: { task: Task; actions: Actions; o
                     onClick={() => actions.patchTask(task.id, { est: task.est === e ? undefined : e })}
                     aria-pressed={task.est === e}
                     className={cn(
-                      "h-8 rounded-full px-3 text-xs font-medium transition-colors",
+                      "h-10 rounded-full px-3.5 text-[13px] font-medium transition-colors",
                       task.est === e ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-accent"
                     )}
                   >
-                    {e}
+                    {EST_TEXT[e]}
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <Label>Date</Label>
-              <input
-                type="date"
-                value={task.due ?? ""}
-                onChange={(e) => actions.patchTask(task.id, { due: e.target.value || undefined })}
-                aria-label="Due date"
-                className="h-8 rounded-full bg-muted px-3 text-xs font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
-              />
+              <Label>When is it due?</Label>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {(
+                  [
+                    ["Today", today],
+                    ["Tomorrow", addDays(today, 1)],
+                    ["Next week", addDays(today, 7)],
+                    ["No date", undefined],
+                  ] as [string, string | undefined][]
+                ).map(([l, d]) => (
+                  <button
+                    key={l}
+                    type="button"
+                    onClick={() => actions.patchTask(task.id, { due: d })}
+                    aria-pressed={task.due === d}
+                    className={cn("h-10 rounded-full px-3.5 text-[13px] font-medium transition-colors", task.due === d ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-accent")}
+                  >
+                    {l}
+                  </button>
+                ))}
+                <input
+                  type="date"
+                  value={task.due ?? ""}
+                  onChange={(e) => actions.patchTask(task.id, { due: e.target.value || undefined })}
+                  aria-label="Pick a date"
+                  className="h-10 rounded-full bg-muted px-3 text-[13px] font-medium outline-none focus-visible:ring-3 focus-visible:ring-ring/40"
+                />
+              </div>
+              {task.due && <p className="mt-1.5 text-[13px] text-muted-foreground">Due {prettyDue(task.due, today)}</p>}
+            </div>
+            <div>
+              <Label>Remind me</Label>
+              <div className="flex flex-wrap gap-1.5">
+                {remindChoices().map((c) => (
+                  <button
+                    key={c.label}
+                    type="button"
+                    onClick={() => {
+                      remindOnce(task.title, c.when);
+                      setReminded(c.label);
+                    }}
+                    className="inline-flex h-10 items-center gap-1.5 rounded-full bg-muted px-3.5 text-[13px] font-medium hover:bg-accent"
+                  >
+                    <Bell className="size-3.5" /> {c.label}
+                  </button>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[13px] text-muted-foreground">
+                {reminded ? `Added to your calendar: ${reminded.toLowerCase()}.` : "Your phone's calendar will remind you."}
+              </p>
             </div>
           </div>
         </>
