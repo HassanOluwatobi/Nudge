@@ -9,6 +9,7 @@ import type { Actions } from "@/lib/use-tasks";
 import { feel } from "@/lib/feedback";
 import { InstallCard } from "./install";
 import { BreakItDown } from "./breakdown";
+import { GoogleRow } from "./import";
 import { type Kind, QuickCapture } from "./quick-capture";
 import { EntryList } from "./ideas";
 import { TaskRow, Tile, DoneList } from "./task-row";
@@ -68,6 +69,7 @@ export function Today({
   onAddTo,
   onSettings,
   onOpen,
+  onGoogleSetup,
   onMenu,
   view,
   onView,
@@ -84,6 +86,7 @@ export function Today({
   onAddTo: (part: Part) => void;
   onSettings: () => void;
   onOpen: (t: Task) => void;
+  onGoogleSetup?: () => void;
   onMenu: (t: Task) => void;
   view: Kind;
   onView: (v: Kind) => void;
@@ -242,6 +245,7 @@ export function Today({
       )}
 
       <InstallCard />
+      {onGoogleSetup && <GoogleRow state={state} actions={actions} onSetup={onGoogleSetup} />}
 
       {ideasBack > 0 && (
         <button type="button" onClick={() => (onView("idea"), feel("tap"))} className="mt-3 flex min-h-[52px] w-full items-center gap-3 rounded-[18px] bg-white px-3 text-left ring-1 ring-line">

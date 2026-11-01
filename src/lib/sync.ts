@@ -3,8 +3,10 @@
 /*
   Bring events in from the calendars people already use.
 
-  Google and Outlook: read-only sign-in in the browser. The access token lives
-  in memory only and expires within the hour.
+  Google and Outlook: read-only sign-in in the browser. Google's access token is
+  kept on this phone until it expires (about an hour), so the app checks quietly
+  each time it opens. For a connection that never needs a tap, Google's private
+  calendar address can be pasted once and is read through the stateless relay.
   Apple and any other calendar: import an .ics file. Nothing leaves the device.
   Notion and Calendly: they block browsers from calling them directly, so a
   small NudgeMe relay forwards the request with the person's own token and
@@ -12,7 +14,7 @@
 */
 
 export type Source = "google" | "outlook" | "ics" | "notion" | "calendly";
-export type ExtEvent = { src: Source; id: string; title: string; start: Date; end?: Date; allDay: boolean };
+export type ExtEvent = { src: Source; id: string; title: string; start: Date; end?: Date; allDay: boolean; rec?: boolean };
 
 export const SOURCE_NAME: Record<Source, string> = { google: "Google Calendar", outlook: "Outlook", ics: "Apple Calendar", notion: "Notion", calendly: "Calendly" };
 
@@ -29,7 +31,7 @@ const range = () => {
 
 // ---------- Google ----------
 type GTokenClient = { requestAccessToken: (o?: { prompt?: string }) => void };
-type GIS = { accounts: { oauth2: { initTokenClient: (c: { client_id: string; scope: string; callback: (r: { access_token?: string; error?: string }) => void; error_callback?: (e: unknown) => void }) => GTokenClient } } };
+type GIS = { accounts: { oauth2: { initTokenClient: (c: { client_id: string; scope: string; callback: (r: { access_token?: string; expires_in?: number; error?: string }) => void; error_callback?: (e: unknown) => void }) => GTokenClient } } };
 
 let gisLoading: Promise<GIS> | null = null;
 function loadGis(): Promise<GIS> {
@@ -47,32 +49,73 @@ function loadGis(): Promise<GIS> {
   return gisLoading;
 }
 
+const G_KEY = "nudgeme.gtoken";
 let googleToken: { value: string; exp: number } | null = null;
+function readToken() {
+  if (googleToken) return googleToken;
+  try {
+    const t = JSON.parse(localStorage.getItem(G_KEY) ?? "null") as { value?: string; exp?: number } | null;
+    if (t?.value && typeof t.exp === "number") googleToken = { value: t.value, exp: t.exp };
+  } catch {
+    // Storage can be off in private browsing. A tap still works.
+  }
+  return googleToken;
+}
+function saveToken(t: { value: string; exp: number } | null) {
+  googleToken = t;
+  try {
+    if (t) localStorage.setItem(G_KEY, JSON.stringify(t));
+    else localStorage.removeItem(G_KEY);
+  } catch {
+    /* fine */
+  }
+}
+/** True while the last Google sign-in is still good, so no tap is needed. */
+export const googleReady = () => {
+  const t = readToken();
+  return !!t && t.exp > Date.now();
+};
+export const googleSignOut = () => saveToken(null);
+/** When Google Calendar was last checked, in ms. 0 if never. */
+export const googleLast = () => {
+  try {
+    return Number(localStorage.getItem("nudgeme.glast")) || 0;
+  } catch {
+    return 0;
+  }
+};
 
-/** Must run from a tap: Google opens a small sign-in window. */
-export async function googleEvents(): Promise<ExtEvent[]> {
+/** With interactive on, this must run from a tap: Google may open a small window. */
+export async function googleEvents(interactive = true): Promise<ExtEvent[]> {
   if (!GOOGLE_CLIENT_ID) throw new Error("Google is not set up yet.");
-  if (!googleToken || googleToken.exp < Date.now()) {
+  if (!googleReady()) {
+    if (!interactive) throw new Error("Tap to check Google Calendar.");
     const gis = await loadGis();
-    const token = await new Promise<string>((res, rej) => {
+    const token = await new Promise<{ value: string; exp: number }>((res, rej) => {
       const c = gis.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID,
         scope: "https://www.googleapis.com/auth/calendar.events.readonly",
-        callback: (r) => (r.access_token ? res(r.access_token) : rej(new Error(r.error ?? "Google sign-in was cancelled."))),
+        callback: (r) => (r.access_token ? res({ value: r.access_token, exp: Date.now() + Math.max(60, (r.expires_in ?? 3600) - 300) * 1000 }) : rej(new Error(r.error ?? "Google sign-in was cancelled."))),
         error_callback: () => rej(new Error("Google sign-in was closed.")),
       });
       c.requestAccessToken({ prompt: "" });
     });
-    googleToken = { value: token, exp: Date.now() + 50 * 60_000 };
+    saveToken(token);
   }
+  const googleToken = readToken()!;
   const { from, to } = range();
   const q = new URLSearchParams({ timeMin: from.toISOString(), timeMax: to.toISOString(), singleEvents: "true", orderBy: "startTime", maxResults: "100" });
   const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${q}`, { headers: { Authorization: `Bearer ${googleToken.value}` } });
   if (r.status === 401) {
-    googleToken = null;
+    saveToken(null);
     throw new Error("Google sign-in expired. Try again.");
   }
   if (!r.ok) throw new Error("Google Calendar did not answer.");
+  try {
+    localStorage.setItem("nudgeme.glast", String(Date.now()));
+  } catch {
+    /* fine */
+  }
   const j = (await r.json()) as { items?: { id: string; summary?: string; status?: string; start?: { dateTime?: string; date?: string }; end?: { dateTime?: string; date?: string } }[] };
   return (j.items ?? [])
     .filter((e) => e.status !== "cancelled" && e.summary)
@@ -152,6 +195,22 @@ export async function linkEvents(url: string): Promise<ExtEvent[]> {
   return parseIcs(await r.text());
 }
 
+/** Is this Google's private calendar address? */
+export const isGoogleLink = (url: string) => /(^|\.)google\.com\//i.test(url.replace(/^\w+:\/\//, "").replace(/\/.*/, "") + "/");
+
+/**
+ * Google's private address. Events get the same ids the Google sign-in uses,
+ * so connecting both ways never makes doubles.
+ */
+export async function googleLinkEvents(url: string): Promise<ExtEvent[]> {
+  const list = await linkEvents(url);
+  const stamp = (d: Date, allDay: boolean) => (allDay ? `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}` : d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, ""));
+  return list.map((e) => {
+    const base = e.id.replace(/@google\.com$/i, "");
+    return { ...e, src: "google" as const, id: e.rec ? `${base}_${stamp(e.start, e.allDay)}` : base };
+  });
+}
+
 export function parseIcs(text: string): ExtEvent[] {
   const unfolded = text.replace(/\r?\n[ \t]/g, "");
   const out: ExtEvent[] = [];
@@ -173,7 +232,7 @@ export function parseIcs(text: string): ExtEvent[] {
       if (step) while (when < from) when = new Date(when.getTime() + step * 864e5);
     }
     if (when < from || when > to) continue;
-    out.push({ src: "ics", id: get("UID") ?? `${title}-${when.getTime()}`, title, start: when, end: e ? new Date(when.getTime() + (e.d.getTime() - s.d.getTime())) : undefined, allDay: s.allDay });
+    out.push({ src: "ics", rec: !!rrule, id: get("UID") ?? `${title}-${when.getTime()}`, title, start: when, end: e ? new Date(when.getTime() + (e.d.getTime() - s.d.getTime())) : undefined, allDay: s.allDay });
   }
   return out.sort((a, b) => a.start.getTime() - b.start.getTime()).slice(0, 100);
 }

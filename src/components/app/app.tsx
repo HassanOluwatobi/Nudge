@@ -7,7 +7,7 @@ import { feel, installTapHaptics, setFeedback } from "@/lib/feedback";
 import { notify, setBadge } from "@/lib/reminders";
 import { type Bucket, type Part, type Task, doneToday, hhmmToday, suggestion, todayTasks, ymd } from "@/lib/tasks";
 import { useBackClose } from "@/lib/use-back";
-import { type ExtEvent, type Source, calendlyEvents, linkEvents, extKey, outlookEvents } from "@/lib/sync";
+import { type ExtEvent, type Source, calendlyEvents, extKey, googleEvents, googleLinkEvents, googleReady, linkEvents, notionEvents, outlookEvents } from "@/lib/sync";
 import { useKeyboardInset } from "@/lib/use-keyboard";
 import { useTasks } from "@/lib/use-tasks";
 import { Art } from "./art";
@@ -180,25 +180,47 @@ export function NudgeApp() {
     return () => timers.forEach(clearTimeout);
   }, [state]);
 
-  // Quietly check connected calendars once per visit. Google needs a tap, so it gets a button instead.
-  const synced = useRef(false);
-  useEffect(() => {
-    if (!state || synced.current) return;
-    synced.current = true;
-    const y = state.settings.sync;
+  // Quietly check connected calendars when the app opens, and again when you come back to it.
+  // New events land as tasks on their own. Google checks too while its sign-in is still good.
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const lastPull = useRef(0);
+  const pull = useCallback(() => {
+    const st = stateRef.current;
+    if (!st || Date.now() - lastPull.current < 10 * 60_000) return;
+    lastPull.current = Date.now();
+    const y = st.settings.sync;
     const jobs: Promise<ExtEvent[]>[] = [];
+    if (y.gics) jobs.push(googleLinkEvents(y.gics).catch(() => []));
+    else if (y.google && googleReady()) jobs.push(googleEvents(false).catch(() => []));
     if (y.outlook) jobs.push(outlookEvents(false).catch(() => []));
     if (y.calendly) jobs.push(calendlyEvents(y.calendly).catch(() => []));
+    if (y.notion) jobs.push(notionEvents(y.notion).catch(() => []));
     if (y.ics) jobs.push(linkEvents(y.ics).catch(() => []));
     if (!jobs.length) return;
     Promise.all(jobs).then((lists) => {
-      const known = new Set([...state.tasks.map((t) => t.ext).filter(Boolean), ...(y.skipped ?? [])] as string[]);
-      const fresh = lists.flat().filter((e) => !known.has(extKey(e)));
+      const now = stateRef.current ?? st;
+      const known = new Set([...now.tasks.map((t) => t.ext).filter(Boolean), ...(now.settings.sync.skipped ?? [])] as string[]);
+      const seen = new Set<string>();
+      const fresh = lists.flat().filter((e) => {
+        const k = extKey(e);
+        if (known.has(k) || seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
       if (!fresh.length) return;
       actions.importEvents(fresh.map((e) => ({ key: extKey(e), title: e.title, start: e.start, end: e.end, allDay: e.allDay })));
       toast(`Added ${fresh.length} ${fresh.length === 1 ? "event" : "events"} from your calendar.`);
     });
-  }, [state]);
+  }, [actions]);
+  const ready = !!state;
+  useEffect(() => {
+    if (!ready) return;
+    pull();
+    const onShow = () => document.visibilityState === "visible" && pull();
+    document.addEventListener("visibilitychange", onShow);
+    return () => document.removeEventListener("visibilitychange", onShow);
+  }, [ready, pull]);
 
   if (!state) {
     return <div className="min-h-dvh bg-paper" aria-busy="true" />;
@@ -263,7 +285,7 @@ export function NudgeApp() {
         ) : (
           <motion.div key={tab} custom={dir} variants={tabMotion} initial="enter" animate="center" exit="exit" transition={{ type: "spring", bounce: 0, duration: 0.34 }}>
             {tab === "today" && (
-              <Today {...common} {...themeProps} view={homeView} onView={setHomeView} onAddTo={(part) => setCapture({ part, bucket: "today" })} onFocus={startFocus} onCheckin={setCheckin} />
+              <Today {...common} {...themeProps} onGoogleSetup={() => setImporter({ source: "google" })} view={homeView} onView={setHomeView} onAddTo={(part) => setCapture({ part, bucket: "today" })} onFocus={startFocus} onCheckin={setCheckin} />
             )}
             {tab === "todo" && <Todo {...common} {...themeProps} onAddTo={(bucket) => setCapture({ bucket })} />}
             {tab === "focus" && <Focus {...themeProps} onSettings={() => setSettings(true)} onHelp={() => setGuide(true)} state={state} actions={actions} announce={announce} taskId={focusId === null ? undefined : (focusId ?? suggestion(state)?.id)} onPickTask={(id) => (setFocusId(id ?? null), state.meta.timer && actions.stopTimer())} onFinished={finished} />}

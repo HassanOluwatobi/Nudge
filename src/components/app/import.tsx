@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { feel } from "@/lib/feedback";
-import { type ExtEvent, type Source, GOOGLE_CLIENT_ID, MS_CLIENT_ID, SOURCE_NAME, calendlyEvents, extKey, linkEvents, googleEvents, notionEvents, outlookEvents, outlookSignOut, parseIcs } from "@/lib/sync";
+import { type ExtEvent, type Source, GOOGLE_CLIENT_ID, MS_CLIENT_ID, SOURCE_NAME, calendlyEvents, extKey, linkEvents, googleEvents, googleLast, googleLinkEvents, googleReady, googleSignOut, isGoogleLink, notionEvents, outlookEvents, outlookSignOut, parseIcs } from "@/lib/sync";
 import type { State } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { AppleMark, CalendlyMark, GoogleMark, LogoTile, NotionMark, OutlookMark } from "./brands";
@@ -15,8 +15,7 @@ export { CalendlyMark, NotionMark } from "./brands";
 
 export const MARK: Record<Source, (p: { className?: string }) => React.ReactElement> = { google: GoogleMark, outlook: OutlookMark, ics: AppleMark, notion: NotionMark, calendly: CalendlyMark };
 // Outlook shows up once its app ID is set. Until then, Outlook users import a file.
-// Notion is left out: connecting it took too many technical steps.
-export const SOURCES: Source[] = (["google", "outlook", "ics", "calendly"] as Source[]).filter((s) => s !== "outlook" || !!MS_CLIENT_ID);
+export const SOURCES: Source[] = (["google", "outlook", "ics", "notion", "calendly"] as Source[]).filter((s) => s !== "outlook" || !!MS_CLIENT_ID);
 
 const SUB: Record<Source, string> = {
   google: "Next two weeks of events",
@@ -34,9 +33,60 @@ const TILE: Record<Source, { el: React.ReactNode; bleed: boolean }> = {
   calendly: { el: <CalendlyMark className="size-7" />, bleed: false },
 };
 
+/**
+ * One tap on Home when Google needs a fresh sign-in. It shows only when Google
+ * has not been checked for a few hours, and goes away once it has.
+ */
+export function GoogleRow({ state, actions, onSetup }: { state: State; actions: Actions; onSetup: () => void }) {
+  const y = state.settings.sync;
+  const [due, setDue] = useState(false);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    const check = () => setDue(!!GOOGLE_CLIENT_ID && !!y.google && !y.gics && !googleReady() && Date.now() - googleLast() > 3 * 3600_000);
+    check();
+    const id = setInterval(check, 60_000);
+    return () => clearInterval(id);
+  }, [y.google, y.gics]);
+  if (!due) return null;
+  const go = async () => {
+    setBusy(true);
+    try {
+      const list = await googleEvents(true);
+      const known = new Set([...state.tasks.map((t) => t.ext).filter(Boolean), ...(y.skipped ?? [])] as string[]);
+      const fresh = list.filter((e) => !known.has(extKey(e)));
+      if (fresh.length) actions.importEvents(fresh.map((e) => ({ key: extKey(e), title: e.title, start: e.start, end: e.end, allDay: e.allDay })));
+      feel(fresh.length ? "save" : "tick", fresh.length ? "success" : "light");
+      toast(fresh.length ? `Added ${fresh.length} ${fresh.length === 1 ? "event" : "events"} from Google Calendar.` : "You're up to date with Google Calendar.");
+      setDue(false);
+    } catch (e) {
+      toast(e instanceof Error ? e.message : "Google Calendar did not answer.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="mt-3 flex items-center gap-3 rounded-[18px] bg-white py-2 pl-3 pr-2 ring-1 ring-line">
+      <LogoTile size={32}>
+        <GoogleMark className="size-[18px]" />
+      </LogoTile>
+      <div className="min-w-0 flex-1">
+        <button type="button" onClick={go} disabled={busy} className="block w-full text-left text-[15px] font-semibold leading-tight">
+          Any new events in Google?
+        </button>
+        <button type="button" onClick={onSetup} className="t-small block text-signal-ink">
+          Make it automatic
+        </button>
+      </div>
+      <button type="button" onClick={go} disabled={busy} className="btn btn-line min-h-9 px-3.5 text-[14px]">
+        {busy ? <Loader2 className="size-4 animate-spin" /> : "Check"}
+      </button>
+    </motion.div>
+  );
+}
+
 /** A grouped list of sources, used in Settings and the import sheet. */
 export function SourceButtons({ state, onPick }: { state: State; onPick: (s: Source) => void }) {
-  const on = (s: Source) => (s === "google" ? state.settings.sync.google : s === "outlook" ? state.settings.sync.outlook : s === "notion" ? !!state.settings.sync.notion : s === "calendly" ? !!state.settings.sync.calendly : !!state.settings.sync.ics);
+  const on = (s: Source) => (s === "google" ? !!(state.settings.sync.google || state.settings.sync.gics) : s === "outlook" ? state.settings.sync.outlook : s === "notion" ? !!state.settings.sync.notion : s === "calendly" ? !!state.settings.sync.calendly : !!state.settings.sync.ics);
   return (
     <ul className="overflow-hidden rounded-[20px] bg-white ring-1 ring-line">
       {SOURCES.map((s, i) => (
@@ -91,6 +141,7 @@ export function ImportSheet({
   const [err, setErr] = useState("");
   const [token, setToken] = useState("");
   const [link, setLink] = useState(state.settings.sync.ics ?? "");
+  const [glink, setGlink] = useState(state.settings.sync.gics ?? "");
   const file = useRef<HTMLInputElement>(null);
 
   const have = new Set(state.tasks.map((t) => t.ext).filter(Boolean) as string[]);
@@ -231,19 +282,84 @@ export function ImportSheet({
             <div className="mt-2 flex items-center gap-3">
               <LogoTile bleed={TILE[source].bleed} size={48}>{TILE[source].el}</LogoTile>
               <p className="t-small flex-1 text-ink-2">
-                {source === "google" && "Sign in with Google and allow read-only access. The sign-in lasts about an hour and is never saved."}
+                {source === "google" && "Sign in once. NudgeMe then checks your calendar when you open it and adds new events as tasks. It only reads, it never changes anything."}
                 {source === "outlook" && "Sign in with your Microsoft account and allow read-only access to your calendar."}
                 {source === "ics" && "Share a calendar from your iPhone as a link, once. NudgeMe reads it and never changes it."}
-                {source === "notion" && "Connect a Notion database that has a date column. Each page with a date in the next two weeks can become a task."}
+                {source === "notion" && "Any Notion database with a date column works. Pages dated in the next two weeks turn into tasks."}
                 {source === "calendly" && "Bring in the meetings people have booked with you."}
               </p>
             </div>
 
             {source === "google" &&
               (GOOGLE_CLIENT_ID ? (
-                <button type="button" className="btn btn-signal mt-5 w-full" disabled={busy} onClick={() => run(googleEvents, () => actions.setSync({ google: true }))}>
-                  {busy ? <Loader2 className="size-5 animate-spin" /> : state.settings.sync.google ? "Check Google Calendar" : "Connect Google Calendar"}
-                </button>
+                <>
+                  {!state.settings.sync.gics && (
+                    <button type="button" className="btn btn-signal mt-5 w-full" disabled={busy} onClick={() => run(() => googleEvents(true), () => actions.setSync({ google: true }))}>
+                      {busy ? <Loader2 className="size-5 animate-spin" /> : state.settings.sync.google ? "Check Google Calendar now" : "Connect Google Calendar"}
+                    </button>
+                  )}
+                  {(state.settings.sync.google || state.settings.sync.gics) && (
+                    <div className="mt-5 rounded-[20px] bg-white p-4 ring-1 ring-line">
+                      {state.settings.sync.gics ? (
+                        <>
+                          <p className="flex items-center gap-1.5 text-[15px] font-semibold text-signal-ink">
+                            <Check className="size-4" strokeWidth={2.6} /> Fully automatic
+                          </p>
+                          <p className="t-small mt-1 text-ink-2">New events show up as tasks every time you open NudgeMe. No sign-in needed.</p>
+                          <button type="button" className="btn btn-signal mt-4 w-full" disabled={busy} onClick={() => run(() => googleLinkEvents(state.settings.sync.gics!))}>
+                            {busy ? <Loader2 className="size-5 animate-spin" /> : "Check now"}
+                          </button>
+                          <button type="button" className="btn btn-quiet mt-1 w-full text-[14px]" onClick={() => (actions.setSync({ gics: undefined }), setGlink(""), toast("Private address removed."))}>
+                            Remove the private address
+                          </button>
+                        </>
+                      ) : (
+                        <form
+                          onSubmit={(e) => {
+                            e.preventDefault();
+                            const u = glink.trim();
+                            if (!u) return;
+                            if (!isGoogleLink(u)) {
+                              setErr("That isn't a Google Calendar address. It should start with https://calendar.google.com");
+                              return;
+                            }
+                            run(() => googleLinkEvents(u), () => actions.setSync({ gics: u, google: true }));
+                          }}
+                        >
+                          <p className="text-[15px] font-semibold">Never sign in again</p>
+                          <p className="t-small mt-1 text-ink-2">Google makes the sign-in run out after an hour. Paste your calendar&apos;s private address once and NudgeMe keeps up on its own.</p>
+                          <ol className="mt-3 space-y-2.5">
+                            {[
+                              "On a computer, open calendar.google.com.",
+                              "Click the gear at the top, then Settings.",
+                              "On the left, click your calendar under Settings for my calendars.",
+                              "Scroll to Secret address in iCal format and copy it.",
+                              "Paste it below.",
+                            ].map((t, i) => (
+                              <li key={i} className="flex gap-2.5 text-[14px] leading-snug text-ink-2">
+                                <span className="grid size-5 shrink-0 place-items-center rounded-full bg-paper text-[11px] font-semibold tabular-nums text-ink ring-1 ring-line">{i + 1}</span>
+                                <span>{t}</span>
+                              </li>
+                            ))}
+                          </ol>
+                          <label htmlFor="g-link" className="t-small mt-4 block font-semibold text-ink-2">
+                            Private address
+                          </label>
+                          <input id="g-link" value={glink} onChange={(e) => setGlink(e.target.value)} inputMode="url" autoCapitalize="off" autoCorrect="off" spellCheck={false} placeholder="https://calendar.google.com/calendar/ical/…" className="field mt-1.5 text-[16px]" />
+                          <p className="t-small mt-2 text-ink-3">Anyone with this address can see your calendar, so keep it to yourself. It stays on this phone.</p>
+                          <button type="submit" className="btn btn-signal mt-4 w-full" disabled={busy || !glink.trim()}>
+                            {busy ? <Loader2 className="size-5 animate-spin" /> : "Make it automatic"}
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  )}
+                  {(state.settings.sync.google || state.settings.sync.gics) && (
+                    <button type="button" className="btn btn-quiet mt-2 w-full text-[14px]" onClick={() => (googleSignOut(), actions.setSync({ google: false, gics: undefined }), setGlink(""), toast("Google Calendar disconnected."))}>
+                      Disconnect Google Calendar
+                    </button>
+                  )}
+                </>
               ) : (
                 <SetupNote name="Google" />
               ))}
@@ -339,10 +455,10 @@ export function ImportSheet({
                         <a className="font-medium text-signal-ink underline" href="https://www.notion.so/my-integrations" target="_blank" rel="noopener noreferrer">
                           notion.so/my-integrations
                         </a>{" "}
-                        and create an integration.
+                        and tap New integration. Call it NudgeMe.
                       </li>
-                      <li>Copy its secret and paste it below.</li>
-                      <li>In Notion, open your database, tap ••• then Connections, and add the integration.</li>
+                      <li>Copy the secret it gives you and paste it below.</li>
+                      <li>In Notion, open the database with your dates. Tap ••• then Connections, and add NudgeMe.</li>
                     </>
                   ) : (
                     <>
@@ -362,7 +478,7 @@ export function ImportSheet({
                   {source === "notion" ? "Notion secret" : "Calendly token"}
                 </label>
                 <input id="ext-token" value={token} onChange={(e) => setToken(e.target.value)} autoComplete="off" spellCheck={false} placeholder={source === "notion" ? "ntn_…" : "eyJ…"} className="field mt-1.5 font-mono text-[16px]" />
-                <p className="t-small mt-1.5 text-ink-3">Saved only on this phone. NudgeMe passes it to {source === "notion" ? "Notion" : "Calendly"} through a relay that stores nothing.</p>
+                <p className="t-small mt-1.5 text-ink-3">Connect once and NudgeMe checks {source === "notion" ? "Notion" : "Calendly"} every time you open it. The {source === "notion" ? "secret" : "token"} stays on this phone and passes through a relay that stores nothing.</p>
                 <button type="submit" className="btn btn-signal mt-4 w-full" disabled={busy || !token.trim()}>
                   {busy ? <Loader2 className="size-5 animate-spin" /> : "Connect and check"}
                 </button>

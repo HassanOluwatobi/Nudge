@@ -225,7 +225,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
                   {[
                     "There's no account. Everything you add lives on this phone.",
                     "Nothing goes to a server. I never see your tasks.",
-                    "If you connect Calendly or an Apple calendar link, the token or link is saved on this phone as plain text. It passes through a NudgeMe relay that stores nothing. You can remove it any time.",
+                    "If you connect Notion, Calendly or a calendar link, that token or link is saved on this phone as plain text. It passes through a NudgeMe relay that stores nothing. You can remove it any time.",
                     "Voice typing uses your browser's speech feature. Some browsers send the audio to their own online service.",
                     "If you clear your browser data, NudgeMe gets cleared too. Download a backup first.",
                   ].map((t, i) => (

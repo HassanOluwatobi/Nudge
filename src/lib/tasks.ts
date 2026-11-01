@@ -50,7 +50,7 @@ export type Settings = {
   calendarAdded?: string;
   lastBackup?: string;
   /** Connected calendars. Tokens for Notion and Calendly stay on this device. */
-  sync: { google?: boolean; outlook?: boolean; notion?: string; calendly?: string; ics?: string; last?: string; skipped?: string[] };
+  sync: { google?: boolean; gics?: string; outlook?: boolean; notion?: string; calendly?: string; ics?: string; last?: string; skipped?: string[] };
   theme?: "light" | "dark" | "auto";
 };
 
@@ -340,6 +340,7 @@ export function sanitize(raw: unknown): State {
       const y = (st.sync && typeof st.sync === "object" ? st.sync : {}) as Settings["sync"];
       return {
         google: !!y.google,
+        gics: typeof y.gics === "string" && /^(https|webcals?):\/\//i.test(y.gics) ? y.gics : undefined,
         outlook: !!y.outlook,
         notion: typeof y.notion === "string" && y.notion ? y.notion : undefined,
         calendly: typeof y.calendly === "string" && y.calendly ? y.calendly : undefined,
