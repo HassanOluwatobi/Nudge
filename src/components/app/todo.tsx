@@ -11,7 +11,7 @@ import { TaskRow, DoneList } from "./task-row";
 import { TopBar } from "./today";
 
 const HINT: Record<Exclude<Bucket, "done">, string> = {
-  today: "Need it today? Add it here",
+  today: "Something for this week",
   week: "Sometime this week",
   later: "No rush. Park it here",
 };

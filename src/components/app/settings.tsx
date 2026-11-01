@@ -79,7 +79,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
     downloadBackup(state);
     feel("save", "medium");
     actions.setSettings({ lastBackup: new Date().toISOString() });
-    toast("Backup downloaded. Keep the file somewhere safe.");
+    toast("Backup downloaded. Keep it somewhere safe.");
   };
   const importData = async (f: File) => {
     try {
@@ -177,25 +177,25 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
 
       <section className="mt-6">
         <h3 className="t-label">Bring in your calendar</h3>
-        <p className="t-small mb-3 mt-1 text-ink-2">Events become tasks, each with a reminder. NudgeMe only reads your calendar. It never changes it.</p>
+        <p className="t-small mb-3 mt-1 text-ink-2">Turn your events into tasks with reminders. NudgeMe only reads your calendar, it never edits it.</p>
         <SourceButtons state={state} onPick={(src) => (onClose(), onImport(src))} />
       </section>
 
       <section className="mt-6">
         <h3 className="t-label">Sound and touch</h3>
         <div className="mt-2 rounded-2xl bg-white px-4 ring-1 ring-line">
-          <Switch label="Sounds" hint="Soft wooden taps and chimes when you get things done." checked={s.sound} onChange={(v) => (actions.setSettings({ sound: v }), v && setTimeout(() => feel("done"), 50))} />
+          <Switch label="Sounds" hint="A soft little sound when you finish something." checked={s.sound} onChange={(v) => (actions.setSettings({ sound: v }), v && setTimeout(() => feel("done"), 50))} />
           <div className="border-t border-line" />
-          <Switch label="Haptics" hint="Little taps you can feel, where your phone supports it." checked={s.haptics} onChange={(v) => (actions.setSettings({ haptics: v }), v && setTimeout(() => feel("tick", "success"), 50))} />
+          <Switch label="Haptics" hint="A gentle buzz when you tick things off." checked={s.haptics} onChange={(v) => (actions.setSettings({ haptics: v }), v && setTimeout(() => feel("tick", "success"), 50))} />
         </div>
       </section>
 
       <section className="mt-6">
         <h3 className="t-label">Your AI helper</h3>
-        <p className="t-small mt-1 text-ink-2">Pick the AI app you already use. In any task, tap “Break it down” and NudgeMe opens it with the question ready. You paste the steps back. No account here, no cost.</p>
+        <p className="t-small mt-1 text-ink-2">Pick the AI you already use. When a task feels too big, tap Break it down. It opens your AI with the question ready, and you paste the steps back. Free.</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {(Object.keys(AI_NAME) as S["ai"][]).map((k) => (
-            <button key={k} type="button" className="chip" aria-pressed={s.ai === k} onClick={() => (actions.setSettings({ ai: k }), feel("tap", "light"), toast(`Break it down will now open ${AI_NAME[k]}.`))}>
+            <button key={k} type="button" className="chip" aria-pressed={s.ai === k} onClick={() => (actions.setSettings({ ai: k }), feel("tap", "light"), toast(`Done. Break it down now opens ${AI_NAME[k]}.`))}>
               {AI_NAME[k]}
             </button>
           ))}
@@ -223,11 +223,11 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
               <div className="border-t border-line px-4 pb-4 pt-3">
                 <ol className="space-y-2">
                   {[
-                    "No account. Your tasks, ideas and settings live only on this phone.",
-                    "Nothing is sent to a server. NudgeMe never sees your tasks.",
+                    "There's no account. Everything you add lives on this phone.",
+                    "Nothing goes to a server. I never see your tasks.",
                     "If you connect Calendly or an Apple calendar link, the token or link is saved on this phone as plain text. It passes through a NudgeMe relay that stores nothing. You can remove it any time.",
                     "Voice typing uses your browser's speech feature. Some browsers send the audio to their own online service.",
-                    "Clearing your browser data also clears NudgeMe. Download a backup first if you want to keep things.",
+                    "If you clear your browser data, NudgeMe gets cleared too. Download a backup first.",
                   ].map((t, i) => (
                     <li key={i} className="flex gap-2.5 text-[14px] leading-snug text-ink-2">
                       <span className="grid size-5 shrink-0 place-items-center rounded-full bg-paper text-[11px] font-semibold tabular-nums text-ink">{i + 1}</span>

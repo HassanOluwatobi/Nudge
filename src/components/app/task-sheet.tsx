@@ -1,13 +1,13 @@
 "use client";
 
-import { ArrowRight, Check, Copy, ExternalLink, RotateCcw, Sparkles, SunMedium, Trash2, Wand2, Copy as Dup } from "lucide-react";
+import { ArrowRight, Check, RotateCcw, Sparkles, SunMedium, Trash2, Copy as Dup } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { AI_NAME, aiLink, breakdownPrompt, copy } from "@/lib/ai";
-import { type Bucket, type Settings, type Task, BUCKET_NAME, HUES, MAX_TITLE, parseSteps } from "@/lib/tasks";
+import { type Bucket, type Settings, type Task, BUCKET_NAME, HUES, MAX_TITLE } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { feel } from "@/lib/feedback";
+import { BreakItDown } from "./breakdown";
 import { RemindPicker } from "./remind";
 import { Sheet } from "./sheet";
 import { SubtaskList } from "./steps";
@@ -36,9 +36,6 @@ export function TaskSheet({
   const [last, setLast] = useState<Task | null>(task);
   const [look, setLook] = useState(false);
   const [confirm, setConfirm] = useState(false);
-  const [aiOpen, setAiOpen] = useState(false);
-  const [pasted, setPasted] = useState("");
-  const aiRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (task) {
@@ -46,8 +43,6 @@ export function TaskSheet({
       setTitle(task.title);
       setConfirm(false);
       setLook(false);
-      setAiOpen(false);
-      setPasted("");
     }
   }, [task?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -64,8 +59,6 @@ export function TaskSheet({
     commit();
     onClose();
   };
-  const parsed = parseSteps(pasted);
-  const link = aiLink(ai, breakdownPrompt(t.title));
 
   const doneCount = t.steps.filter((s) => s.d).length;
 
@@ -144,81 +137,9 @@ export function TaskSheet({
           <div className="mt-2">
             <SubtaskList task={t} actions={actions} />
           </div>
-          <button
-            type="button"
-            className="chip mt-2 gap-1.5"
-            aria-expanded={aiOpen}
-            onClick={() => {
-              setAiOpen((v) => !v);
-              feel("tap", "light");
-              if (!aiOpen) setTimeout(() => aiRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 360);
-            }}
-          >
-            <Wand2 className="size-3.5 text-signal" /> Break it down with {AI_NAME[ai]}
-          </button>
-
-          <AnimatePresence initial={false}>
-            {aiOpen && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }} className="overflow-hidden">
-                <div ref={aiRef} className="mt-3 scroll-mb-6 rounded-2xl bg-white p-4 ring-1 ring-line">
-                  <p className="text-[15px] font-semibold">Use your own {AI_NAME[ai]}</p>
-                  <p className="t-small mt-1 text-ink-2">Free. Nothing is sent from NudgeMe. You choose what to paste back.</p>
-                  <ol className="mt-3 space-y-3">
-                    <li>
-                      <p className="t-small font-semibold text-ink-2">1. Ask {AI_NAME[ai]}</p>
-                      <a
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={async () => {
-                          const ok = await copy(breakdownPrompt(t.title));
-                          if (!link.prefilled) toast(ok ? `Question copied. Paste it into ${AI_NAME[ai]}.` : `Open ${AI_NAME[ai]} and ask it to break this task into tiny subtasks.`);
-                        }}
-                        className="btn btn-line mt-1.5 min-h-11 w-full gap-2 text-[15px]"
-                      >
-                        Open {AI_NAME[ai]} <ExternalLink className="size-4" />
-                      </a>
-                      <button type="button" className="btn btn-quiet mt-1 min-h-10 w-full gap-1.5 text-[14px]" onClick={async () => toast((await copy(breakdownPrompt(t.title))) ? "Question copied." : "Copy did not work in this browser.")}>
-                        <Copy className="size-3.5" /> Copy the question instead
-                      </button>
-                    </li>
-                    <li>
-                      <label htmlFor="ai-paste" className="t-small font-semibold text-ink-2">
-                        2. Paste the answer here
-                      </label>
-                      <textarea id="ai-paste" rows={4} value={pasted} onChange={(e) => setPasted(e.target.value)} placeholder="Paste the list" className="field mt-1.5 resize-none text-[16px]" />
-                    </li>
-                  </ol>
-                  {parsed.length > 0 && (
-                    <div className="mt-3">
-                      <p className="t-small font-semibold text-ink-2">3. Check them</p>
-                      <ul className="mt-1.5 space-y-1">
-                        {parsed.map((p, i) => (
-                          <li key={i} className="flex gap-2 text-[15px]">
-                            <span className="text-ink-3">{i + 1}.</span> {p}
-                          </li>
-                        ))}
-                      </ul>
-                      <button
-                        type="button"
-                        className="btn btn-signal mt-3 min-h-12 w-full"
-                        onClick={() => {
-                          actions.addSteps(t.id, parsed);
-                          feel("done", "success");
-                          setPasted("");
-                          setAiOpen(false);
-                          announce(`${parsed.length} subtasks added.`);
-                          toast(`${parsed.length} subtasks added.`);
-                        }}
-                      >
-                        Add {parsed.length} subtasks
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          <div className="mt-3">
+            <BreakItDown key={t.id} task={t} actions={actions} ai={ai} announce={announce} compact />
+          </div>
 
           {/* 4. When, and a nudge. That is all the planning a task needs. */}
           <p className="t-label mt-7">When</p>

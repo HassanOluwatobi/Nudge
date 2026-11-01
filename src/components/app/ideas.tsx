@@ -67,7 +67,7 @@ export function EntryList({ kind, state, actions }: { kind: EntryKind; state: St
       {list.length === 0 ? (
         <div className="mt-8 rounded-[24px] bg-white px-5 py-7 text-center ring-1 ring-line">
           <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-signal-soft text-signal-ink">{kind === "idea" ? <Lightbulb className="size-6" /> : <NotebookPen className="size-6" />}</span>
-          <p className="t-body mt-3 text-ink-2">{kind === "idea" ? "No ideas yet. Type one above so it stops circling in your head. It comes back in a few days." : "No notes yet. Type one above. Numbers, addresses, little facts."}</p>
+          <p className="t-body mt-3 text-ink-2">{kind === "idea" ? "No ideas yet. Jot one above and let it go. It comes back in a few days." : "No notes yet. Good for numbers, addresses and little things you'll need later."}</p>
         </div>
       ) : (
         <ul className="mt-5 space-y-2">

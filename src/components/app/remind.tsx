@@ -45,7 +45,7 @@ export function RemindPicker({ task, actions, compact = false }: { task: Task; a
           </button>
         </div>
         <div className="mt-3 border-t border-line pt-3">
-          <p className="t-small mb-1 text-ink-2">{compact ? "Add it to a calendar so your phone rings." : "Add it to a calendar so your phone rings even when NudgeMe is closed."}</p>
+          <p className="t-small mb-1 text-ink-2">{compact ? "Add it to a calendar so your phone rings." : "Add it to your calendar so your phone rings, even with NudgeMe closed."}</p>
           <CalendarButtons flat events={[taskEvent(task.title, new Date(task.remindAt!))]} file="nudgeme-reminder" label="" />
         </div>
       </div>

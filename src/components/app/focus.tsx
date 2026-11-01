@@ -5,8 +5,9 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { feel } from "@/lib/feedback";
 import { notify } from "@/lib/reminders";
-import { type State, type Task, MAX_STEP, nextStep, smallerStep, todayTasks, ymd } from "@/lib/tasks";
+import { type Settings, type State, type Task, MAX_STEP, nextStep, smallerStep, todayTasks, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
+import { BreakItDown } from "./breakdown";
 import { Sheet } from "./sheet";
 import { AddSubtask, SubtaskList } from "./steps";
 import { burstFrom } from "./petals";
@@ -95,7 +96,7 @@ export function Focus({
           }
         />
 
-        {task ? <NowCard task={task} actions={actions} onFinish={finish} announce={announce} /> : <NoTaskCard onPick={() => setPicker(true)} />}
+        {task ? <NowCard task={task} actions={actions} ai={state.settings.ai} onFinish={finish} announce={announce} /> : <NoTaskCard onPick={() => setPicker(true)} />}
 
         <TimerCard state={state} actions={actions} task={task} announce={announce} />
 
@@ -127,7 +128,7 @@ export function Focus({
 }
 
 /** 1. The one thing to do now. */
-function NowCard({ task, actions, onFinish, announce }: { task: Task; actions: Actions; onFinish: () => void; announce: (s: string) => void }) {
+function NowCard({ task, actions, ai, onFinish, announce }: { task: Task; actions: Actions; ai: Settings["ai"]; onFinish: () => void; announce: (s: string) => void }) {
   const current = nextStep(task);
   const n = task.steps.length;
   const k = task.steps.filter((s) => s.d).length;
@@ -140,7 +141,7 @@ function NowCard({ task, actions, onFinish, announce }: { task: Task; actions: A
     actions.toggleStep(task.id, current.id);
     feel("step", "success");
     burstFrom(doneBtn.current, 10);
-    announce(k + 1 === n ? "All subtasks done." : "Subtask done. On to the next one.");
+    announce(k + 1 === n ? "That was the last one." : "Nice. Next one.");
   };
 
   return (
@@ -161,7 +162,7 @@ function NowCard({ task, actions, onFinish, announce }: { task: Task; actions: A
                   <Check className="size-5" /> {k + 1 === n ? "Done" : "Done, next"}
                 </button>
                 <button type="button" className="btn btn-quiet mx-auto mt-1 flex min-h-10 gap-1.5 text-[14px]" onClick={() => setSmaller(smallerStep(current.t))}>
-                  <Scissors className="size-4" /> Too big? Make it smaller
+                  <Scissors className="size-4" /> Still too big? Shrink it
                 </button>
               </>
             ) : (
@@ -177,7 +178,7 @@ function NowCard({ task, actions, onFinish, announce }: { task: Task; actions: A
                 }}
               >
                 <label className="t-small font-medium text-ink-2" htmlFor="smaller">
-                  A smaller first move. Change it if you like.
+                  Here is a smaller way in. Change it if you like.
                 </label>
                 <input id="smaller" value={smaller} maxLength={MAX_STEP} onChange={(e) => setSmaller(e.target.value)} className="field mt-2" autoFocus />
                 <div className="mt-3 grid grid-cols-2 gap-2">
@@ -193,8 +194,8 @@ function NowCard({ task, actions, onFinish, announce }: { task: Task; actions: A
           </motion.div>
         ) : n > 0 ? (
           <motion.div key="all" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}>
-            <p className="t-label text-signal-ink">Every subtask is done</p>
-            <p className="mt-2 font-serif text-[28px] leading-tight tracking-[-0.01em]">Ready to finish it?</p>
+            <p className="t-label text-signal-ink">All done</p>
+            <p className="mt-2 font-serif text-[28px] leading-tight tracking-[-0.01em]">Tick the whole thing off?</p>
             <button type="button" className="btn btn-signal mt-5 w-full text-[17px]" onClick={onFinish}>
               <Check className="size-5" /> Finish the task
             </button>
@@ -202,10 +203,14 @@ function NowCard({ task, actions, onFinish, announce }: { task: Task; actions: A
         ) : (
           <motion.div key="none" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }}>
             <p className="t-label text-signal-ink">Now</p>
-            <p className="mt-2 font-serif text-[24px] leading-tight tracking-[-0.01em]">What is the first small thing?</p>
-            <p className="t-small mt-1 text-ink-3">Optional. Big tasks feel lighter in small pieces.</p>
-            <div className="task-row mt-3">
-              <AddSubtask onAdd={(t) => actions.addStep(task.id, t)} placeholder="Type it and press Return" />
+            <p className="mt-2 font-serif text-[24px] leading-tight tracking-[-0.01em]">Not sure where to start?</p>
+            <p className="t-small mt-1 text-ink-3">Let your AI split it into tiny steps. Then you just do the first one.</p>
+            <div className="mt-4">
+              <BreakItDown task={task} actions={actions} ai={ai} announce={announce} />
+            </div>
+            <p className="t-small mt-5 text-ink-3">Or write the first step yourself.</p>
+            <div className="task-row mt-2">
+              <AddSubtask onAdd={(t) => actions.addStep(task.id, t)} placeholder="Open the laptop" />
             </div>
             <button type="button" className="btn btn-line mt-3 w-full" onClick={onFinish}>
               <Check className="size-4" /> Finish the task
@@ -221,8 +226,8 @@ function NoTaskCard({ onPick }: { onPick: () => void }) {
   return (
     <section className="mt-5 rounded-[24px] bg-white p-5 ring-1 ring-line">
       <p className="t-label text-signal-ink">Now</p>
-      <p className="mt-2 font-serif text-[24px] leading-tight tracking-[-0.01em]">A timer on its own.</p>
-      <p className="t-small mt-1 text-ink-3">Pick a time below, or focus on one of today&apos;s tasks.</p>
+      <p className="mt-2 font-serif text-[24px] leading-tight tracking-[-0.01em]">Just you and a timer.</p>
+      <p className="t-small mt-1 text-ink-3">Pick a time below. Or choose a task and take it one step at a time.</p>
       <button type="button" className="btn btn-line mt-4 w-full" onClick={onPick}>
         Choose a task <ArrowRight className="size-4" />
       </button>

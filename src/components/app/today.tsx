@@ -8,6 +8,7 @@ import { type Part, type State, type Task, checkinDue, doneToday, dueIdeas, next
 import type { Actions } from "@/lib/use-tasks";
 import { feel } from "@/lib/feedback";
 import { InstallCard } from "./install";
+import { BreakItDown } from "./breakdown";
 import { type Kind, QuickCapture } from "./quick-capture";
 import { EntryList } from "./ideas";
 import { TaskRow, Tile, DoneList } from "./task-row";
@@ -204,13 +205,18 @@ export function Today({
                         {step.t}
                       </>
                     ) : pick.steps.length ? (
-                      "Every subtask is done. Finish it when you are ready."
+                      "All the subtasks are ticked. Finish it whenever."
                     ) : (
-                      "Tap Start. You can add subtasks as you go."
+                      "Feels big? Break it down first."
                     )}
                   </span>
                 </span>
               </button>
+              {!pick.steps.length && (
+                <div className="mt-3">
+                  <BreakItDown key={pick.id} task={pick} actions={actions} ai={state.settings.ai} announce={announce} compact />
+                </div>
+              )}
               <button type="button" className="btn btn-signal mt-5 w-full text-[17px]" onClick={() => (feel("tap", "light"), onFocus(pick))}>
                 Start <ArrowRight className="size-5" />
               </button>
@@ -227,9 +233,9 @@ export function Today({
       ) : (
         <section className="mt-6 overflow-hidden rounded-[24px] bg-white ring-1 ring-line">
           <div className="p-5">
-            <h2 className="t-title">{finished.length ? "Today is clear." : "Nothing on today yet."}</h2>
+            <h2 className="t-title">{finished.length ? "That's today done" : "Nothing on today yet"}</h2>
             <p className="t-body mt-2 text-ink-2">
-              {finished.length ? `You finished ${finished.length === 1 ? "one task" : `${finished.length} tasks`}. You can stop here, or add something above.` : "Type it in the field above. NudgeMe holds it, then helps you start with one small step."}
+              {finished.length ? `You finished ${finished.length === 1 ? "one task" : `${finished.length} tasks`}. Nice work. You can stop here.` : "Type anything in the box above. Messy is fine."}
             </p>
           </div>
         </section>
@@ -312,14 +318,14 @@ function MorningPick({ state, actions, announce }: { state: State; actions: Acti
     actions.finishCheckin("morning");
     feel("save", "success");
     announce(`${t.title} is your one thing today.`);
-    toast("Your one thing is set. Start when you are ready.");
+    toast("Got it. That's your one thing.");
   };
   return (
     <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-3 rounded-[20px] bg-white p-4 ring-1 ring-line" aria-label="Morning check-in">
       <p className="t-label flex items-center gap-1.5 text-signal-ink">
         <Sun className="size-3.5" /> Good morning
       </p>
-      <p className="mt-1.5 text-[17px] font-semibold">What is your one thing today?</p>
+      <p className="mt-1.5 text-[17px] font-semibold">What's the one thing for today?</p>
       {options.length ? (
         <ul className="mt-3 grid gap-1.5">
           {options.map((t) => (
@@ -333,7 +339,7 @@ function MorningPick({ state, actions, announce }: { state: State; actions: Acti
           ))}
         </ul>
       ) : (
-        <p className="t-small mt-1 text-ink-3">Nothing planned yet. Add something in the field above.</p>
+        <p className="t-small mt-1 text-ink-3">Nothing here yet. Add something in the box above.</p>
       )}
       <button type="button" className="btn btn-quiet mt-1 min-h-10 w-full text-[14px]" onClick={() => (actions.finishCheckin("morning"), feel("tap"))}>
         Skip for today
@@ -370,7 +376,7 @@ function BackupNudge({ state, actions }: { state: State; actions: Actions }) {
       <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-signal-soft text-signal-ink">
         <Download className="size-[18px]" />
       </span>
-      <span className="min-w-0 flex-1 text-[14px] font-medium">{state.settings.lastBackup ? "Time for a fresh backup" : "Save a backup of your tasks"}</span>
+      <span className="min-w-0 flex-1 text-[14px] font-medium">{state.settings.lastBackup ? "Back up your list?" : "Save a copy of your list"}</span>
       <button type="button" className="text-[13px] text-ink-3" onClick={() => (actions.setSettings({ lastBackup: new Date(Date.now() - 7 * 864e5).toISOString() }), setHidden(true))}>
         Later
       </button>

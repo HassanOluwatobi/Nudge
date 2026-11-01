@@ -63,7 +63,7 @@ export function InstallButton({ compact = false, variant = "button" }: { compact
           </span>
           <span className="min-w-0 flex-1">
             <span className="block text-[15px] font-semibold">Add to Home Screen</span>
-            <span className="t-small block text-ink-3">Keeps your tasks safe. Opens like an app.</span>
+            <span className="t-small block text-ink-3">Opens like an app and keeps your list safe.</span>
           </span>
           <span className="inline-flex h-8 items-center rounded-full bg-signal px-3.5 text-[13px] font-semibold text-white">Add</span>
         </button>
@@ -78,7 +78,7 @@ export function InstallButton({ compact = false, variant = "button" }: { compact
           {(plat === "ios"
             ? [
                 { icon: <Share className="size-5" />, t: "Tap the Share button", s: "At the bottom of Safari, or next to the address." },
-                { icon: <SquarePlus className="size-5" />, t: "Choose Add to Home Screen", s: "Scroll the list if you do not see it." },
+                { icon: <SquarePlus className="size-5" />, t: "Choose Add to Home Screen", s: "Scroll down if you don't see it." },
                 { icon: <Check className="size-5" />, t: "Tap Add", s: "Open NudgeMe from your home screen. It fills the whole screen." },
               ]
             : [
@@ -130,7 +130,7 @@ export function InstallCard() {
   return (
     <section className="mt-6 rounded-[20px] bg-white p-4 ring-1 ring-line" aria-label="Keep your tasks safe">
       <p className="text-[15px] font-semibold">Keep your tasks safe</p>
-      <p className="t-small mt-1 text-ink-2">Add NudgeMe to your Home Screen. Phones can clear websites you have not opened for a week. Apps on the Home Screen keep everything.</p>
+      <p className="t-small mt-1 text-ink-2">Add NudgeMe to your Home Screen. Phones sometimes wipe websites you haven't opened in a while. Home Screen apps keep everything.</p>
       <div className="mt-3">
         <InstallButton compact />
       </div>

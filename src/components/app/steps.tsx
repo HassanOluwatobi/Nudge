@@ -1,6 +1,6 @@
 "use client";
 
-import { Plus, Sparkles, X } from "lucide-react";
+import { Lightbulb, Plus, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRef, useState } from "react";
 import { feel } from "@/lib/feedback";
@@ -91,7 +91,7 @@ export function SubtaskList({ task, actions, suggest = true }: { task: Task; act
       </ul>
       {suggest && !task.steps.length && (
         <button type="button" className="chip mt-2 gap-1.5 text-left" onClick={() => (actions.addStep(task.id, tip), feel("step", "light"))}>
-          <Sparkles className="size-3.5 shrink-0 text-signal" /> {tip}
+          <Lightbulb className="size-3.5 shrink-0 text-ink-3" /> {tip}
         </button>
       )}
     </div>

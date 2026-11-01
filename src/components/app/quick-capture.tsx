@@ -13,9 +13,9 @@ import { keepFocus } from "./steps";
 export type Kind = "task" | EntryKind;
 
 const HINT: Record<Kind, string> = {
-  task: "One task, or paste a list and each line becomes a task.",
-  idea: "A spark for later. It comes back in a few days.",
-  note: "Something to keep, like a number or an address.",
+  task: "Add one, or dump a whole list. Each line becomes its own task.",
+  idea: "Something for later. It'll come back in a few days.",
+  note: "Somewhere to keep a number, an address, anything.",
 };
 const PLACEHOLDER: Record<Kind, string> = { task: "Add a task…", idea: "Jot an idea…", note: "Write a note…" };
 
@@ -83,7 +83,7 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
       const e = actions.addEntry(text, kind);
       if (!e) return;
       feel("save", "success");
-      toast(kind === "idea" ? "Idea saved. It comes back in a few days." : "Note saved.");
+      toast(kind === "idea" ? "Saved. It'll come back in a few days." : "Note saved.");
     }
     reset();
     inside.current = false;
@@ -152,7 +152,7 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
               <div className="flex items-center gap-3">
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.p key={dup ? "dup" : kind} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: 0.15 }} className="t-small min-w-0 flex-1 px-1 text-ink-3">
-                    {dup ? "You already have this. Saving adds it again." : HINT[kind]}
+                    {dup ? "You already have this one. Saving adds it again." : HINT[kind]}
                   </motion.p>
                 </AnimatePresence>
                 <button type="submit" {...keepFocus} disabled={!text.trim() && !interim.trim()} className="btn btn-signal min-h-9 shrink-0 px-4 text-[14px]">

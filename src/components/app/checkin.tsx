@@ -77,7 +77,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
         <AnimatePresence mode="wait" initial={false}>
           {i === 0 && (
             <motion.div key="m0" {...swap} className="pt-5">
-              <h3 className="t-title">Good morning. How is your energy?</h3>
+              <h3 className="t-title">Morning! How are you feeling?</h3>
               {yesterday.length > 0 && <p className="t-body mt-2 text-ink-2">Yesterday you finished {yesterday.length === 1 ? `“${yesterday[0].title}”` : `${yesterday.length} tasks`}. Nice.</p>}
               <div className="mt-5 grid gap-2">
                 <button type="button" className="flex min-h-[64px] items-center gap-3 rounded-2xl bg-white px-4 text-left ring-1 ring-line" onClick={() => (actions.setEnergy("ok"), actions.clearEasy(), feel("start", "light"), setI(1))}>
@@ -86,7 +86,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
                 </button>
                 <button type="button" className="flex min-h-[64px] items-center gap-3 rounded-2xl bg-white px-4 text-left ring-1 ring-line" onClick={() => (actions.setEnergy("low"), actions.makeEasy(), feel("tap", "light"), setI(1))}>
                   <span className="hue-lilac tile grid size-10 place-items-center rounded-xl"><BatteryLow className="size-5" /></span>
-                  <span><span className="block font-semibold">Running low</span><span className="t-small text-ink-3">One thing is enough today</span></span>
+                  <span><span className="block font-semibold">Running low</span><span className="t-small text-ink-3">Just one thing today</span></span>
                 </button>
               </div>
             </motion.div>
@@ -94,7 +94,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
           {i === 1 && (
             <motion.div key="m1" {...swap} className="pt-5">
               <h3 className="t-title">What matters today?</h3>
-              <p className="t-body mt-2 text-ink-2">{already.length ? `${already.length} already on Today. Add any of these, or none.` : "Pick one, two or three. Fewer is fine."}</p>
+              <p className="t-body mt-2 text-ink-2">{already.length ? `${already.length} already on Today. Add any of these, or none.` : "Pick up to three. One is plenty."}</p>
               {candidates.length ? (
                 <ul className="mt-4 max-h-[44vh] space-y-2 overflow-auto">
                   {candidates.map((t) => (
@@ -118,7 +118,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
                   <span className="min-w-0 flex-1 font-semibold">{first.title}</span>
                 </div>
               ) : (
-                <p className="t-body mt-2 text-ink-2">Add something whenever you are ready.</p>
+                <p className="t-body mt-2 text-ink-2">Add something whenever you're ready.</p>
               )}
               <div className="mt-5 grid gap-2">
                 {first && (
@@ -159,7 +159,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
                   ))}
                 </ul>
               ) : (
-                <p className="t-body mt-2 text-ink-2">Nothing ticked today, and that is okay. Rest counts too.</p>
+                <p className="t-body mt-2 text-ink-2">Nothing ticked today, and that's okay. Rest counts too.</p>
               )}
               <button type="button" className="btn btn-signal mt-5 w-full" onClick={(e) => (done.length && (burst(e.clientX, e.clientY, 18), feel("done", "success")), setI(left.length ? 1 : 2))}>
                 Continue
@@ -169,7 +169,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
           {i === 1 && (
             <motion.div key="e1" {...swap} className="pt-5">
               <h3 className="t-title">What about the rest?</h3>
-              <p className="t-body mt-2 text-ink-2">Choose where each one goes. Nothing is overdue here.</p>
+              <p className="t-body mt-2 text-ink-2">Pick where each one goes. Nothing here is overdue.</p>
               <ul className="mt-4 max-h-[46vh] space-y-2 overflow-auto">
                 {left.map((t) => (
                   <li key={t.id} className="rounded-2xl bg-white p-3 ring-1 ring-line">
@@ -196,7 +196,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
           {i === 2 && (
             <motion.div key="e2" {...swap} className="pt-5">
               <h3 className="t-title">Anything on your mind?</h3>
-              <p className="t-body mt-2 text-ink-2">Put it down so it can stop circling. It will be here tomorrow.</p>
+              <p className="t-body mt-2 text-ink-2">Write it down so you can stop thinking about it. It'll be here tomorrow.</p>
               <textarea value={thought} onChange={(e) => setThought(e.target.value)} rows={3} placeholder="Optional" aria-label="Anything on your mind" className="field mt-4 resize-none" />
               <div className="mt-5 grid gap-2">
                 {thought.trim() && (
@@ -233,7 +233,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
           <motion.div key="w0" {...swap} className="pt-5 text-center">
             <p className="font-serif text-[88px] leading-none tracking-[-0.03em]">{weekDone.length}</p>
             <h3 className="t-title mt-2">{weekDone.length === 1 ? "thing finished this week" : "things finished this week"}</h3>
-            <p className="t-body mt-2 text-ink-2">{weekDone.length ? "Every one of them counts." : "A quiet week is still a week. Let us set up the next one."}</p>
+            <p className="t-body mt-2 text-ink-2">{weekDone.length ? "Every one of them counts." : "Quiet weeks count too. Let's set up the next one."}</p>
             <button type="button" className="btn btn-signal mt-6 w-full" onClick={(e) => (weekDone.length && (burst(e.clientX, e.clientY, 22), feel("finish", "success")), setI(1))}>
               Continue
             </button>
@@ -260,7 +260,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
                 ))}
               </ul>
             ) : (
-              <p className="t-small mt-4 rounded-2xl bg-white/70 p-4 text-ink-3">Nothing waiting. A clean slate.</p>
+              <p className="t-small mt-4 rounded-2xl bg-white/70 p-4 text-ink-3">Nothing waiting. Fresh start.</p>
             )}
             <button type="button" className="btn btn-signal mt-5 w-full" onClick={() => setI(2)}>
               Continue
@@ -269,8 +269,8 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
         )}
         {i === 2 && (
           <motion.div key="w2" {...swap} className="pt-5">
-            <h3 className="t-title">You are ready for the week</h3>
-            <p className="t-body mt-2 text-ink-2">{ideas ? `${ideas} ${ideas === 1 ? "idea is" : "ideas are"} resting under Ideas on Home. They will come back when it is time.` : "Your ideas will come back on Today when it is time."}</p>
+            <h3 className="t-title">You're set for the week</h3>
+            <p className="t-body mt-2 text-ink-2">{ideas ? `${ideas} ${ideas === 1 ? "idea is" : "ideas are"} resting under Ideas on Home. They will come back when it is time.` : "Your ideas will pop back up on Home when it's time."}</p>
             <button type="button" className="btn btn-signal mt-6 w-full" onClick={() => close(true)}>
               Done
             </button>

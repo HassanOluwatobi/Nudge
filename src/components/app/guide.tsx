@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Bell, Lightbulb } from "lucide-react";
+import { ArrowRight, Bell, Lightbulb, Sparkles } from "lucide-react";
 import { AppleMark, GoogleMark, LogoTile, OutlookMark } from "./brands";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
@@ -9,7 +9,7 @@ import { Art } from "./art";
 import { burstFrom } from "./petals";
 
 /*
-  The user guide. Five short pages, each with a small live illustration.
+  The user guide. Six short pages, each with a small live illustration.
   Swipe, tap Next, or use the arrow keys. It opens on first visit and from the
   help button. Enter and exit ride springs, so it never snaps.
 */
@@ -32,19 +32,63 @@ function Row({ emoji, text, hue, delay, done = false }: { emoji: string; text: s
   );
 }
 
+const DUMP = "pay rent, email Sade, book the dentist";
+
 function Capture() {
+  const reduce = useReducedMotion();
+  const [n, setN] = useState(reduce ? DUMP.length : 0);
+  useEffect(() => {
+    if (n >= DUMP.length) return;
+    const t = setTimeout(() => setN((v) => v + 1), 38);
+    return () => clearTimeout(t);
+  }, [n]);
+  const typed = n >= DUMP.length;
   return (
     <div className="flex h-full flex-col justify-center gap-2 px-6">
-      <div className="seg grid grid-cols-3 p-0.5 text-center text-[12px] font-semibold">
-        <span className="seg-knob py-1.5 text-ink">Tasks</span>
-        <span className="py-1.5 text-ink-3">Ideas</span>
-        <span className="py-1.5 text-ink-3">Notes</span>
+      <div className="rounded-[14px] bg-white px-3 py-2.5 text-[16px] ring-1 ring-signal/40">
+        <span className={typed ? "text-ink-3 transition-colors duration-500" : ""}>{DUMP.slice(0, n)}</span>
+        {!typed && <motion.span className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 bg-signal" animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 0.9 }} />}
       </div>
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.5 }} className="mb-1 rounded-[14px] bg-white px-3 py-2.5 font-serif text-[17px] ring-1 ring-line">
-        call mum tomorrow<motion.span className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 bg-signal" animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 1 }} />
-      </motion.div>
-      <Row emoji="📞" text="Call mum" hue="cyan" delay={0.25} />
-      <Row emoji="🧺" text="Laundry" hue="aqua" delay={0.4} />
+      {typed && (
+        <>
+          <Row emoji="💳" text="Pay rent" hue="cyan" delay={0.15} />
+          <Row emoji="✉️" text="Email Sade" hue="aqua" delay={0.27} />
+          <Row emoji="🩺" text="Book the dentist" hue="blue" delay={0.39} />
+        </>
+      )}
+    </div>
+  );
+}
+
+function AiSteps() {
+  const steps = ["Find last year's forms", "Make a folder for receipts", "Log in to the tax site", "Fill in page one"];
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => (setOpen(true), feel("tick")), 900);
+    return () => clearTimeout(t);
+  }, []);
+  return (
+    <div className="flex h-full flex-col justify-center px-6">
+      <div className="rounded-[18px] bg-white p-3.5 ring-1 ring-line">
+        <p className="font-serif text-[20px] leading-tight tracking-[-0.01em]">Sort out my taxes</p>
+        <motion.span
+          className="ai-chip mt-2 inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] font-semibold"
+          aria-expanded={open}
+          animate={open ? { scale: [1, 0.94, 1] } : {}}
+          transition={{ duration: 0.3 }}
+        >
+          <Sparkles className="size-3.5" /> Break it down with ChatGPT
+        </motion.span>
+        <div className="mt-2.5 space-y-1.5">
+          {open &&
+            steps.map((t, i) => (
+              <motion.div key={t} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 + i * 0.16, type: "spring", bounce: 0.25, duration: 0.5 }} className="flex items-center gap-2 text-[14px] leading-snug">
+                <span className="grid size-[18px] shrink-0 place-items-center rounded-full bg-signal-soft text-[10px] font-bold text-signal-ink">{i + 1}</span>
+                <span className="truncate">{t}</span>
+              </motion.div>
+            ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -53,12 +97,11 @@ function OneThing() {
   return (
     <div className="flex h-full flex-col justify-center px-6">
       <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", bounce: 0.15, duration: 0.6 }} className="rounded-[20px] bg-white p-4 ring-1 ring-line">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-signal-ink">Start here</p>
         <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, type: "spring", bounce: 0, duration: 0.5 }} className="mt-2 font-serif text-[22px] leading-tight tracking-[-0.01em]">
           Reply to Tunde
         </motion.p>
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="mt-1 text-[14px] leading-snug text-ink-2">
-          <span className="font-semibold text-signal-ink">Next:</span> Write the first line
+          <span className="font-semibold text-signal-ink">Next:</span> Say thanks for the intro
         </motion.p>
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, type: "spring", bounce: 0.2, duration: 0.5 }} className="btn btn-signal mt-3 min-h-10 w-full text-[15px]">
           Start
@@ -189,8 +232,8 @@ function Reminders() {
           <Bell className="size-5 text-signal-ink" />
         </motion.span>
         <span className="flex-1">
-          <span className="block text-[15px] font-semibold">Morning kickoff</span>
-          <span className="block text-[13px] text-ink-2">Every day at 8:30 am</span>
+          <span className="block text-[15px] font-semibold">Pay rent</span>
+          <span className="block text-[13px] text-ink-2">Today at 5:00 pm</span>
         </span>
       </motion.div>
     </div>
@@ -198,11 +241,12 @@ function Reminders() {
 }
 
 const PAGES = [
-  { art: Capture, title: "Put it all down", body: "Pick Tasks, Ideas or Notes at the top of Home, then type or speak. It lands right in that list. Messy is fine. Press and hold anything for more options." },
-  { art: OneThing, title: "Start with one thing", body: "Under Tasks, Home picks one thing and shows its next small step. Not feeling it? Tap Not this one, or Make today easy." },
-  { art: Timer, title: "Focus, one step at a time", body: "Focus shows one subtask at a time. Tap Done, next to move on. Add a timer if it helps, then finish the task." },
-  { art: IdeasBack, title: "Ideas and notes", body: "Tap Ideas or Notes at the top of Home and type it in. Ideas come back after a few days, so they stop circling in your head. Notes wait until you need them." },
-  { art: Reminders, title: "Reminders that ring", body: "Add a reminder to any task, then tap Google, Apple or Outlook. Your calendar rings even when NudgeMe is closed. You can do the same for your morning and evening check-ins in Settings." },
+  { art: Capture, tag: "Brain dump", title: "Empty your head", body: "Type it or say it. One long messy line is fine. NudgeMe splits it into separate tasks so nothing slips." },
+  { art: AiSteps, tag: "AI helper", title: "Big task? Let AI shrink it", body: "Tap Break it down and your own ChatGPT, Claude, Gemini or Grok turns it into tiny steps. Paste them back and you're set. No sign up, no cost." },
+  { art: OneThing, tag: "Home", title: "Just one thing", body: "Home shows you one task and the very next step. That's it. Not feeling it today? Skip to another." },
+  { art: Timer, tag: "Focus", title: "One step at a time", body: "Focus hides everything else. Tick a step and the next one slides in. Add a timer if a little pressure helps you." },
+  { art: IdeasBack, tag: "Ideas", title: "Ideas come back to you", body: "Drop an idea and stop holding it in your head. It comes back in a few days. Do it, snooze it or let it go." },
+  { art: Reminders, tag: "Reminders", title: "Reminders that actually ring", body: "Send any reminder to Google, Apple or Outlook Calendar. Your phone rings even when NudgeMe is closed." },
 ];
 
 export function Guide({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -282,7 +326,7 @@ export function Guide({ open, onClose }: { open: boolean; onClose: () => void })
               {last && <span className="h-10" />}
             </div>
 
-            <div className="relative mx-5 mt-2 h-[230px] overflow-hidden rounded-[22px] bg-[#efe9dd]">
+            <div className="relative mx-5 mt-2 h-[230px] overflow-hidden rounded-[22px] guide-canvas">
               <AnimatePresence mode="popLayout" initial={false} custom={dir}>
                 <motion.div
                   key={i}
@@ -315,7 +359,8 @@ export function Guide({ open, onClose }: { open: boolean; onClose: () => void })
             <div className="relative min-h-[148px] px-6 pt-5">
               <AnimatePresence mode="popLayout" initial={false} custom={dir}>
                 <motion.div key={i} custom={dir} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ type: "spring", bounce: 0, duration: 0.4 }}>
-                  <h2 className="t-title">{PAGES[i].title}</h2>
+                  <p className="t-label text-signal-ink">{PAGES[i].tag}</p>
+                  <h2 className="t-title mt-1">{PAGES[i].title}</h2>
                   <p className="t-body mt-2 text-ink-2">{PAGES[i].body}</p>
                 </motion.div>
               </AnimatePresence>
@@ -335,7 +380,7 @@ export function Guide({ open, onClose }: { open: boolean; onClose: () => void })
                 </button>
               )}
               <motion.button layout type="button" className="btn btn-signal min-h-12 whitespace-nowrap px-5" onClick={() => (last ? (feel("save", "success"), onClose()) : go(i + 1))} transition={{ type: "spring", bounce: 0, duration: 0.35 }}>
-                {last ? "Get started" : "Next"} <ArrowRight className="size-4" />
+                {last ? "Let\u2019s go" : "Next"} <ArrowRight className="size-4" />
               </motion.button>
             </div>
           </motion.div>
