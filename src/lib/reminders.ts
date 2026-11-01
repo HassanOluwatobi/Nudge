@@ -6,7 +6,7 @@ import type { CalEvent } from "./calendar";
 
 export type ReminderTimes = { morning: string; evening: string }; // "HH:MM"
 export const DEFAULT_TIMES: ReminderTimes = { morning: "08:30", evening: "20:00" };
-export const APP_URL = "https://nudgeme-thread.vercel.app";
+export const APP_URL = "https://shrinkmyday.com";
 
 export const MORNING = {
   title: "Shrink my day: pick your one thing",

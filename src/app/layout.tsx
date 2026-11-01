@@ -14,6 +14,7 @@ const GeistSerif = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://shrinkmyday.com"),
   title: "Shrink my day",
   description: "One calm step at a time. Put down what is on your mind, choose one thing, and start with a small first step. Free, no account, works offline.",
   manifest: "/manifest.webmanifest",

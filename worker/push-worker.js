@@ -18,7 +18,7 @@
 const PUSH_HOSTS = [/(^|\.)push\.apple\.com$/, /^fcm\.googleapis\.com$/, /^updates\.push\.services\.mozilla\.com$/, /(^|\.)notify\.windows\.com$/, /^android\.googleapis\.com$/];
 const MAX_ITEMS = 300;
 const MAX_BODY = 6000; // base64 characters per sealed message
-const CONTACT = "https://nudgeme-thread.vercel.app";
+const CONTACT = "https://shrinkmyday.com";
 
 const cors = {
   "access-control-allow-origin": "*",
