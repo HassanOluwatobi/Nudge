@@ -1021,3 +1021,66 @@ html[data-theme="dark"] [data-sonner-toaster] [data-sonner-toast] {
 html[data-theme="dark"] dialog.sheet::backdrop {
   background: rgb(0 0 0 / 0.55);
 }
+
+/* Splash: the logo's strokes slide in one after another, then it all fades away. */
+#splash {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  transition: opacity 380ms cubic-bezier(0.32, 0.72, 0, 1), visibility 0s linear 380ms;
+}
+html.no-splash #splash,
+html.splash-done #splash {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+html.no-splash #splash {
+  transition: none;
+}
+#splash .splash-inner {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  transition: transform 380ms cubic-bezier(0.32, 0.72, 0, 1);
+}
+html.splash-done #splash .splash-inner {
+  transform: scale(1.06);
+}
+#splash path {
+  fill: #0075ff;
+  opacity: 0;
+  transform: translateX(-14px);
+  animation: splash-stroke 520ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--i) * 55ms);
+}
+#splash .splash-name {
+  font-family: var(--font-serif);
+  font-size: 22px;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  opacity: 0;
+  animation: splash-name 500ms ease-out 380ms forwards;
+}
+@keyframes splash-stroke {
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes splash-name {
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  #splash path,
+  #splash .splash-name {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

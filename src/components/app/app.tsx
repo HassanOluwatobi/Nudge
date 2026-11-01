@@ -81,7 +81,7 @@ export function NudgeApp() {
   useEffect(() => {
     if (state && !state.meta.intro && !introShown.current) {
       introShown.current = true;
-      setTimeout(() => setGuide(true), 500);
+      setTimeout(() => setGuide(true), (window as unknown as { __splashAt?: number }).__splashAt ? 1500 : 500);
     }
   }, [state]);
   // Light, dark, or follow the phone. The status bar colour follows too.
@@ -175,6 +175,16 @@ export function NudgeApp() {
     setBadge(todayTasks(state).length);
     return () => timers.forEach(clearTimeout);
   }, [state]);
+
+  // Let the splash finish drawing, then fade it once the app is ready.
+  const loaded = !!state;
+  useEffect(() => {
+    if (!loaded) return;
+    const at = (window as unknown as { __splashAt?: number }).__splashAt;
+    const wait = at ? Math.max(0, 1000 - (Date.now() - at)) : 0;
+    const id = setTimeout(() => document.documentElement.classList.add("splash-done"), wait);
+    return () => clearTimeout(id);
+  }, [loaded]);
 
   // People who already allowed notifications move to closed-app reminders quietly. No new prompt.
   const notifyOn = !!state?.settings.notify;

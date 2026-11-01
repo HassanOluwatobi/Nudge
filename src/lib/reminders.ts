@@ -131,7 +131,7 @@ export async function notify(title: string, body: string, url = "/") {
   if (!canNotify() || Notification.permission !== "granted") return;
   try {
     const reg = await navigator.serviceWorker?.getRegistration();
-    if (reg) await reg.showNotification(title, { body, icon: "/icon-192.png", badge: "/icon-192.png", tag: "nudgeme", data: { url } });
+    if (reg) await reg.showNotification(title, { body, icon: "/icon-192.png", badge: "/badge-96.png", tag: "nudgeme", data: { url } });
     else new Notification(title, { body, icon: "/icon-192.png" });
   } catch {}
 }
