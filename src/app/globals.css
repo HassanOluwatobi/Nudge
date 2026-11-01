@@ -1127,3 +1127,41 @@ html[data-theme="dark"] [aria-label="How Shrink my day works"] {
     filter: brightness(0.98);
   }
 }
+
+/* ---------- Landing page ---------- */
+@keyframes lp-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+.lp-float { animation: lp-float 5.5s ease-in-out infinite; }
+.lp-hint { position: relative; }
+.lp-hint::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 7px;
+  width: 3px;
+  height: 7px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: #fff;
+  animation: lp-hint 1.6s ease-in-out infinite;
+}
+@keyframes lp-hint {
+  0% { transform: translateY(0); opacity: 1; }
+  80% { transform: translateY(12px); opacity: 0; }
+  100% { transform: translateY(0); opacity: 0; }
+}
+.lp-grid {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+  background-position: center;
+}
+.lp-wordmark {
+  font-size: clamp(36px, 14.5vw, 210px);
+  color: var(--ink);
+  opacity: 0.08;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-float, .lp-hint::after { animation: none; }
+}
