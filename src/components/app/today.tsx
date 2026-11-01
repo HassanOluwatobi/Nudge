@@ -8,6 +8,7 @@ import { type Part, type State, type Task, PARTS, PART_NAME, checkinDue, doneTod
 import type { Actions } from "@/lib/use-tasks";
 import { feel } from "@/lib/feedback";
 import { Art } from "./art";
+import { Credit } from "./settings";
 import { TaskRow, Tile } from "./task-row";
 
 export function Counter({ done, total }: { done: number; total: number }) {
@@ -289,6 +290,10 @@ export function Today({
           </AnimatePresence>
         </section>
       )}
+
+      <div className="mt-10">
+        <Credit />
+      </div>
     </div>
   );
 }

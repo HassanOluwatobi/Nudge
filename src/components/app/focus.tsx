@@ -174,8 +174,8 @@ export function Focus({
               {timer ? (
                 task?.emoji ? <span className="text-[44px] drop-shadow-lg">{task.emoji}</span> : null
               ) : (
-                <div className="text-center">
-                  <span className="block font-serif text-[64px] leading-none drop-shadow-[0_2px_12px_rgb(6_11_43/0.6)]">{mins}</span>
+                <div className="text-center text-white">
+                  <span className="block font-serif text-[64px] leading-none text-white drop-shadow-[0_2px_12px_rgb(6_11_43/0.6)]">{mins}</span>
                   <span className="text-[12px] font-semibold tracking-[0.14em] text-white/85">MINS</span>
                 </div>
               )}

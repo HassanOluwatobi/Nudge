@@ -1,3 +1,5 @@
+import type { CalEvent } from "./calendar";
+
 // Daily nudges without a server or an account.
 // The phone's own calendar rings at the chosen times, so reminders work even
 // when NudgeMe is closed. Free, private, and reliable on every phone.
@@ -196,4 +198,17 @@ export function remindChoices(now = new Date()): { label: string; when: Date }[]
   if (evening.getTime() - now.getTime() > 90 * 60000) out.push({ label: "This evening, 7 pm", when: evening });
   out.push({ label: "Tomorrow, 9 am", when: morning });
   return out;
+}
+
+// ---------- events for the calendar buttons ----------
+
+export function dailyEvents(t: ReminderTimes): CalEvent[] {
+  return (["morning", "evening"] as const).map((k) => {
+    const e = k === "morning" ? MORNING : EVENING;
+    return { title: e.title, body: e.body, url: e.url, start: at(t[k]), mins: 5, daily: true, uid: `nudgeme-${k}` };
+  });
+}
+
+export function taskEvent(title: string, when: Date): CalEvent {
+  return { title: `NudgeMe: ${title}`, body: "Time for a small step. Open NudgeMe.", url: APP_URL, start: when, mins: 10, uid: `nudgeme-task-${when.getTime()}` };
 }
