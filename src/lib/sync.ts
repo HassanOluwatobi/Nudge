@@ -98,7 +98,7 @@ export async function googleEvents(interactive = true): Promise<ExtEvent[]> {
         client_id: GOOGLE_CLIENT_ID,
         scope: "https://www.googleapis.com/auth/calendar.events.readonly",
         callback: (r) => (r.access_token ? res({ value: r.access_token, exp: Date.now() + Math.max(60, (r.expires_in ?? 3600) - 300) * 1000 }) : rej(new Error(r.error ?? "Google sign-in was cancelled."))),
-        error_callback: () => rej(new Error("Google sign-in was closed.")),
+        error_callback: () => rej(new Error("You closed the Google sign-in.")),
       });
       c.requestAccessToken({ prompt: "" });
     });
@@ -110,9 +110,9 @@ export async function googleEvents(interactive = true): Promise<ExtEvent[]> {
   const r = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events?${q}`, { headers: { Authorization: `Bearer ${googleToken.value}` } });
   if (r.status === 401) {
     saveToken(null);
-    throw new Error("Google sign-in expired. Try again.");
+    throw new Error("Google signed you out. Try again.");
   }
-  if (!r.ok) throw new Error("Google Calendar did not answer.");
+  if (!r.ok) throw new Error("Google Calendar isn't answering. Try again soon.");
   try {
     localStorage.setItem("nudgeme.glast", String(Date.now()));
   } catch {
@@ -193,7 +193,7 @@ function icsDate(v: string): { d: Date; allDay: boolean } | null {
 /** A shared calendar link, read through the stateless relay. */
 export async function linkEvents(url: string): Promise<ExtEvent[]> {
   const r = await fetch("/api/ics", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url }) });
-  if (!r.ok) throw new Error(((await r.json().catch(() => ({}))) as { error?: string }).error ?? "That calendar did not answer.");
+  if (!r.ok) throw new Error(((await r.json().catch(() => ({}))) as { error?: string }).error ?? "That calendar isn't answering.");
   return parseIcs(await r.text());
 }
 
@@ -276,5 +276,5 @@ export function syncWords(n?: SyncNote) {
   const mins = Math.round((Date.now() - n.at) / 60000);
   const when = mins < 1 ? "just now" : mins < 60 ? `${mins} min ago` : mins < 1440 ? `${Math.round(mins / 60)} h ago` : `${Math.round(mins / 1440)} d ago`;
   if (n.error) return `Couldn't check ${when}. ${n.error}`;
-  return `Checked ${when}. ${n.added ? `Added ${n.added} ${n.added === 1 ? "task" : "tasks"}.` : "Nothing new."}`;
+  return `Checked ${when}. ${n.added ? `${n.added} new.` : "Nothing new."}`;
 }

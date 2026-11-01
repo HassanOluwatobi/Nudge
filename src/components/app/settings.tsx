@@ -80,19 +80,19 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
     downloadBackup(state);
     feel("save", "medium");
     actions.setSettings({ lastBackup: new Date().toISOString() });
-    toast("Backup downloaded. Keep it somewhere safe.");
+    toast("Saved. Keep it somewhere safe.");
   };
   const importData = async (f: File) => {
     try {
       const next = sanitize(JSON.parse(await f.text()));
-      if (!next.tasks.length && !next.entries.length) return toast("That file has nothing in it. Nothing changed.");
+      if (!next.tasks.length && !next.entries.length) return toast("That file is empty. Nothing changed.");
       const before = state;
       actions.replaceAll(next);
       feel("save", "success");
-      toast(`Restored ${next.tasks.length} tasks and ${next.entries.length} ideas.`, { action: { label: "Undo", onClick: () => actions.replaceAll(before) } });
+      toast(`Loaded ${next.tasks.length} tasks and ${next.entries.length} ideas.`, { action: { label: "Undo", onClick: () => actions.replaceAll(before) } });
       onClose();
     } catch {
-      toast("That file could not be read. Nothing changed.");
+      toast("I couldn't open that file. Nothing changed.");
     }
   };
 
@@ -108,12 +108,12 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
       </div>
 
       <section className="mt-4">
-        <h3 className="t-label">Daily check-ins</h3>
+        <h3 className="t-label">Daily plans</h3>
         <div className="mt-2 divide-y divide-line rounded-2xl bg-white ring-1 ring-line">
           {(["morning", "evening"] as const).map((k) => (
             <div key={k} className="flex min-h-[72px] items-center justify-between px-4 py-2.5">
               <span>
-                <span className="block font-medium">{k === "morning" ? "Morning kickoff" : "Evening wrap-up"}</span>
+                <span className="block font-medium">{k === "morning" ? "Morning plan" : "Evening wrap-up"}</span>
                 <button type="button" className="t-small text-signal-ink" onClick={() => (onClose(), onCheckin(k))}>
                   Do it now
                 </button>
@@ -123,7 +123,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
           ))}
           <div className="flex min-h-[72px] items-center justify-between px-4 py-2.5">
             <span>
-              <span className="block font-medium">Weekly reset</span>
+              <span className="block font-medium">Plan the week</span>
               <button type="button" className="t-small text-signal-ink" onClick={() => (onClose(), onCheckin("weekly"))}>
                 Do it now
               </button>
@@ -131,13 +131,13 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
             <label className="relative inline-flex h-11 items-center gap-1.5 rounded-xl bg-white pl-3.5 pr-2.5 text-[16px] font-medium ring-1 ring-line">
               <span>{s.weeklyDay < 0 ? "Never" : DAYS[s.weeklyDay]}</span>
               <ChevronDown className="size-4 text-ink-3" />
-              <select value={s.weeklyDay} onChange={(e) => (actions.setSettings({ weeklyDay: Number(e.target.value) }), feel("tick", "light"))} className="absolute inset-0 cursor-pointer appearance-none opacity-0" aria-label="Weekly reset day">
+              <select value={s.weeklyDay} onChange={(e) => (actions.setSettings({ weeklyDay: Number(e.target.value) }), feel("tick", "light"))} className="absolute inset-0 cursor-pointer appearance-none opacity-0" aria-label="Plan the week day">
                 {DAYS.map((d, i) => (
                   <option key={d} value={i}>
                     {d}
                   </option>
                 ))}
-                <option value={-1}>Never</option>
+                <option value={-1}>Off</option>
               </select>
             </label>
           </div>
@@ -147,7 +147,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
       <section className="mt-6">
         <h3 className="t-label">Reminders</h3>
         <p className="t-small mb-3 mt-1 text-ink-2">
-          Add your check-ins to a calendar. It rings every day at {prettyTime(s.morning)} and {prettyTime(s.evening)}, even when Shrink my day is closed.
+          Put these in your calendar so your phone rings at {prettyTime(s.morning)} and {prettyTime(s.evening)} every day.
         </p>
         <CalendarButtons events={dailyEvents({ morning: s.morning, evening: s.evening })} file="nudgeme-check-ins" onAdded={() => actions.setSettings({ calendarAdded: ymd() })} label={s.calendarAdded ? "Added. If you change the times, add them again." : ""} />
         <div className="mt-3 rounded-2xl bg-white px-4 ring-1 ring-line">
@@ -157,10 +157,10 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
               label="Notifications"
               hint={
                 pushSupported()
-                  ? "Task reminders and check-ins ring on this phone, even when Shrink my day is closed."
+                  ? "Your phone rings for reminders, even when the app is closed."
                   : platform() === "ios"
-                    ? "On iPhone, add Shrink my day to your Home Screen and open it from there. Then reminders ring even when it's closed."
-                    : "Alerts while Shrink my day is open or in the background. For alerts when it's fully closed, add them to your calendar above."
+                    ? "On iPhone, add the app to your Home Screen first and open it from there."
+                    : "This only works while the app is open. Use your calendar above for the rest."
               }
               checked={s.notify}
               onChange={async (v) => {
@@ -172,7 +172,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
                 const ok = pushSupported() ? await enablePush().catch(() => false) : await askNotify();
                 actions.setSettings({ notify: ok });
                 if (!ok) toast("Notifications are blocked. You can allow them in your phone's settings.");
-                else (feel("save"), toast(pushSupported() ? "Reminders are on. They'll ring even with Shrink my day closed." : "Notifications are on."));
+                else (feel("save"), toast(pushSupported() ? "Done. Your phone will ring, even with the app closed." : "Notifications are on."));
               }}
             />
           ) : (
@@ -181,7 +181,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
                 <Bell className="size-4" /> Notifications
               </span>
               <span className="t-small mt-0.5 block text-ink-2">
-                {platform() === "ios" ? "On iPhone, add Shrink my day to your Home Screen first. Then open it from there and turn this on." : "This browser does not offer notifications. Calendar reminders above still work."}
+                {platform() === "ios" ? "On iPhone, add the app to your Home Screen first and open it from there." : "This browser can't do reminders. The calendar option above still works."}
               </span>
             </div>
           )}
@@ -189,24 +189,24 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
       </section>
 
       <section className="mt-6">
-        <h3 className="t-label">Bring in your calendar</h3>
-        <p className="t-small mb-3 mt-1 text-ink-2">Turn your events into tasks with reminders. Shrink my day only reads your calendar, it never edits it.</p>
+        <h3 className="t-label">Add your calendar</h3>
+        <p className="t-small mb-3 mt-1 text-ink-2">Your events show up as tasks with reminders. I only read your calendar, I never change it.</p>
         <SourceButtons state={state} onPick={(src) => (onClose(), onImport(src))} />
       </section>
 
       <section className="mt-6">
         <h3 className="t-label">Touch</h3>
         <div className="mt-2 rounded-2xl bg-white px-4 ring-1 ring-line">
-          <Switch label="Haptics" hint="A light tap when you tick a step, and a double tap when you finish a task." checked={s.haptics} onChange={(v) => (actions.setSettings({ haptics: v }), v && setTimeout(() => feel("done"), 50))} />
+          <Switch label="Vibration" hint="A little tap when you tick a step, and a double tap when you finish a task." checked={s.haptics} onChange={(v) => (actions.setSettings({ haptics: v }), v && setTimeout(() => feel("done"), 50))} />
         </div>
       </section>
 
       <section className="mt-6">
-        <h3 className="t-label">Your AI helper</h3>
-        <p className="t-small mt-1 text-ink-2">Pick the AI you already use. When a task feels too big, tap Break it down. It opens your AI with the question ready, and you paste the steps back. Free.</p>
+        <h3 className="t-label">Your AI</h3>
+        <p className="t-small mt-1 text-ink-2">Pick the AI you already use. When a task feels like a lot, it breaks it down into small steps for you. Free.</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {(Object.keys(AI_NAME) as S["ai"][]).map((k) => (
-            <button key={k} type="button" className="chip" aria-pressed={s.ai === k} onClick={() => (actions.setSettings({ ai: k }), feel("tap", "light"), toast(`Done. Break it down now opens ${AI_NAME[k]}.`))}>
+            <button key={k} type="button" className="chip" aria-pressed={s.ai === k} onClick={() => (actions.setSettings({ ai: k }), feel("tap", "light"), toast(`Done. I'll use ${AI_NAME[k]} from now on.`))}>
               {AI_NAME[k]}
             </button>
           ))}
@@ -220,7 +220,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
             <span className="t-small text-ink-2">
               Stays on this device.{" "}
               <span className={!s.lastBackup || Date.now() - Date.parse(s.lastBackup) > 14 * 864e5 ? "font-semibold text-danger" : ""}>
-                {s.lastBackup ? `Last backup ${new Date(s.lastBackup).toLocaleDateString(undefined, { day: "numeric", month: "short" })}.` : "No backup yet."}
+                {s.lastBackup ? `Last saved ${new Date(s.lastBackup).toLocaleDateString(undefined, { day: "numeric", month: "short" })}.` : "Not saved yet."}
               </span>
             </span>
           </span>
@@ -234,11 +234,11 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
               <div className="border-t border-line px-4 pb-4 pt-3">
                 <ol className="space-y-2">
                   {[
-                    "There's no account. Everything you add lives on this phone.",
-                    "Nothing goes to a server. I never see your tasks.",
+                    "No account needed. Everything stays on this phone.",
+                    "I never see your tasks.",
                     "If you connect Notion, Calendly or a calendar link, that token or link is saved on this phone as plain text. It passes through a Shrink my day relay that stores nothing. You can remove it any time.",
                     "Voice typing uses your browser's speech feature. Some browsers send the audio to their own online service.",
-                    "If you clear your browser data, Shrink my day gets cleared too. Download a backup first.",
+                    "If you clear your browser, your list goes with it. Save a copy first.",
                   ].map((t, i) => (
                     <li key={i} className="flex gap-2.5 text-[14px] leading-snug text-ink-2">
                       <span className="grid size-5 shrink-0 place-items-center rounded-full bg-paper text-[11px] font-semibold tabular-nums text-ink">{i + 1}</span>
@@ -250,14 +250,14 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
                   <button type="button" className="btn btn-line w-full justify-start gap-3 px-4" onClick={exportData} disabled={!count}>
                     <Download className="size-[18px] text-ink-2" />
                     <span className="text-left">
-                      <span className="block">Download a backup</span>
+                      <span className="block">Save a copy</span>
                     </span>
                   </button>
-                  <p className="t-small -mt-1 px-1 text-ink-3">Saves one file with all your tasks, ideas and settings.</p>
+                  <p className="t-small -mt-1 px-1 text-ink-3">One file with everything in it.</p>
                   <button type="button" className="btn btn-line w-full justify-start gap-3 px-4" onClick={() => file.current?.click()}>
-                    <Upload className="size-[18px] text-ink-2" /> Restore from a backup
+                    <Upload className="size-[18px] text-ink-2" /> Load a copy
                   </button>
-                  <p className="t-small -mt-1 px-1 text-ink-3">Loads that file back, for example on a new phone. You can undo.</p>
+                  <p className="t-small -mt-1 px-1 text-ink-3">Use it on a new phone. You can undo.</p>
                   <input ref={file} type="file" accept="application/json,.json" className="hidden" onChange={(e) => (e.target.files?.[0] && importData(e.target.files[0]), (e.target.value = ""))} />
                   {clear ? (
                     <div className="flex items-center justify-between gap-2 rounded-2xl bg-danger-soft p-2 pl-4" role="group" aria-label="Confirm clear">
@@ -266,7 +266,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
                         <button type="button" className="btn btn-quiet min-h-11" onClick={() => setClear(false)}>
                           Keep
                         </button>
-                        <button type="button" className="btn btn-danger min-h-11 px-4" onClick={() => (actions.clearAll(), feel("undo", "warning"), setClear(false), onClose(), toast("Everything was cleared."))}>
+                        <button type="button" className="btn btn-danger min-h-11 px-4" onClick={() => (actions.clearAll(), feel("undo", "warning"), setClear(false), onClose(), toast("All cleared."))}>
                           Delete all
                         </button>
                       </div>
@@ -286,10 +286,10 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
       <section className="mt-6">
         <h3 className="t-label">Help</h3>
         <button type="button" className="btn btn-line mt-2 w-full gap-2" onClick={() => (onClose(), onGuide())}>
-          <CircleHelp className="size-[18px]" /> How Shrink my day works
+          <CircleHelp className="size-[18px]" /> How it works
         </button>
         <a href="/privacy" className="btn btn-quiet mt-1 w-full text-[14px]">
-          Privacy policy
+          Privacy
         </a>
       </section>
     </Sheet>

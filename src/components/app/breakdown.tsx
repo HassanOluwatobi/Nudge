@@ -27,7 +27,7 @@ export function BreakItDown({ task, actions, ai, announce, compact = false, onAd
     try {
       const t = await navigator.clipboard.readText();
       if (!parseSteps(t).length) {
-        toast(`Nothing to paste yet. Copy ${name}'s answer first.`);
+        toast(`Copy ${name}'s answer first, then come back.`);
         return;
       }
       setText(t);
@@ -68,7 +68,7 @@ export function BreakItDown({ task, actions, ai, announce, compact = false, onAd
               {!found.length ? (
                 <>
                   <p className="text-[15px] font-semibold">Let {name} do the hard part</p>
-                  <p className="t-small mt-1 text-ink-2">It splits this into tiny steps. You stay in charge of what gets added.</p>
+                  <p className="t-small mt-1 text-ink-2">It&apos;ll split this into tiny steps. You choose what to keep.</p>
                   <div className="mt-3 grid gap-2">
                     <a
                       href={link.url}
@@ -84,14 +84,14 @@ export function BreakItDown({ task, actions, ai, announce, compact = false, onAd
                       <span className="grid size-5 place-items-center rounded-full bg-white/25 text-[12px] font-bold">1</span> Ask {name} <ExternalLink className="size-4" />
                     </a>
                     <button type="button" className={`btn ${asked ? "btn-signal" : "btn-line"} min-h-12 w-full gap-2`} onClick={paste}>
-                      <span className={`grid size-5 place-items-center rounded-full text-[12px] font-bold ${asked ? "bg-white/25" : "bg-paper"}`}>2</span> Paste the answer <ClipboardPaste className="size-4" />
+                      <span className={`grid size-5 place-items-center rounded-full text-[12px] font-bold ${asked ? "bg-white/25" : "bg-paper"}`}>2</span> Paste its answer here <ClipboardPaste className="size-4" />
                     </button>
                   </div>
-                  {typing && <textarea autoFocus rows={4} value={text} onChange={(e) => setText(e.target.value)} placeholder={`Paste ${name}'s list here`} className="field mt-3 resize-none text-[16px]" />}
+                  {typing && <textarea autoFocus rows={4} value={text} onChange={(e) => setText(e.target.value)} placeholder="Paste the list here" className="field mt-3 resize-none text-[16px]" />}
                 </>
               ) : (
                 <>
-                  <p className="text-[15px] font-semibold">Here is the plan</p>
+                  <p className="text-[15px] font-semibold">Here&apos;s the plan</p>
                   <ul className="mt-2 space-y-1.5">
                     {found.map((p, i) => (
                       <li key={i} className="flex gap-2.5 text-[15px] leading-snug">
@@ -102,10 +102,10 @@ export function BreakItDown({ task, actions, ai, announce, compact = false, onAd
                   </ul>
                   <div className="mt-4 grid grid-cols-[auto_1fr] gap-2">
                     <button type="button" className="btn btn-line min-h-12 px-4" onClick={() => (setText(""), setTyping(false))}>
-                      Redo
+                      Try again
                     </button>
                     <button type="button" className="btn btn-signal min-h-12" onClick={add}>
-                      Add {found.length} subtasks
+                      Add these {found.length} subtasks
                     </button>
                   </div>
                 </>

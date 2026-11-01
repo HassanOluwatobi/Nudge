@@ -32,7 +32,7 @@ export function TopBar({ title, onSettings, onAdd, onHelp, dark, onTheme }: { ti
           </button>
         )}
         {onHelp && (
-          <button type="button" className={round} aria-label="How Shrink my day works" onClick={onHelp}>
+          <button type="button" className={round} aria-label="How it works" onClick={onHelp}>
             <CircleHelp className="size-[18px]" />
           </button>
         )}
@@ -56,9 +56,9 @@ const slide = {
 };
 
 const CHECKIN = {
-  morning: { icon: Sun, title: "Morning kickoff", body: "2 min", hue: "hue-peach" },
+  morning: { icon: Sun, title: "Morning plan", body: "2 min", hue: "hue-peach" },
   evening: { icon: Moon, title: "Evening wrap-up", body: "2 min", hue: "hue-lilac" },
-  weekly: { icon: CalendarSync, title: "Weekly reset", body: "5 min", hue: "hue-blue" },
+  weekly: { icon: CalendarSync, title: "Plan the week", body: "5 min", hue: "hue-blue" },
 } as const;
 
 export function Today({
@@ -132,7 +132,7 @@ export function Today({
     onMenu(pick);
   });
   const finishedOne = (t: Task) => {
-    toast(`Finished: ${t.title}`, { action: { label: "Undo", onClick: () => actions.restore(t.id) } });
+    toast(`Done: ${t.title}`, { action: { label: "Undo", onClick: () => actions.restore(t.id) } });
     announce(`Finished: ${t.title}`);
   };
 
@@ -156,7 +156,7 @@ export function Today({
         <section className="mt-7" aria-labelledby={`next-h-${k}`}>
           <button type="button" className="mb-2.5 flex items-center gap-2 px-1" aria-expanded={showNext} onClick={() => (setShowNext((v) => !v), feel("tap"))}>
             <span id={`next-h-${k}`} className="pill pill-anytime">
-              Up next ({rest.length})
+              Next up ({rest.length})
             </span>
             <ChevronDown className={`size-4 text-ink-3 transition-transform ${showNext ? "rotate-180" : ""}`} />
           </button>
@@ -268,9 +268,9 @@ export function Today({
                         {step.t}
                       </>
                     ) : pick.steps.length ? (
-                      "All the subtasks are ticked. Finish it whenever."
+                      "All subtasks done. Tick it off when you're ready."
                     ) : (
-                      "Feels big? Break it down first."
+                      "Feels like a lot? Break it down first."
                     )}
                   </span>
                 </span>
@@ -285,8 +285,8 @@ export function Today({
               </button>
               {rest.length > 0 && (
                 <div className="mt-1 flex justify-center">
-                  <button type="button" className="btn btn-quiet text-[15px]" onClick={() => (actions.pass(pick.id), feel("tap", "light"), announce("Showing another task."))}>
-                    Not this one
+                  <button type="button" className="btn btn-quiet text-[15px]" onClick={() => (actions.pass(pick.id), feel("tap", "light"), announce("Here's another one."))}>
+                    Not now
                   </button>
                 </div>
               )}
@@ -296,9 +296,9 @@ export function Today({
       ) : (
         <section className="mt-6 overflow-hidden rounded-[24px] bg-white ring-1 ring-line">
           <div className="p-5">
-            <h2 className="t-title">{finished.length ? "That's today done" : "Nothing on today yet"}</h2>
+            <h2 className="t-title">{finished.length ? "You did it" : "Your day is clear"}</h2>
             <p className="t-body mt-2 text-ink-2">
-              {finished.length ? `You finished ${finished.length === 1 ? "one task" : `${finished.length} tasks`}. Nice work. You can stop here.` : "Type anything in the box above. Messy is fine."}
+              {finished.length ? `${finished.length === 1 ? "1 thing" : `${finished.length} things`} done today. You can rest now.` : "Add something above. Messy text is fine."}
             </p>
           </div>
         </section>
@@ -311,8 +311,8 @@ export function Today({
           <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-signal-soft text-signal-ink">
             <Lightbulb className="size-[18px]" />
           </span>
-          <span className="flex-1 text-[15px] font-semibold">{ideasBack === 1 ? "An idea came back" : `${ideasBack} ideas came back`}</span>
-          <span className="text-[13px] text-ink-3">Review</span>
+          <span className="flex-1 text-[15px] font-semibold">{ideasBack === 1 ? "An idea to look at again" : `${ideasBack} ideas to look at again`}</span>
+          <span className="text-[13px] text-ink-3">Look</span>
           <ChevronRight className="size-4 text-ink-3" />
         </button>
       )}
@@ -328,7 +328,7 @@ export function Today({
 
       {/* Wide screens: today's list sits beside the main card. */}
       <aside className="hidden lg:sticky lg:top-6 lg:mt-6 lg:block [&>section:first-child]:mt-0" aria-label="Today's list">
-        {rest.length || finished.length ? lists("d") : <p className="t-small mt-7 px-1 text-ink-3">Your other tasks for today will show up here.</p>}
+        {rest.length || finished.length ? lists("d") : <p className="t-small mt-7 px-1 text-ink-3">The rest of today&apos;s tasks will show up here.</p>}
       </aside>
       </div>
 
@@ -350,14 +350,14 @@ function MorningPick({ state, actions, announce }: { state: State; actions: Acti
     actions.finishCheckin("morning");
     feel("save", "success");
     announce(`${t.title} is your one thing today.`);
-    toast("Got it. That's your one thing.");
+    toast("Nice. That's your one thing.");
   };
   return (
     <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-3 rounded-[20px] bg-white p-4 ring-1 ring-line" aria-label="Morning check-in">
       <p className="t-label flex items-center gap-1.5 text-signal-ink">
         <Sun className="size-3.5" /> Good morning
       </p>
-      <p className="mt-1.5 text-[17px] font-semibold">What&apos;s the one thing for today?</p>
+      <p className="mt-1.5 text-[17px] font-semibold">What&apos;s the one thing you want to get done today?</p>
       {options.length ? (
         <ul className="mt-3 grid gap-1.5">
           {options.map((t) => (
@@ -371,10 +371,10 @@ function MorningPick({ state, actions, announce }: { state: State; actions: Acti
           ))}
         </ul>
       ) : (
-        <p className="t-small mt-1 text-ink-3">Nothing here yet. Add something in the box above.</p>
+        <p className="t-small mt-1 text-ink-3">Nothing here yet. Add something above first.</p>
       )}
       <button type="button" className="btn btn-quiet mt-1 min-h-10 w-full text-[14px]" onClick={() => (actions.finishCheckin("morning"), feel("tap"))}>
-        Skip for today
+        Not today
       </button>
     </motion.section>
   );
@@ -408,7 +408,7 @@ function BackupNudge({ state, actions }: { state: State; actions: Actions }) {
       <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-signal-soft text-signal-ink">
         <Download className="size-[18px]" />
       </span>
-      <span className="min-w-0 flex-1 text-[14px] font-medium">{state.settings.lastBackup ? "Back up your list?" : "Save a copy of your list"}</span>
+      <span className="min-w-0 flex-1 text-[14px] font-medium">{state.settings.lastBackup ? "Back up your list?" : "Save a copy of your list, just in case"}</span>
       <button type="button" className="text-[13px] text-ink-3" onClick={() => (actions.setSettings({ lastBackup: new Date(Date.now() - 7 * 864e5).toISOString() }), setHidden(true))}>
         Later
       </button>
@@ -419,7 +419,7 @@ function BackupNudge({ state, actions }: { state: State; actions: Actions }) {
           downloadBackup(state);
           actions.setSettings({ lastBackup: new Date().toISOString() });
           feel("save", "success");
-          toast("Backup saved to your downloads.");
+          toast("Saved to your downloads.");
         }}
       >
         Save

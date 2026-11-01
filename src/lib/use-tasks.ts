@@ -41,7 +41,7 @@ function load(): State {
     try {
       localStorage.setItem(`${KEY}.broken.${Date.now()}`, raw);
     } catch {}
-    setTimeout(() => toast("Some saved data could not be read. A copy was kept, and you can keep going."), 300);
+    setTimeout(() => toast("Something in your saved list looked off. I kept a copy, and you're fine to carry on."), 300);
     return freshState();
   }
 }
@@ -54,7 +54,7 @@ function save(s: State) {
   } catch {
     if (!warned) {
       warned = true;
-      toast("This browser would not save your list. Your changes stay while this tab is open.", { duration: 8000 });
+      toast("This browser won't save your list. Keep this tab open so you don't lose anything.", { duration: 8000 });
     }
   }
 }

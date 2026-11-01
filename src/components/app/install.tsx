@@ -130,7 +130,7 @@ export function InstallCard() {
   return (
     <section className="mt-6 rounded-[20px] bg-white p-4 ring-1 ring-line" aria-label="Keep your tasks safe">
       <p className="text-[15px] font-semibold">Keep your tasks safe</p>
-      <p className="t-small mt-1 text-ink-2">Add Shrink my day to your Home Screen. Phones sometimes wipe websites you haven't opened in a while. Home Screen apps keep everything.</p>
+      <p className="t-small mt-1 text-ink-2">Add Shrink my day to your Home Screen. Phones sometimes wipe websites you haven&apos;t opened in a while. Home Screen apps keep everything.</p>
       <div className="mt-3">
         <InstallButton compact />
       </div>
@@ -195,17 +195,17 @@ export function InstallPrompt({ open, onClose }: { open: boolean; onClose: () =>
     if (r.outcome === "accepted") (feel("done"), noteAsk(true), onClose());
   };
   const reasons = [
-    { icon: <Bell className="size-5" />, t: "Reminders that actually ring", s: plat === "ios" ? "iPhone only lets Shrink my day ring when it's closed once it's on your Home Screen." : "Your reminders ring even when Shrink my day is closed." },
-    { icon: <ShieldCheck className="size-5" />, t: "Your list stays safe", s: "Phones can wipe websites you haven't opened in a while. Home Screen apps keep everything." },
-    { icon: <Maximize2 className="size-5" />, t: "One tap away", s: "It opens full screen, like any other app." },
+    { icon: <Bell className="size-5" />, t: "Reminders that ring", s: plat === "ios" ? "On iPhone, this is the only way your notifications can show up outside the site." : "Your reminders ring even when the app is closed." },
+    { icon: <ShieldCheck className="size-5" />, t: "Your list stays safe", s: "Phones sometimes clear websites. Home Screen apps don't get cleared." },
+    { icon: <Maximize2 className="size-5" />, t: "One tap away", s: "Opens full screen like a normal app." },
   ];
   return (
     <Sheet open={open} onClose={onClose} title="Add to Home Screen" hideTitle>
       <div className="flex flex-col items-center pt-1 text-center">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src="/icon-192.png" alt="" width={52} height={52} className="size-[52px] rounded-[14px]" />
-        <h2 className="mt-3 font-serif text-[24px] leading-tight tracking-[-0.01em]">Put Shrink my day on your Home Screen</h2>
-        <p className="t-small mt-1 text-ink-2">Ten seconds, and everything works better.</p>
+        <h2 className="mt-3 font-serif text-[24px] leading-tight tracking-[-0.01em]">Add it to your Home Screen</h2>
+        <p className="t-small mt-1 text-ink-2">Takes 10 seconds. Worth it.</p>
       </div>
       <ul className="mt-4 divide-y divide-line/70 overflow-hidden rounded-[18px] bg-white ring-1 ring-line">
         {reasons.map((r) => (
@@ -225,18 +225,18 @@ export function InstallPrompt({ open, onClose }: { open: boolean; onClose: () =>
         </button>
       ) : (
         <div className="mt-3 rounded-[18px] bg-paper px-4 py-3">
-          <p className="text-[14px] font-semibold">How to add it</p>
+          <p className="text-[14px] font-semibold">How to do it</p>
           <ol className="mt-2 space-y-2 text-[14px] text-ink-2">
             {(plat === "ios"
               ? [
-                  <>Tap <Share className="inline size-4 -translate-y-0.5 text-ink" /> Share in Safari. If you don&apos;t see it, tap <MoreHorizontal className="inline size-4 -translate-y-0.5 text-ink" /> first.</>,
-                  <>Choose <span className="font-semibold text-ink">Add to Home Screen</span>. Scroll down if it&apos;s hidden.</>,
-                  <>Tap <span className="font-semibold text-ink">Add</span>, then open Shrink my day from its new icon.</>,
+                  <>Tap <Share className="inline size-4 -translate-y-0.5 text-ink" /> Share in Safari (or <MoreHorizontal className="inline size-4 -translate-y-0.5 text-ink" /> first).</>,
+                  <>Tap <span className="font-semibold text-ink">Add to Home Screen</span>. You might need to scroll.</>,
+                  <>Tap <span className="font-semibold text-ink">Add</span>, then open it from the new icon.</>,
                 ]
               : [
                   <>Open the browser menu <MoreVertical className="inline size-4 -translate-y-0.5 text-ink" /> at the top right.</>,
                   <>Choose <span className="font-semibold text-ink">Install app</span> or <span className="font-semibold text-ink">Add to Home screen</span>.</>,
-                  <>Confirm, then open Shrink my day from its new icon.</>,
+                  <>Confirm, then open it from the new icon.</>,
                 ]
             ).map((x, i) => (
               <li key={i} className="flex gap-2.5">
@@ -248,7 +248,7 @@ export function InstallPrompt({ open, onClose }: { open: boolean; onClose: () =>
         </div>
       )}
       <button type="button" className="btn btn-quiet mt-2 w-full text-[15px]" onClick={onClose}>
-        {ready ? "Maybe later" : "Got it, I'll do it now"}
+        {ready ? "Maybe later" : "Got it"}
       </button>
     </Sheet>
   );

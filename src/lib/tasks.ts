@@ -167,7 +167,7 @@ export function splitLines(text: string): string[] {
   return out.slice(0, 50);
 }
 
-export const BUCKET_NAME: Record<Bucket, string> = { today: "Today", week: "This week", later: "Later", done: "Done" };
+export const BUCKET_NAME: Record<Bucket, string> = { today: "Today", week: "This week", later: "Someday", done: "Done" };
 export const PART_NAME: Record<Part, string> = { anytime: "Anytime", morning: "Morning", afternoon: "Afternoon", evening: "Evening" };
 export const MIN_CHOICES = [5, 10, 15, 30, 45, 60];
 export const RESURFACE_DAYS = [3, 7, 14, 30];

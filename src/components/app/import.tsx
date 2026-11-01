@@ -18,11 +18,11 @@ export const MARK: Record<Source, (p: { className?: string }) => React.ReactElem
 export const SOURCES: Source[] = (["google", "outlook", "ics", "notion", "calendly"] as Source[]).filter((s) => s !== "outlook" || !!MS_CLIENT_ID);
 
 const SUB: Record<Source, string> = {
-  google: "Next two weeks of events",
+  google: "Your next two weeks",
   outlook: "Next two weeks of events",
-  ics: "Paste your calendar link once",
-  notion: "Pages that have a date",
-  calendly: "Meetings booked with you",
+  ics: "Paste your link once",
+  notion: "Pages with a date",
+  calendly: "Meetings people booked with you",
 };
 const NAME: Record<Source, string> = { google: "Google Calendar", outlook: "Outlook", ics: "Apple Calendar", notion: "Notion", calendly: "Calendly" };
 const TILE: Record<Source, { el: React.ReactNode; bleed: boolean }> = {
@@ -56,7 +56,7 @@ export function GoogleRow({ state, actions, onSetup }: { state: State; actions: 
       const fresh = list.filter((e) => !known.has(extKey(e)));
       if (fresh.length) actions.importEvents(fresh.map((e) => ({ key: extKey(e), title: e.title, start: e.start, end: e.end, allDay: e.allDay })));
       feel(fresh.length ? "save" : "tick", fresh.length ? "success" : "light");
-      toast(fresh.length ? `Added ${fresh.length} ${fresh.length === 1 ? "event" : "events"} from Google Calendar.` : "You're up to date with Google Calendar.");
+      toast(fresh.length ? `${fresh.length} added from Google Calendar.` : "Nothing new in Google Calendar.");
       setDue(false);
     } catch (e) {
       toast(e instanceof Error ? e.message : "Google Calendar did not answer.");
@@ -71,10 +71,10 @@ export function GoogleRow({ state, actions, onSetup }: { state: State; actions: 
       </LogoTile>
       <div className="min-w-0 flex-1">
         <button type="button" onClick={go} disabled={busy} className="block w-full text-left text-[15px] font-semibold leading-tight">
-          Any new events in Google?
+          New stuff in Google Calendar?
         </button>
         <button type="button" onClick={onSetup} className="t-small block text-signal-ink">
-          Make it automatic
+          Do this for me
         </button>
       </div>
       <button type="button" onClick={go} disabled={busy} className="btn btn-line min-h-9 px-3.5 text-[14px]">
@@ -177,7 +177,7 @@ export function ImportSheet({
       show(list);
       feel(list.length ? "save" : "tap", list.length ? "success" : "light");
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Something went wrong.");
+      setErr(e instanceof Error ? e.message : "Something went wrong. Try again.");
       feel("undo", "warning");
     } finally {
       setBusy(false);
@@ -191,11 +191,11 @@ export function ImportSheet({
     if (rest.length) actions.skipEvents(rest);
     if (source) noteSync(source, { at: Date.now(), added: n });
     feel("done", "success");
-    toast(n ? `Added ${n} ${n === 1 ? "task" : "tasks"} from your calendar.` : "Nothing new to add.");
+    toast(n ? `${n} added.` : "Nothing new.");
     onClose();
   };
 
-  const title = events ? "Choose what to add" : source ? SOURCE_NAME[source] : "Bring in your calendar";
+  const title = events ? "Pick what to add" : source ? SOURCE_NAME[source] : "Add your calendar";
   const fresh = (events ?? []).filter((e) => !have.has(extKey(e)));
   const groups = new Map<string, ExtEvent[]>();
   for (const e of events ?? []) {
@@ -213,7 +213,7 @@ export function ImportSheet({
                 <ArrowLeft className="size-4" /> Back
               </button>
             )}
-            <p className="t-small mt-1 text-ink-2">{events.length ? "The next two weeks. Tick what you want as tasks. Each one gets its time and a reminder 10 minutes before." : "Nothing in the next two weeks."}</p>
+            <p className="t-small mt-1 text-ink-2">{events.length ? "Your next two weeks. Tick what you want as tasks. Each gets a reminder 10 minutes before." : "No events in the next two weeks."}</p>
             <div className="mt-3 max-h-[52vh] space-y-4 overflow-auto pb-1">
               {[...groups.entries()].map(([day, list]) => (
                 <section key={day}>
@@ -264,18 +264,18 @@ export function ImportSheet({
             {fresh.length > 0 && (
               <div className="mt-3 flex items-center justify-between">
                 <button type="button" className="btn btn-quiet -ml-3 min-h-10 px-3 text-[14px]" onClick={() => setPicked(picked.size === fresh.length ? new Set() : new Set(fresh.map(extKey)))}>
-                  {picked.size === fresh.length ? "Select none" : "Select all"}
+                  {picked.size === fresh.length ? "None" : "All"}
                 </button>
                 <span className="t-small text-ink-3">{picked.size} selected</span>
               </div>
             )}
             <button type="button" className="btn btn-signal mt-3 w-full" disabled={!picked.size} onClick={add}>
-              {picked.size ? `Add ${picked.size} to Shrink my day` : "Nothing selected"}
+              {picked.size ? `Add ${picked.size}` : "Nothing selected"}
             </button>
           </motion.div>
         ) : !source ? (
           <motion.div key="pick" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <p className="t-small mt-1 text-ink-2">Events from the next two weeks can become tasks. You choose which ones. Shrink my day only reads, it never changes your calendar.</p>
+            <p className="t-small mt-1 text-ink-2">Your events can show up as tasks. You pick which ones. I only read your calendar, I never change it.</p>
             <div className="mt-4">
               <SourceButtons state={state} onPick={(s) => (setSource(s), setToken(s === "notion" ? (state.settings.sync.notion ?? "") : s === "calendly" ? (state.settings.sync.calendly ?? "") : ""))} />
             </div>
@@ -290,11 +290,11 @@ export function ImportSheet({
             <div className="mt-2 flex items-center gap-3">
               <LogoTile bleed={TILE[source].bleed} size={48}>{TILE[source].el}</LogoTile>
               <p className="t-small flex-1 text-ink-2">
-                {source === "google" && "Sign in once. Shrink my day then checks your calendar when you open it and adds new events as tasks. It only reads, it never changes anything."}
+                {source === "google" && "Sign in once. Each time you open the app, new events show up as tasks. I only read, I never change anything."}
                 {source === "outlook" && "Sign in with your Microsoft account and allow read-only access to your calendar."}
-                {source === "ics" && "Share a calendar from your iPhone as a link, once. Shrink my day reads it and never changes it."}
-                {source === "notion" && "Any Notion database with a date column works. Pages dated in the next two weeks turn into tasks."}
-                {source === "calendly" && "Bring in the meetings people have booked with you."}
+                {source === "ics" && "Share your iPhone calendar as a link, once. I only read it."}
+                {source === "notion" && "Any Notion table with dates works. Pages for the next two weeks become tasks."}
+                {source === "calendly" && "See the meetings people booked with you."}
               </p>
             </div>
 
@@ -303,7 +303,7 @@ export function ImportSheet({
                 <>
                   {!state.settings.sync.gics && (
                     <button type="button" className="btn btn-signal mt-5 w-full" disabled={busy} onClick={() => run(() => googleEvents(true), () => actions.setSync({ google: true }))}>
-                      {busy ? <Loader2 className="size-5 animate-spin" /> : state.settings.sync.google ? "Check Google Calendar now" : "Connect Google Calendar"}
+                      {busy ? <Loader2 className="size-5 animate-spin" /> : state.settings.sync.google ? "Check now" : "Connect Google Calendar"}
                     </button>
                   )}
                   {(state.settings.sync.google || state.settings.sync.gics) && (
@@ -311,9 +311,9 @@ export function ImportSheet({
                       {state.settings.sync.gics ? (
                         <>
                           <p className="flex items-center gap-1.5 text-[15px] font-semibold text-signal-ink">
-                            <Check className="size-4" strokeWidth={2.6} /> Fully automatic
+                            <Check className="size-4" strokeWidth={2.6} /> All set
                           </p>
-                          <p className="t-small mt-1 text-ink-2">New events show up as tasks every time you open Shrink my day. No sign-in needed.</p>
+                          <p className="t-small mt-1 text-ink-2">New events show up by themselves. No signing in.</p>
                           <button type="button" className="btn btn-signal mt-4 w-full" disabled={busy} onClick={() => run(() => googleLinkEvents(state.settings.sync.gics!))}>
                             {busy ? <Loader2 className="size-5 animate-spin" /> : "Check now"}
                           </button>
@@ -328,14 +328,14 @@ export function ImportSheet({
                             const u = glink.trim();
                             if (!u) return;
                             if (!isGoogleLink(u)) {
-                              setErr("That isn't a Google Calendar address. It should start with https://calendar.google.com");
+                              setErr("That's not a Google Calendar link. It should start with https://calendar.google.com");
                               return;
                             }
                             run(() => googleLinkEvents(u), () => actions.setSync({ gics: u, google: true }));
                           }}
                         >
-                          <p className="text-[15px] font-semibold">Never sign in again</p>
-                          <p className="t-small mt-1 text-ink-2">Google makes the sign-in run out after an hour. Paste your calendar&apos;s private address once and Shrink my day keeps up on its own.</p>
+                          <p className="text-[15px] font-semibold">Skip signing in every time</p>
+                          <p className="t-small mt-1 text-ink-2">Google signs you out after an hour. Paste your calendar&apos;s private link once and I&apos;ll keep up by myself.</p>
                           <ol className="mt-3 space-y-2.5">
                             {[
                               "On a computer, open calendar.google.com.",
@@ -354,7 +354,7 @@ export function ImportSheet({
                             Private address
                           </label>
                           <input id="g-link" value={glink} onChange={(e) => setGlink(e.target.value)} inputMode="url" autoCapitalize="off" autoCorrect="off" spellCheck={false} placeholder="https://calendar.google.com/calendar/ical/…" className="field mt-1.5 text-[16px]" />
-                          <p className="t-small mt-2 text-ink-3">Anyone with this address can see your calendar, so keep it to yourself. It stays on this phone.</p>
+                          <p className="t-small mt-2 text-ink-3">Anyone with this link can see your calendar, so keep it private. It only stays on this phone.</p>
                           <button type="submit" className="btn btn-signal mt-4 w-full" disabled={busy || !glink.trim()}>
                             {busy ? <Loader2 className="size-5 animate-spin" /> : "Make it automatic"}
                           </button>
@@ -364,7 +364,7 @@ export function ImportSheet({
                   )}
                   {(state.settings.sync.google || state.settings.sync.gics) && (
                     <button type="button" className="btn btn-quiet mt-2 w-full text-[14px]" onClick={() => (googleSignOut(), actions.setSync({ google: false, gics: undefined }), setGlink(""), toast("Google Calendar disconnected."))}>
-                      Disconnect Google Calendar
+                      Disconnect
                     </button>
                   )}
                 </>
@@ -404,7 +404,7 @@ export function ImportSheet({
                       "On your iPhone, open the Calendar app and tap Calendars.",
                       "Tap the ⓘ next to the calendar you want.",
                       "Turn on Public Calendar, then tap Share Link and Copy.",
-                      "Paste it below. Shrink my day checks it each time you open the app.",
+                      "Paste it below. I'll check it each time you open the app.",
                     ].map((t, i) => (
                       <li key={i} className="flex gap-2.5 text-[14px] leading-snug text-ink-2">
                         <span className="grid size-5 shrink-0 place-items-center rounded-full bg-paper text-[11px] font-semibold tabular-nums text-ink ring-1 ring-line">{i + 1}</span>
@@ -486,7 +486,7 @@ export function ImportSheet({
                   {source === "notion" ? "Notion secret" : "Calendly token"}
                 </label>
                 <input id="ext-token" value={token} onChange={(e) => setToken(e.target.value)} autoComplete="off" spellCheck={false} placeholder={source === "notion" ? "ntn_…" : "eyJ…"} className="field mt-1.5 font-mono text-[16px]" />
-                <p className="t-small mt-1.5 text-ink-3">Connect once and Shrink my day checks {source === "notion" ? "Notion" : "Calendly"} every time you open it. The {source === "notion" ? "secret" : "token"} stays on this phone and passes through a relay that stores nothing.</p>
+                <p className="t-small mt-1.5 text-ink-3">Connect once and I&apos;ll check {source === "notion" ? "Notion" : "Calendly"} each time you open the app. Your key stays on this phone.</p>
                 <button type="submit" className="btn btn-signal mt-4 w-full" disabled={busy || !token.trim()}>
                   {busy ? <Loader2 className="size-5 animate-spin" /> : "Connect and check"}
                 </button>

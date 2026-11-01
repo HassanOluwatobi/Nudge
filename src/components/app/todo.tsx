@@ -47,7 +47,7 @@ export function Todo({
   const earlier = doneEarlier(state, today);
 
   const finishedOne = (t: Task) => {
-    toast(`Finished: ${t.title}`, { action: { label: "Undo", onClick: () => actions.restore(t.id) } });
+    toast(`Done: ${t.title}`, { action: { label: "Undo", onClick: () => actions.restore(t.id) } });
     announce(`Finished: ${t.title}`);
   };
 
@@ -80,7 +80,7 @@ export function Todo({
                   </ul>
                 )}
                 <button type="button" onClick={() => onAddTo(b)} className="add-row flex h-14 w-full items-center justify-between px-4 text-[15px]">
-                  Add a task
+                  Add a plan
                   <Plus className="size-4" />
                 </button>
               </motion.div>

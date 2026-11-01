@@ -17,7 +17,7 @@ const swap = { initial: { opacity: 0, x: 24 }, animate: { opacity: 1, x: 0 }, ex
 
 function Dots({ n, i }: { n: number; i: number }) {
   return (
-    <div className="flex justify-center gap-1.5" aria-label={`Step ${i + 1} of ${n}`}>
+    <div className="flex justify-center gap-1.5" aria-label={`${i + 1} of ${n}`}>
       {Array.from({ length: n }, (_, k) => (
         <motion.span key={k} className="h-1.5 rounded-full bg-ink" initial={false} animate={{ width: k === i ? 20 : 6, opacity: k === i ? 1 : 0.2 }} />
       ))}
@@ -63,7 +63,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
     onClose();
   };
 
-  const title = k === "morning" ? "Morning kickoff" : k === "evening" ? "Evening wrap-up" : "Weekly reset";
+  const title = k === "morning" ? "Morning plan" : k === "evening" ? "Evening wrap-up" : "Plan the week";
 
   // ---------- morning ----------
   if (k === "morning") {
@@ -77,24 +77,24 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
         <AnimatePresence mode="wait" initial={false}>
           {i === 0 && (
             <motion.div key="m0" {...swap} className="pt-5">
-              <h3 className="t-title">Morning! How are you feeling?</h3>
-              {yesterday.length > 0 && <p className="t-body mt-2 text-ink-2">Yesterday you finished {yesterday.length === 1 ? `“${yesterday[0].title}”` : `${yesterday.length} tasks`}. Nice.</p>}
+              <h3 className="t-title">Morning! How are you feeling today?</h3>
+              {yesterday.length > 0 && <p className="t-body mt-2 text-ink-2">Yesterday you got {yesterday.length === 1 ? `“${yesterday[0].title}”` : `${yesterday.length} tasks`} done. Nice.</p>}
               <div className="mt-5 grid gap-2">
                 <button type="button" className="flex min-h-[64px] items-center gap-3 rounded-2xl bg-white px-4 text-left ring-1 ring-line" onClick={() => (actions.setEnergy("ok"), actions.clearEasy(), feel("start", "light"), setI(1))}>
                   <span className="hue-lime tile grid size-10 place-items-center rounded-xl"><Zap className="size-5" /></span>
-                  <span><span className="block font-semibold">Ready to go</span><span className="t-small text-ink-3">Plan a normal day</span></span>
+                  <span><span className="block font-semibold">Good</span><span className="t-small text-ink-3">Let&apos;s plan a normal day</span></span>
                 </button>
                 <button type="button" className="flex min-h-[64px] items-center gap-3 rounded-2xl bg-white px-4 text-left ring-1 ring-line" onClick={() => (actions.setEnergy("low"), actions.makeEasy(), feel("tap", "light"), setI(1))}>
                   <span className="hue-lilac tile grid size-10 place-items-center rounded-xl"><BatteryLow className="size-5" /></span>
-                  <span><span className="block font-semibold">Running low</span><span className="t-small text-ink-3">Just one thing today</span></span>
+                  <span><span className="block font-semibold">Tired</span><span className="t-small text-ink-3">Just one thing today</span></span>
                 </button>
               </div>
             </motion.div>
           )}
           {i === 1 && (
             <motion.div key="m1" {...swap} className="pt-5">
-              <h3 className="t-title">What matters today?</h3>
-              <p className="t-body mt-2 text-ink-2">{already.length ? `${already.length} already on Today. Add any of these, or none.` : "Pick up to three. One is plenty."}</p>
+              <h3 className="t-title">What matters most today?</h3>
+              <p className="t-body mt-2 text-ink-2">{already.length ? `You've got ${already.length} on today already. Add more if you want.` : "Pick up to three. One is enough."}</p>
               {candidates.length ? (
                 <ul className="mt-4 max-h-[44vh] space-y-2 overflow-auto">
                   {candidates.map((t) => (
@@ -102,23 +102,23 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
                   ))}
                 </ul>
               ) : (
-                <p className="t-small mt-4 rounded-2xl bg-white/70 p-4 text-ink-3">Nothing waiting in This week or Later.</p>
+                <p className="t-small mt-4 rounded-2xl bg-white/70 p-4 text-ink-3">Nothing else on your list.</p>
               )}
               <button type="button" className="btn btn-signal mt-5 w-full" onClick={() => (actions.planToday(picked), setI(2))}>
-                {picked.length ? `Add ${picked.length} to Today` : "Continue"}
+                {picked.length ? `Add ${picked.length} to today` : "Next"}
               </button>
             </motion.div>
           )}
           {i === 2 && (
             <motion.div key="m2" {...swap} className="pt-5">
-              <h3 className="t-title">{first ? "Your first thing" : "You are set"}</h3>
+              <h3 className="t-title">{first ? "Start with this one" : "You're good"}</h3>
               {first ? (
                 <div className="mt-4 flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-line">
                   <Tile task={first} />
                   <span className="min-w-0 flex-1 font-semibold">{first.title}</span>
                 </div>
               ) : (
-                <p className="t-body mt-2 text-ink-2">Add something whenever you're ready.</p>
+                <p className="t-body mt-2 text-ink-2">Add something whenever you want.</p>
               )}
               <div className="mt-5 grid gap-2">
                 {first && (
@@ -147,19 +147,19 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
         <AnimatePresence mode="wait" initial={false}>
           {i === 0 && (
             <motion.div key="e0" {...swap} className="pt-5">
-              <h3 className="t-title">{done.length ? `You finished ${done.length === 1 ? "one thing" : `${done.length} things`} today` : "Today is done"}</h3>
+              <h3 className="t-title">{done.length ? `You got ${done.length === 1 ? "one thing" : `${done.length} things`} done today` : "Done for today"}</h3>
               {done.length ? (
                 <ul className="mt-4 space-y-2">
                   {done.map((t) => (
                     <li key={t.id} className="flex items-center gap-3 rounded-2xl bg-white p-3 ring-1 ring-line">
                       <Tile task={t} size={34} />
                       <span className="min-w-0 flex-1 truncate">{t.title}</span>
-                      <span className="size-2 rounded-full bg-coral" aria-label="Finished" />
+                      <span className="size-2 rounded-full bg-coral" aria-label="Done" />
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="t-body mt-2 text-ink-2">Nothing ticked today, and that's okay. Rest counts too.</p>
+                <p className="t-body mt-2 text-ink-2">Nothing ticked off today, and that&apos;s fine. Rest counts too.</p>
               )}
               <button type="button" className="btn btn-signal mt-5 w-full" onClick={(e) => (done.length && (burst(e.clientX, e.clientY, 18), feel("done", "success")), setI(left.length ? 1 : 2))}>
                 Continue
@@ -169,7 +169,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
           {i === 1 && (
             <motion.div key="e1" {...swap} className="pt-5">
               <h3 className="t-title">What about the rest?</h3>
-              <p className="t-body mt-2 text-ink-2">Pick where each one goes. Nothing here is overdue.</p>
+              <p className="t-body mt-2 text-ink-2">Where should each one go? No pressure.</p>
               <ul className="mt-4 max-h-[46vh] space-y-2 overflow-auto">
                 {left.map((t) => (
                   <li key={t.id} className="rounded-2xl bg-white p-3 ring-1 ring-line">
@@ -181,7 +181,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
                       <button type="button" className="chip min-h-9 text-[14px]" onClick={() => actions.tomorrow(t.id)}>Tomorrow</button>
                       {(["week", "later"] as Exclude<Bucket, "done">[]).map((b) => (
                         <button key={b} type="button" className="chip min-h-9 text-[14px]" onClick={() => actions.move(t.id, b)}>
-                          {b === "week" ? "This week" : "Later"}
+                          {b === "week" ? "This week" : "Someday"}
                         </button>
                       ))}
                     </div>
@@ -189,22 +189,22 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
                 ))}
               </ul>
               <button type="button" className="btn btn-signal mt-5 w-full" onClick={() => setI(2)}>
-                {left.length ? "Leave the rest on Today" : "Continue"}
+                {left.length ? "Keep them on today" : "Next"}
               </button>
             </motion.div>
           )}
           {i === 2 && (
             <motion.div key="e2" {...swap} className="pt-5">
               <h3 className="t-title">Anything on your mind?</h3>
-              <p className="t-body mt-2 text-ink-2">Write it down so you can stop thinking about it. It'll be here tomorrow.</p>
-              <textarea value={thought} onChange={(e) => setThought(e.target.value)} rows={3} placeholder="Optional" aria-label="Anything on your mind" className="field mt-4 resize-none" />
+              <p className="t-body mt-2 text-ink-2">Write it down so you can stop thinking about it. It&apos;ll be here tomorrow.</p>
+              <textarea value={thought} onChange={(e) => setThought(e.target.value)} rows={3} placeholder="You can skip this" aria-label="Anything on your mind" className="field mt-4 resize-none" />
               <div className="mt-5 grid gap-2">
                 {thought.trim() && (
                   <div className="grid grid-cols-2 gap-2">
                     <button type="button" className="btn btn-line" onClick={() => (actions.capture(thought, { bucket: "week", due: addDays(today, 1) }), toast("Saved for tomorrow."), close(true))}>
                       Save as task
                     </button>
-                    <button type="button" className="btn btn-line" onClick={() => (actions.addEntry(thought, "idea"), toast("Saved under Ideas on Home."), close(true))}>
+                    <button type="button" className="btn btn-line" onClick={() => (actions.addEntry(thought, "idea"), toast("Saved in your ideas."), close(true))}>
                       Save as idea
                     </button>
                   </div>
@@ -232,8 +232,8 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
         {i === 0 && (
           <motion.div key="w0" {...swap} className="pt-5 text-center">
             <p className="font-serif text-[88px] leading-none tracking-[-0.03em]">{weekDone.length}</p>
-            <h3 className="t-title mt-2">{weekDone.length === 1 ? "thing finished this week" : "things finished this week"}</h3>
-            <p className="t-body mt-2 text-ink-2">{weekDone.length ? "Every one of them counts." : "Quiet weeks count too. Let's set up the next one."}</p>
+            <h3 className="t-title mt-2">{weekDone.length === 1 ? "thing done this week" : "things done this week"}</h3>
+            <p className="t-body mt-2 text-ink-2">{weekDone.length ? "Every one counts." : "Slow weeks happen. Let's set up the next one."}</p>
             <button type="button" className="btn btn-signal mt-6 w-full" onClick={(e) => (weekDone.length && (burst(e.clientX, e.clientY, 22), feel("finish", "success")), setI(1))}>
               Continue
             </button>
@@ -242,7 +242,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
         {i === 1 && (
           <motion.div key="w1" {...swap} className="pt-5">
             <h3 className="t-title">Set up next week</h3>
-            <p className="t-body mt-2 text-ink-2">Move what matters into This week. Park the rest in Later.</p>
+            <p className="t-body mt-2 text-ink-2">Move what matters to this week. Leave the rest for someday.</p>
             {waiting.length ? (
               <ul className="mt-4 max-h-[46vh] space-y-2 overflow-auto">
                 {waiting.map((t) => (
@@ -252,7 +252,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
                     <div className="seg flex shrink-0 p-0.5">
                       {(["week", "later"] as Exclude<Bucket, "done">[]).map((b) => (
                         <button key={b} type="button" aria-pressed={t.bucket === b} onClick={() => actions.move(t.id, b)} className={`h-8 rounded-full px-2.5 text-[13px] font-semibold ${t.bucket === b ? "seg-knob text-ink" : "text-ink-3"}`}>
-                          {b === "week" ? "Week" : "Later"}
+                          {b === "week" ? "This week" : "Someday"}
                         </button>
                       ))}
                     </div>
@@ -269,8 +269,8 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
         )}
         {i === 2 && (
           <motion.div key="w2" {...swap} className="pt-5">
-            <h3 className="t-title">You're set for the week</h3>
-            <p className="t-body mt-2 text-ink-2">{ideas ? `${ideas} ${ideas === 1 ? "idea is" : "ideas are"} resting under Ideas on Home. They will come back when it is time.` : "Your ideas will pop back up on Home when it's time."}</p>
+            <h3 className="t-title">You&apos;re all set for the week</h3>
+            <p className="t-body mt-2 text-ink-2">{ideas ? `You've got ${ideas} ${ideas === 1 ? "idea" : "ideas"} saved. I'll bring them back when it's time.` : "I'll bring your ideas back when it's time."}</p>
             <button type="button" className="btn btn-signal mt-6 w-full" onClick={() => close(true)}>
               Done
             </button>

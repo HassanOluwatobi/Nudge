@@ -101,7 +101,7 @@ export function Focus({
         {task && <div className="lg:hidden"><MoreSubtasks task={task} actions={actions} onFinish={finish} /></div>}
       </div>
 
-      <Sheet open={picker} onClose={() => setPicker(false)} title="Focus on">
+      <Sheet open={picker} onClose={() => setPicker(false)} title="What are you working on?">
         <ul className="mt-2">
           {todayTasks(state, ymd()).map((t) => (
             <li key={t.id}>
@@ -115,7 +115,7 @@ export function Focus({
           <li>
             <button type="button" className="row" onClick={() => (onPickTask(undefined), setPicker(false))}>
               <span className="grid size-10 place-items-center rounded-[12px] bg-white text-[18px] ring-1 ring-line">⏱</span>
-              <span className="flex-1 font-medium">Just a timer, no task</span>
+              <span className="flex-1 font-medium">Just a timer</span>
               {!task && <Check className="size-5 text-signal-ink" />}
             </button>
           </li>
@@ -149,7 +149,7 @@ function NowCard({ task, actions, ai, onFinish, onSwitch, announce }: { task: Ta
         <Tile task={task} size={28} />
         <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{task.title}</span>
         <button type="button" onClick={onSwitch} className="inline-flex shrink-0 items-center gap-1 text-[14px] font-medium text-signal-ink" aria-label={`Switch from ${task.title} to another task`}>
-          Switch <ChevronDown className="size-4" />
+          Change <ChevronDown className="size-4" />
         </button>
       </div>
       <AnimatePresence mode="wait" initial={false}>
@@ -165,7 +165,7 @@ function NowCard({ task, actions, ai, onFinish, onSwitch, announce }: { task: Ta
                   <Check className="size-5" /> {k + 1 === n ? "Done" : "Done, next"}
                 </button>
                 <button type="button" className="btn btn-quiet mx-auto mt-1 flex min-h-10 gap-1.5 text-[14px]" onClick={() => setSmaller(smallerStep(current.t))}>
-                  <Scissors className="size-4" /> Still too big? Shrink it
+                  <Scissors className="size-4" /> Still too much? Make it smaller
                 </button>
               </>
             ) : (
@@ -181,7 +181,7 @@ function NowCard({ task, actions, ai, onFinish, onSwitch, announce }: { task: Ta
                 }}
               >
                 <label className="t-small font-medium text-ink-2" htmlFor="smaller">
-                  Here is a smaller way in. Change it if you like.
+                  Try this smaller step. Change it if you want.
                 </label>
                 <input id="smaller" value={smaller} maxLength={MAX_STEP} onChange={(e) => setSmaller(e.target.value)} className="field mt-2" autoFocus />
                 <div className="mt-3 grid grid-cols-2 gap-2">
@@ -198,24 +198,24 @@ function NowCard({ task, actions, ai, onFinish, onSwitch, announce }: { task: Ta
         ) : n > 0 ? (
           <motion.div key="all" initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ type: "spring", bounce: 0.2, duration: 0.4 }}>
             <p className="t-label text-signal-ink">All done</p>
-            <p className="mt-2 font-serif text-[28px] leading-tight tracking-[-0.01em]">Tick the whole thing off?</p>
+            <p className="mt-2 font-serif text-[28px] leading-tight tracking-[-0.01em]">Ready to tick it off?</p>
             <button type="button" className="btn btn-signal mt-5 w-full text-[17px]" onClick={onFinish}>
-              <Check className="size-5" /> Finish the task
+              <Check className="size-5" /> Tick it off
             </button>
           </motion.div>
         ) : (
           <motion.div key="none" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }}>
             <p className="font-serif text-[24px] leading-tight tracking-[-0.01em]">Not sure where to start?</p>
-            <p className="t-small mt-1 text-ink-3">Let your AI split it into tiny steps. Then you just do the first one.</p>
+            <p className="t-small mt-1 text-ink-3">Let your AI split it into tiny steps. Then just do the first one.</p>
             <div className="mt-4">
               <BreakItDown task={task} actions={actions} ai={ai} announce={announce} />
             </div>
             <p className="t-small mt-5 text-ink-3">Or write the first step yourself.</p>
             <div className="task-row mt-2">
-              <AddSubtask onAdd={(t) => actions.addStep(task.id, t)} placeholder="Open the laptop" />
+              <AddSubtask onAdd={(t) => actions.addStep(task.id, t)} placeholder="e.g. Open the laptop" />
             </div>
             <button type="button" className="btn btn-line mt-3 w-full" onClick={onFinish}>
-              <Check className="size-4" /> Finish the task
+              <Check className="size-4" /> It&apos;s done
             </button>
           </motion.div>
         )}
@@ -228,10 +228,10 @@ function NoTaskCard({ onPick }: { onPick: () => void }) {
   return (
     <section className="mt-5 rounded-[24px] bg-white p-5 ring-1 ring-line">
       <p className="t-label text-signal-ink">Now</p>
-      <p className="mt-2 font-serif text-[24px] leading-tight tracking-[-0.01em]">Just you and a timer.</p>
-      <p className="t-small mt-1 text-ink-3">Pick a time below. Or choose a task and take it one step at a time.</p>
+      <p className="mt-2 font-serif text-[24px] leading-tight tracking-[-0.01em]">Just a timer.</p>
+      <p className="t-small mt-1 text-ink-3">Pick a time below, or pick a task to work on.</p>
       <button type="button" className="btn btn-line mt-4 w-full" onClick={onPick}>
-        Choose a task <ArrowRight className="size-4" />
+        Pick a task <ArrowRight className="size-4" />
       </button>
     </section>
   );
@@ -241,6 +241,7 @@ function NoTaskCard({ onPick }: { onPick: () => void }) {
 function TimerCard({ state, actions, task, announce }: { state: State; actions: Actions; task?: Task; announce: (s: string) => void }) {
   const timer = state.meta.timer;
   const [mins, setMins] = useState(15);
+  const [typed, setTyped] = useState("");
   const running = !!timer && timer.pausedLeft === undefined;
   const paused = !!timer && timer.pausedLeft !== undefined;
   const now = useNow(running);
@@ -256,13 +257,13 @@ function TimerCard({ state, actions, task, announce }: { state: State; actions: 
       rang.current = timer.end;
       if (left > -60_000) {
         feel("end", "warning");
-        if (document.hidden) notify("Time is up", task ? `Nice work on: ${task.title}` : "Your focus time is done.");
+        if (document.hidden) notify("Time's up", task ? `Nice work on ${task.title}` : "Your focus time is done.");
       }
       announce("Time is up.");
     }
   }, [left, running, timer, task, announce]);
 
-  const label = !timer ? "Ready" : over ? "Time is up" : paused ? "Paused" : `Ends ${clock(timer.end)}`;
+  const label = !timer ? "Ready" : over ? "Time's up" : paused ? "Paused" : `Ends ${clock(timer.end)}`;
 
   return (
     <section className="mt-3 rounded-[24px] bg-white p-5 ring-1 ring-line lg:mt-5" aria-label="Timer">
@@ -347,11 +348,34 @@ function TimerCard({ state, actions, task, announce }: { state: State; actions: 
       {!timer && (
         <div className="mt-4 grid grid-cols-5 gap-1.5" role="group" aria-label="Minutes">
           {QUICK.map((m) => (
-            <button key={m} type="button" aria-pressed={mins === m} onClick={() => (setMins(m), feel("tick", "light"))} className="chip min-h-10 justify-center px-0 text-[14px] font-semibold">
+            <button key={m} type="button" aria-pressed={!typed && mins === m} onClick={() => (setMins(m), setTyped(""), feel("tick", "light"))} className="chip min-h-10 justify-center px-0 text-[14px] font-semibold">
               {m}m
             </button>
           ))}
         </div>
+      )}
+      {/* Any other length: type the minutes. */}
+      {!timer && (
+        <label className="mt-2 flex items-center justify-center gap-2 text-[14px] text-ink-2">
+          Or type your own:
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={240}
+            value={typed}
+            placeholder="20"
+            onChange={(e) => {
+              setTyped(e.target.value);
+              const v = Math.round(Number(e.target.value));
+              if (v >= 1 && v <= 240) setMins(v);
+              else if (!e.target.value) setMins(15);
+            }}
+            className="field h-10 w-20 px-3 py-0 text-center text-[16px] tabular-nums"
+            aria-label="Minutes"
+          />
+          min
+        </label>
       )}
     </section>
   );
@@ -383,7 +407,7 @@ function MoreSubtasks({ task, actions, onFinish }: { task: Task; actions: Action
       </AnimatePresence>
       {!allDone && (
         <button type="button" className="btn btn-quiet mx-auto mt-4 flex min-h-10 gap-1.5 text-[14px]" onClick={onFinish}>
-          <Check className="size-4" /> Finish the whole task now
+          <Check className="size-4" /> I&apos;m done with this one
         </button>
       )}
     </section>

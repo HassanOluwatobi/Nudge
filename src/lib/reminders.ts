@@ -14,7 +14,7 @@ export const MORNING = {
   url: `${APP_URL}/?from=morning`,
 };
 export const EVENING = {
-  title: "Shrink my day: tick off your day",
+  title: "Shrink my day: look back on today",
   body: "Open Shrink my day, tick what you did, and let tomorrow wait.",
   url: `${APP_URL}/?from=evening`,
 };
@@ -210,5 +210,5 @@ export function dailyEvents(t: ReminderTimes): CalEvent[] {
 }
 
 export function taskEvent(title: string, when: Date): CalEvent {
-  return { title: `Shrink my day: ${title}`, body: "Time for a small step. Open Shrink my day.", url: APP_URL, start: when, mins: 10, uid: `nudgeme-task-${when.getTime()}` };
+  return { title: `Shrink my day: ${title}`, body: "Time for this one.", url: APP_URL, start: when, mins: 10, uid: `nudgeme-task-${when.getTime()}` };
 }

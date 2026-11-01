@@ -31,7 +31,7 @@ export function RemindPicker({ task, actions, compact = false }: { task: Task; a
     setDay("");
     setTime("");
     await askNotify();
-    toast(`Reminder set for ${prettyWhen(d.toISOString())}.`);
+    toast(`I'll remind you ${prettyWhen(d.toISOString())}.`);
   };
 
   if (task.remindAt) {
@@ -45,7 +45,7 @@ export function RemindPicker({ task, actions, compact = false }: { task: Task; a
           </button>
         </div>
         <div className="mt-3 border-t border-line pt-3">
-          <p className="t-small mb-1 text-ink-2">{compact ? "Add it to a calendar so your phone rings." : "Add it to your calendar so your phone rings, even with Shrink my day closed."}</p>
+          <p className="t-small mb-1 text-ink-2">{compact ? "Add it to a calendar so your phone rings." : "Add it to your calendar too, so you get notified even when the app is closed."}</p>
           <CalendarButtons flat events={[taskEvent(task.title, new Date(task.remindAt!))]} file="nudgeme-reminder" label="" />
         </div>
       </div>
@@ -91,7 +91,7 @@ export function RemindPicker({ task, actions, compact = false }: { task: Task; a
               </label>
               <input id={`rt-${task.id}`} type="time" value={time} onChange={(e) => setTime(e.target.value)} className="field mt-1.5 tabular-nums" />
               <button type="button" disabled={!valid} className="btn btn-signal mt-3 min-h-12 w-full" onClick={() => when && set(when)}>
-                {!day || !time ? "Choose a day and time" : valid ? `Remind me ${prettyWhen(when!.toISOString())}` : "That time has passed"}
+                {!day || !time ? "Pick a day and time" : valid ? `Remind me ${prettyWhen(when!.toISOString())}` : "That time's already gone"}
               </button>
             </div>
           </motion.div>

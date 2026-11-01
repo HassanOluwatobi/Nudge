@@ -109,7 +109,7 @@ export function TaskSheet({
                 </button>
               ))}
               <button type="button" onClick={() => actions.patch(t.id, { emoji: undefined })} className="h-10 rounded-xl bg-white px-3 text-[14px] text-ink-2 ring-1 ring-line">
-                Letter
+                Use a letter
               </button>
             </div>
           </motion.div>
@@ -142,10 +142,10 @@ export function TaskSheet({
           </div>
 
           {/* 4. When, and a nudge. That is all the planning a task needs. */}
-          <p className="t-label mt-7">When</p>
+          <p className="t-label mt-7">When?</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {(["today", "week", "later"] as Exclude<Bucket, "done">[]).map((b) => (
-              <button key={b} type="button" className="chip" aria-pressed={t.bucket === b} onClick={() => (actions.move(t.id, b), feel("tick", "light"), announce(`Moved to ${BUCKET_NAME[b]}.`))}>
+              <button key={b} type="button" className="chip" aria-pressed={t.bucket === b} onClick={() => (actions.move(t.id, b), feel("tick", "light"), announce(`Moved to ${BUCKET_NAME[b].toLowerCase()}.`))}>
                 {BUCKET_NAME[b]}
               </button>
             ))}
@@ -163,7 +163,7 @@ export function TaskSheet({
             <button type="button" className="btn btn-quiet min-h-10 gap-1.5 px-3 text-[14px]" onClick={() => (actions.tomorrow(t.id), toast("Moved to tomorrow."), onClose())}>
               <SunMedium className="size-4" /> Tomorrow
             </button>
-            <button type="button" className="btn btn-quiet min-h-10 gap-1.5 px-3 text-[14px]" onClick={() => (actions.duplicate(t.id), toast("Copy made."))}>
+            <button type="button" className="btn btn-quiet min-h-10 gap-1.5 px-3 text-[14px]" onClick={() => (actions.duplicate(t.id), toast("Copied."))}>
               <Dup className="size-4" /> Copy
             </button>
           </>
@@ -179,7 +179,7 @@ export function TaskSheet({
               onClick={() => {
                 const gone = actions.remove(t.id);
                 onClose();
-                if (gone) toast("Task deleted.", { action: { label: "Undo", onClick: () => actions.put(gone) } });
+                if (gone) toast("Deleted.", { action: { label: "Undo", onClick: () => actions.put(gone) } });
               }}
             >
               Delete
@@ -219,16 +219,16 @@ export function TaskMenu({ task, onClose, actions, onOpen, onFocus }: { task: Ta
         {t.bucket !== "done" && item("Do it tomorrow", <SunMedium className="size-5" />, () => (actions.tomorrow(t.id), toast("Moved to tomorrow.")))}
         {t.bucket !== "today" && t.bucket !== "done" && item("Move to Today", <span className="text-[15px]">→</span>, () => actions.move(t.id, "today"))}
         {t.bucket !== "week" && t.bucket !== "done" && item("Move to This week", <span className="text-[15px]">→</span>, () => actions.move(t.id, "week"))}
-        {t.bucket !== "later" && t.bucket !== "done" && item("Move to Later", <span className="text-[15px]">→</span>, () => actions.move(t.id, "later"))}
+        {t.bucket !== "later" && t.bucket !== "done" && item("Move to someday", <span className="text-[15px]">→</span>, () => actions.move(t.id, "later"))}
         {t.bucket === "done" && item("Put it back", <RotateCcw className="size-5" />, () => actions.restore(t.id))}
         {item("Edit", <Sparkles className="size-5" />, () => onOpen(t))}
-        {item("Make a copy", <Dup className="size-5" />, () => (actions.duplicate(t.id), toast("Copy made.")))}
+        {item("Make a copy", <Dup className="size-5" />, () => (actions.duplicate(t.id), toast("Copied.")))}
         {item(
           "Delete",
           <Trash2 className="size-5" />,
           () => {
             const gone = actions.remove(t.id);
-            if (gone) toast("Task deleted.", { action: { label: "Undo", onClick: () => actions.put(gone) } });
+            if (gone) toast("Deleted.", { action: { label: "Undo", onClick: () => actions.put(gone) } });
           },
           true
         )}

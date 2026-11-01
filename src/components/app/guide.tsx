@@ -191,7 +191,7 @@ function IdeasBack() {
     <div className="flex h-full flex-col items-center justify-center px-6">
       <motion.div initial={{ opacity: 0, y: 30, rotate: -4 }} animate={{ opacity: 1, y: [30, -6, 0], rotate: [-4, 2, 0] }} transition={{ duration: 0.9, ease }} className="w-full rounded-[16px] bg-white p-3 ring-1 ring-line">
         <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-signal-ink">
-          <Lightbulb className="size-3" /> An idea came back
+          <Lightbulb className="size-3" /> Remember this idea?
         </p>
         <p className="mt-1 text-[15px] leading-snug">A newsletter about design in African fintech</p>
         <div className="mt-2 flex gap-1.5">
@@ -241,12 +241,12 @@ function Reminders() {
 }
 
 const PAGES = [
-  { art: Capture, tag: "Brain dump", title: "Empty your head", body: "Type it or say it. One long messy line is fine. Shrink my day splits it into separate tasks so nothing slips." },
-  { art: AiSteps, tag: "AI helper", title: "Big task? Let AI shrink it", body: "Tap Break it down and your own ChatGPT, Claude, Gemini or Grok turns it into tiny steps. Paste them back and you're set. No sign up, no cost." },
-  { art: OneThing, tag: "Home", title: "Just one thing", body: "Home shows you one task and the very next step. That's it. Not feeling it today? Skip to another." },
-  { art: Timer, tag: "Focus", title: "One step at a time", body: "Focus hides everything else. Tick a step and the next one slides in. Add a timer if a little pressure helps you." },
-  { art: IdeasBack, tag: "Ideas", title: "Ideas come back to you", body: "Drop an idea and stop holding it in your head. It comes back in a few days. Do it, snooze it or let it go." },
-  { art: Reminders, tag: "Reminders", title: "Reminders that actually ring", body: "Send any reminder to Google, Apple or Outlook Calendar. Your phone rings even when Shrink my day is closed." },
+  { art: Capture, tag: "Brain dump", title: "Get it out of your head", body: "Type it or say it, all in one go. I'll split it into tasks so nothing gets lost." },
+  { art: AiSteps, tag: "AI helper", title: "Big task? Let AI shrink it", body: "Your own ChatGPT, Claude, Gemini or Grok splits it into tiny steps. Paste them back and you're good. No sign up, no cost." },
+  { art: OneThing, tag: "Home", title: "One thing at a time", body: "You only see one task and its next step. Not feeling it? Pick another." },
+  { art: Timer, tag: "Focus", title: "One step at a time", body: "Focus hides everything else. Tick a step and the next one shows up. Add a timer if it helps." },
+  { art: IdeasBack, tag: "Ideas", title: "Save ideas for later", body: "Write it down and stop holding it in your head. I'll bring it back in a few days." },
+  { art: Reminders, tag: "Reminders", title: "Timely reminders", body: "Your phone notifies you when it's time, even with the site closed." },
 ];
 
 export function Guide({ open, onClose }: { open: boolean; onClose: () => void }) {

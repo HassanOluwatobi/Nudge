@@ -53,7 +53,7 @@ export function AddSubtask({ onAdd, placeholder = "Add a subtask", className = "
         aria-label="Add a subtask"
         className="min-w-0 flex-1 bg-transparent py-3 text-[16px] placeholder:text-ink-3 focus:outline-none"
       />
-      {draft.trim() && <span className="shrink-0 text-[12px] font-medium text-ink-3">Return to add</span>}
+      {draft.trim() && <span className="shrink-0 text-[12px] font-medium text-ink-3">Press enter to add</span>}
     </label>
   );
 }
@@ -86,7 +86,7 @@ export function SubtaskList({ task, actions, suggest = true }: { task: Task; act
           ))}
         </AnimatePresence>
         <li>
-          <AddSubtask onAdd={(t) => actions.addStep(task.id, t)} placeholder={task.steps.length ? "Add a subtask" : "The smallest first thing"} />
+          <AddSubtask onAdd={(t) => actions.addStep(task.id, t)} placeholder={task.steps.length ? "Add a subtask" : "What's the first tiny step?"} />
         </li>
       </ul>
       {suggest && !task.steps.length && (

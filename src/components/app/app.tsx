@@ -154,8 +154,8 @@ export function NudgeApp() {
       if (fired.current.has(key)) continue;
       const ring = () => {
         remember(key);
-        toast(`Reminder: ${t.title}`, { duration: 10000, action: { label: "Start", onClick: () => (setFocusId(t.id), setTab("focus")) } });
-        if (state.settings.notify && !pushOn()) notify(`Shrink my day: ${t.title}`, "Time for a small step.");
+        toast(`Time for: ${t.title}`, { duration: 10000, action: { label: "Start", onClick: () => (setFocusId(t.id), setTab("focus")) } });
+        if (state.settings.notify && !pushOn()) notify(t.title, "Time for this one.");
       };
       if (at <= now && now - at < 12 * 3600_000) ring();
       else if (at > now && at - now < 24 * 3600_000) timers.push(setTimeout(ring, at - now));
@@ -169,7 +169,7 @@ export function NudgeApp() {
           timers.push(
             setTimeout(() => {
               remember(key);
-              notify(k === "morning" ? "Morning kickoff" : "Evening wrap-up", k === "morning" ? "Two minutes to pick what matters today." : "See what you did and let the rest wait.", `/?from=${k}`);
+              notify(k === "morning" ? "Morning plan" : "Evening wrap-up", k === "morning" ? "Got 2 minutes? Pick your one thing for today." : "See what you got done today.", `/?from=${k}`);
             }, at - now)
           );
       });
@@ -214,14 +214,14 @@ export function NudgeApp() {
       for (const t of state.tasks) {
         if (!t.remindAt || t.bucket === "done") continue;
         const at = Date.parse(t.remindAt);
-        if (at > now && at < until) items.push({ at, title: t.title, body: "Time for a small step.", url: "/", tag: `task-${t.id}` });
+        if (at > now && at < until) items.push({ at, title: t.title, body: "Time for this one.", url: "/", tag: `task-${t.id}` });
       }
       for (let d = 0; d < 14; d++) {
         const day = new Date(now + d * 864e5);
         (["morning", "evening"] as const).forEach((k) => {
           const [h, m] = state.settings[k].split(":").map(Number);
           const at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, m).getTime();
-          if (at > now) items.push({ at, title: k === "morning" ? "Morning kickoff" : "Evening wrap-up", body: k === "morning" ? "Two minutes to pick what matters today." : "See what you did and let the rest wait.", url: `/?from=${k}`, tag: `${k}-${ymd(day)}` });
+          if (at > now) items.push({ at, title: k === "morning" ? "Morning plan" : "Evening wrap-up", body: k === "morning" ? "Got 2 minutes? Pick your one thing for today." : "See what you got done today.", url: `/?from=${k}`, tag: `${k}-${ymd(day)}` });
         });
       }
       syncPush(items.sort((a, b) => a.at - b.at).slice(0, 250)).catch(() => {});
@@ -267,7 +267,7 @@ export function NudgeApp() {
       }
       if (!fresh.length) return;
       actions.importEvents(fresh.map((e) => ({ key: extKey(e), title: e.title, start: e.start, end: e.end, allDay: e.allDay })));
-      toast(`Added ${fresh.length} ${fresh.length === 1 ? "event" : "events"} from your calendar.`);
+      toast(`${fresh.length} ${fresh.length === 1 ? "thing" : "things"} added from your calendar.`);
     });
   }, [actions]);
   const ready = !!state;
@@ -334,7 +334,7 @@ export function NudgeApp() {
               <Art mode={0} shift={0.55} />
             </div>
             <h1 className="mt-8 text-[40px] font-medium leading-[1.04] tracking-[-0.04em]">You can stop here.</h1>
-            <p className="t-body mt-3 text-ink-2">Your list is saved on this device. Close Shrink my day whenever you like.</p>
+            <p className="t-body mt-3 text-ink-2">Your list is saved. Close the app whenever you want.</p>
             <button type="button" className="btn btn-line mt-8 self-start" onClick={() => (setOver(null), setTab("today"))}>
               Back to today
             </button>

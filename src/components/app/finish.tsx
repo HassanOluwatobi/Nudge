@@ -67,7 +67,7 @@ export function Finish({ task, onStop, onToday, onAnother, onUndo }: { task: Tas
 
         <main className="flex flex-1 flex-col px-1 pt-7">
           <motion.p {...rise(0)} className="t-label text-signal-ink">
-            Finished
+            Done
           </motion.p>
           <motion.div {...rise(1)} className="mt-3 flex items-center gap-3">
             <Tile task={task} size={44} />
@@ -76,7 +76,7 @@ export function Finish({ task, onStop, onToday, onAnother, onUndo }: { task: Tas
             </h1>
           </motion.div>
           <motion.p {...rise(2)} className="t-body mt-3 text-ink-2">
-            That counts. One finished task is a whole win.
+            That counts. Seriously, nice one.
           </motion.p>
           <motion.div {...rise(3)} className="mt-4 flex flex-wrap gap-2">
             <span className="inline-flex h-8 items-center rounded-full bg-white px-3 text-[13px] font-semibold text-ink-2 ring-1 ring-line">Done at {at}</span>
@@ -96,11 +96,11 @@ export function Finish({ task, onStop, onToday, onAnother, onUndo }: { task: Tas
                 Do another
               </button>
               <button type="button" className="btn btn-line min-h-[50px] px-3 text-[15px]" onClick={onToday}>
-                Back to Today
+                Back to today
               </button>
             </div>
             <button type="button" className="btn btn-quiet mt-1 min-h-11 text-[14px] text-ink-3" onClick={onUndo}>
-              Not finished yet? Undo
+              Not actually done? Undo
             </button>
           </motion.div>
         </main>

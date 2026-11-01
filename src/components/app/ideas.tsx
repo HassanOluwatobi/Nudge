@@ -44,13 +44,13 @@ export function EntryList({ kind, state, actions }: { kind: EntryKind; state: St
           <motion.section key={first.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }} className="mt-5 rounded-[20px] bg-white p-4 ring-1 ring-signal/40" aria-label="Ideas that came back">
             <div className="flex items-center justify-between">
               <p className="t-label flex items-center gap-1.5 text-signal-ink">
-                <Lightbulb className="size-3.5" /> {back.length === 1 ? "An idea came back" : `${back.length} ideas came back`}
+                <Lightbulb className="size-3.5" /> {back.length === 1 ? "Remember this idea?" : `${back.length} ideas to look at again`}
               </p>
               {back.length > 1 && <span className="t-small text-ink-3">One at a time</span>}
             </div>
             <p className="mt-2 text-[16px] leading-snug [overflow-wrap:anywhere]">{first.text}</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <button type="button" className="chip" onClick={() => (actions.entryToTask(first.id), feel("save", "success"), toast("Added to This week."))}>
+              <button type="button" className="chip" onClick={() => (actions.entryToTask(first.id), feel("save", "success"), toast("Added to this week."))}>
                 <Sparkles className="mr-1 size-3.5" /> Make it a task
               </button>
               <button type="button" className="chip" onClick={() => (actions.snoozeEntry(first.id), feel("tap", "light"))}>
@@ -67,7 +67,7 @@ export function EntryList({ kind, state, actions }: { kind: EntryKind; state: St
       {list.length === 0 ? (
         <div className="mt-8 rounded-[24px] bg-white px-5 py-7 text-center ring-1 ring-line">
           <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-signal-soft text-signal-ink">{kind === "idea" ? <Lightbulb className="size-6" /> : <NotebookPen className="size-6" />}</span>
-          <p className="t-body mt-3 text-ink-2">{kind === "idea" ? "No ideas yet. Jot one above and let it go. It comes back in a few days." : "No notes yet. Good for numbers, addresses and little things you'll need later."}</p>
+          <p className="t-body mt-3 text-ink-2">{kind === "idea" ? "No ideas yet. Write one above and forget about it. I'll bring it back in a few days." : "No notes yet. Good for numbers, addresses and little things you'll need later."}</p>
         </div>
       ) : (
         <ul className="mt-5 space-y-2">
@@ -82,7 +82,7 @@ export function EntryList({ kind, state, actions }: { kind: EntryKind; state: St
       {archived.length > 0 && (
         <div className="mt-6">
           <button type="button" className="btn btn-quiet gap-1 px-1 text-[14px]" aria-expanded={showArchived} onClick={() => setShowArchived((v) => !v)}>
-            <ChevronDown className={`size-4 transition-transform ${showArchived ? "rotate-180" : ""}`} /> Archived and turned into tasks ({archived.length})
+            <ChevronDown className={`size-4 transition-transform ${showArchived ? "rotate-180" : ""}`} /> Archived list ({archived.length})
           </button>
           {showArchived && (
             <ul className="mt-2">
@@ -117,7 +117,7 @@ export function EntryList({ kind, state, actions }: { kind: EntryKind; state: St
                   if (edit.trim() && edit !== open.text) actions.editEntry(open.id, edit);
                   actions.entryToTask(open.id);
                   setOpen(null);
-                  toast("Added to This week.");
+                  toast("Added to this week.");
                 }}
               >
                 <Sparkles className="size-4" /> Make it a task
@@ -145,7 +145,7 @@ export function EntryList({ kind, state, actions }: { kind: EntryKind; state: St
           <ul className="mt-1 pb-2">
             {[
               { label: "Edit", icon: <Pencil className="size-5" />, fn: () => (setOpen(menuLast), setEdit(menuLast.text)) },
-              { label: "Make it a task", icon: <Sparkles className="size-5" />, fn: () => (actions.entryToTask(menuLast.id), toast("Added to This week.")) },
+              { label: "Make it a task", icon: <Sparkles className="size-5" />, fn: () => (actions.entryToTask(menuLast.id), toast("Added to this week.")) },
               { label: "Archive", icon: <Archive className="size-5" />, fn: () => (actions.archiveEntry(menuLast.id), toast("Archived.")) },
               {
                 label: "Delete",

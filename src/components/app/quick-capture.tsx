@@ -13,9 +13,9 @@ import { keepFocus } from "./steps";
 export type Kind = "task" | EntryKind;
 
 const HINT: Record<Kind, string> = {
-  task: "Add one, or say everything at once. It gets split into tasks.",
-  idea: "Something for later. It'll come back in a few days.",
-  note: "Somewhere to keep a number, an address, anything.",
+  task: "Add one or more tasks.",
+  idea: "Save it for later. I'll remind you in a few days.",
+  note: "Numbers, addresses, anything you'll need later.",
 };
 const PLACEHOLDER: Record<Kind, string> = { task: "Add a task…", idea: "Jot an idea…", note: "Write a note…" };
 
@@ -82,12 +82,12 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
       if (!t) return;
       feel("save", "success");
       announce(`Saved: ${t.title}.`);
-      toast(`Added to ${BUCKET_NAME[t.bucket]}.`, { action: { label: "Details", onClick: () => onOpen(t) } });
+      toast("Added.", { action: { label: "Details", onClick: () => onOpen(t) } });
     } else {
       const e = actions.addEntry(text, kind);
       if (!e) return;
       feel("save", "success");
-      toast(kind === "idea" ? "Saved. It'll come back in a few days." : "Note saved.");
+      toast(kind === "idea" ? "Saved. I'll bring it back in a few days." : "Note saved.");
     }
     reset();
     inside.current = false;
@@ -140,7 +140,7 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
             }
           }}
           enterKeyHint={kind === "task" ? "done" : "enter"}
-          placeholder={speech.listening ? "Listening…" : PLACEHOLDER[kind]}
+          placeholder={speech.listening ? "I'm listening…" : PLACEHOLDER[kind]}
           className="min-h-[54px] flex-1 resize-none bg-transparent py-[15px] text-[17px] leading-snug placeholder:text-ink-3 focus:outline-none"
         />
         {speech.supported && (
@@ -166,11 +166,11 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
                 <AnimatePresence mode="wait" initial={false}>
                   {parts.length > 1 ? (
                     <motion.p key="split" initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: 0.15 }} className="t-small min-w-0 flex-1 px-1 font-semibold text-signal-ink">
-                      Saves as {parts.length} tasks
+                      That&apos;s {parts.length} tasks
                     </motion.p>
                   ) : (
                     <motion.p key={dup ? "dup" : kind} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: 0.15 }} className="t-small min-w-0 flex-1 px-1 text-ink-3">
-                      {dup ? "You already have this one. Saving adds it again." : HINT[kind]}
+                      {dup ? "You've already got this one." : HINT[kind]}
                     </motion.p>
                   )}
                 </AnimatePresence>

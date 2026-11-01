@@ -204,7 +204,7 @@ export function TaskRow({
         }
         onDelete={() => {
           const gone = actions.remove(task.id);
-          if (gone) toast("Task deleted.", { action: { label: "Undo", onClick: () => actions.put(gone) } });
+          if (gone) toast("Deleted.", { action: { label: "Undo", onClick: () => actions.put(gone) } });
         }}
       >
       <div className="flex items-center gap-3 pl-3 pr-1">
@@ -308,7 +308,7 @@ export function DoneList({ tasks, actions, onOpen, onMenu }: { tasks: Task[]; ac
               label={t.title}
               onDelete={() => {
                 const gone = actions.remove(t.id);
-                if (gone) toast("Task deleted.", { action: { label: "Undo", onClick: () => actions.put(gone) } });
+                if (gone) toast("Deleted.", { action: { label: "Undo", onClick: () => actions.put(gone) } });
               }}
             >
             <div className="flex min-h-[52px] items-center pl-1 pr-4">
