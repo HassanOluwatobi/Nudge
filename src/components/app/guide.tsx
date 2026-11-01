@@ -5,6 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { feel } from "@/lib/feedback";
 import { Art } from "./art";
+import { burstFrom } from "./petals";
 import { AppleMark, CalendlyMark, GoogleMark, LogoTile } from "./brands";
 
 /*
@@ -65,11 +66,23 @@ function OneThing() {
 
 function Timer() {
   const reduce = useReducedMotion();
+  const ring = useRef<HTMLDivElement>(null);
+  const [done, setDone] = useState(false);
   const R = 44;
   const C = 2 * Math.PI * R;
+  const STEP = 0.7; // seconds between ticks
+  // All three steps get ticked, the task finishes, then a burst of confetti.
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDone(true);
+      feel("finish", "success");
+      burstFrom(ring.current, 28);
+    }, (0.9 + 3 * STEP + 0.35) * 1000);
+    return () => clearTimeout(t);
+  }, []);
   return (
     <div className="flex h-full items-center justify-center gap-5 px-6">
-      <div className="relative size-[120px]">
+      <div ref={ring} className="relative size-[120px]">
         <svg viewBox="0 0 110 110" className="absolute inset-0 size-full -rotate-90">
           <defs>
             <linearGradient id="g-ring" x1="0" y1="0" x2="1" y2="1">
@@ -79,10 +92,21 @@ function Timer() {
             </linearGradient>
           </defs>
           <circle cx="55" cy="55" r={R} fill="none" stroke="var(--line)" strokeWidth="10" />
-          <motion.circle cx="55" cy="55" r={R} fill="none" stroke="url(#g-ring)" strokeWidth="10" strokeLinecap="round" strokeDasharray={C} initial={{ strokeDashoffset: 0 }} animate={{ strokeDashoffset: reduce ? C * 0.35 : [0, C * 0.7] }} transition={{ duration: 6, ease: "linear", repeat: Infinity, repeatType: "reverse" }} />
+          <motion.circle cx="55" cy="55" r={R} fill="none" stroke="url(#g-ring)" strokeWidth="10" strokeLinecap="round" strokeDasharray={C} initial={{ strokeDashoffset: reduce ? 0 : C * 0.8 }} animate={{ strokeDashoffset: 0 }} transition={{ duration: 0.9 + 3 * STEP, ease: "linear" }} />
         </svg>
         <div className="absolute inset-[18%] overflow-hidden rounded-full">
           <Art mode={2} />
+          <AnimatePresence>
+            {done && (
+              <motion.div initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", bounce: 0.45, duration: 0.6 }} className="absolute inset-0 grid place-items-center">
+                <span className="grid size-11 place-items-center rounded-full bg-white">
+                  <svg viewBox="0 0 16 16" className="size-6" fill="none" aria-hidden>
+                    <motion.path d="M3.5 8.4 6.6 11.4 12.6 4.8" stroke="var(--signal)" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.15, duration: 0.3 }} />
+                  </svg>
+                </span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
       <div className="flex w-[138px] flex-col gap-2.5">
@@ -91,20 +115,25 @@ function Timer() {
             <motion.span
               className="grid size-[22px] shrink-0 place-items-center rounded-[7px] border-2"
               initial={{ backgroundColor: "rgba(29,77,245,0)", borderColor: "var(--ink-3)" }}
-              animate={i < 2 ? { backgroundColor: "#1d4df5", borderColor: "#1d4df5", scale: [1, 0.85, 1.1, 1] } : {}}
-              transition={{ delay: 0.9 + i * 0.7, duration: 0.35 }}
+              animate={{ backgroundColor: "#1d4df5", borderColor: "#1d4df5", scale: [1, 0.85, 1.1, 1] }}
+              transition={{ delay: 0.9 + i * STEP, duration: 0.35 }}
             >
-              {i < 2 && (
-                <svg viewBox="0 0 16 16" className="size-3.5" fill="none">
-                  <motion.path d="M3.5 8.4 6.6 11.4 12.6 4.8" stroke="#fff" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 1 + i * 0.7, duration: 0.3 }} />
-                </svg>
-              )}
+              <svg viewBox="0 0 16 16" className="size-3.5" fill="none">
+                <motion.path d="M3.5 8.4 6.6 11.4 12.6 4.8" stroke="#fff" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 1 + i * STEP, duration: 0.3 }} />
+              </svg>
             </motion.span>
-            <motion.span className="truncate" initial={{ opacity: 1 }} animate={i < 2 ? { opacity: 0.45 } : {}} transition={{ delay: 1.2 + i * 0.7 }}>
+            <motion.span className="truncate" initial={{ opacity: 1 }} animate={{ opacity: 0.45 }} transition={{ delay: 1.2 + i * STEP }}>
               {t}
             </motion.span>
           </motion.div>
         ))}
+        <AnimatePresence>
+          {done && (
+            <motion.p initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", bounce: 0.3, duration: 0.5 }} className="mt-1 text-[13px] font-semibold text-signal-ink">
+              Task finished
+            </motion.p>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -209,9 +238,9 @@ function AiSteps() {
 }
 
 const PAGES = [
-  { art: Capture, title: "Put it all down", body: "Tap + and type or speak whatever is on your mind. Messy is fine. NudgeMe tidies it into a task, an idea or a note." },
+  { art: Capture, title: "Put it all down", body: "Type or speak whatever is on your mind in the field at the top of Today. Messy is fine. Choose task, idea or note, then save. Press and hold anything for more options." },
   { art: OneThing, title: "Start with one thing", body: "Today picks one task and shows its next small step. Not feeling it? Tap Not this one, or Make today easy." },
-  { art: Timer, title: "Focus, one step at a time", body: "Drag the ring to set a timer if you want one. Tick steps as you go. Finishing a step never finishes the task by itself." },
+  { art: Timer, title: "Focus, one step at a time", body: "Drag the ring to set a timer if you want one. Tick steps as you go, then finish the task when it is all done." },
   { art: Checkins, title: "Gentle check-ins", body: "A two-minute morning kickoff, an evening wrap-up and a weekly reset on the day you choose. Change the times in Settings." },
   { art: Calendars, title: "Your calendars, both ways", body: "Put check-ins and reminders in Google, Apple or Outlook so your phone rings. Connect Google, Apple or Calendly and upcoming events become tasks, each with a reminder." },
   { art: AiSteps, title: "Break it down with your AI", body: "In any task, tap Break it down. NudgeMe opens ChatGPT, Claude, Gemini or Grok with the question ready. Paste the steps back and check them. Free." },
