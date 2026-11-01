@@ -85,6 +85,15 @@ export function NudgeApp() {
   }, [state]);
   // Light, dark, or follow the phone. The status bar colour follows too.
   const theme = state?.settings.theme ?? "light";
+  const [systemDark, setSystemDark] = useState(false);
+  useEffect(() => {
+    const mq = matchMedia("(prefers-color-scheme: dark)");
+    setSystemDark(mq.matches);
+    const on = () => setSystemDark(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+  const resolvedDark = theme === "dark" || (theme === "auto" && systemDark);
   useEffect(() => {
     document.documentElement.dataset.view = over?.name === "finish" ? "finish" : "page";
     const mq = matchMedia("(prefers-color-scheme: dark)");
@@ -116,7 +125,8 @@ export function NudgeApp() {
     if ("serviceWorker" in navigator && !["localhost", "127.0.0.1"].includes(location.hostname)) navigator.serviceWorker.register("/sw.js").catch(() => {});
     // Opened from a calendar reminder: go straight to the check-in.
     const from = new URLSearchParams(location.search).get("from");
-    if (from === "morning" || from === "evening") setTimeout(() => setCheckin(from), 400);
+    // Morning lives on Home now. Evening still opens its short sheet.
+    if (from === "evening") setTimeout(() => setCheckin(from), 400);
   }, []);
 
   useBackClose(tab !== "today" || !!over, () => {
@@ -252,7 +262,7 @@ export function NudgeApp() {
         ) : (
           <motion.div key={tab} custom={dir} variants={tabMotion} initial="enter" animate="center" exit="exit" transition={{ type: "spring", bounce: 0, duration: 0.34 }}>
             {tab === "today" && (
-              <Today {...common} view={homeView} onView={setHomeView} onAddTo={(part) => setCapture({ part, bucket: "today" })} onFocus={startFocus} onCheckin={setCheckin} />
+              <Today {...common} dark={resolvedDark} onTheme={() => actions.setSettings({ theme: resolvedDark ? "light" : "dark" })} view={homeView} onView={setHomeView} onAddTo={(part) => setCapture({ part, bucket: "today" })} onFocus={startFocus} onCheckin={setCheckin} />
             )}
             {tab === "todo" && <Todo {...common} onAdd={() => setCapture({ bucket: "week" })} onAddTo={(bucket) => setCapture({ bucket })} />}
             {tab === "focus" && <Focus state={state} actions={actions} announce={announce} taskId={focusId === null ? undefined : (focusId ?? suggestion(state)?.id)} onPickTask={(id) => (setFocusId(id ?? null), state.meta.timer && actions.stopTimer())} onFinished={finished} />}

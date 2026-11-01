@@ -13,6 +13,7 @@ import type { Actions } from "@/lib/use-tasks";
 import { CalendarButtons } from "./calendars";
 import { SourceButtons } from "./import";
 import { InstallButton } from "./install";
+import { downloadBackup } from "@/lib/backup";
 import { Sheet } from "./sheet";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -75,12 +76,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
   const count = state.tasks.length + state.entries.length;
 
   const exportData = () => {
-    const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `nudgeme-backup-${ymd()}.json`;
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    downloadBackup(state);
     feel("save", "medium");
     actions.setSettings({ lastBackup: new Date().toISOString() });
     toast("Backup downloaded. Keep the file somewhere safe.");
@@ -101,11 +97,9 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
 
   return (
     <Sheet open={open} onClose={() => (setClear(false), setDataOpen(false), onClose())} title="Settings">
-      <div className="mt-2">
-        <Credit compact />
-      </div>
+      <InstallButton variant="row" />
 
-      <section className="mt-6">
+      <section className="mt-4">
         <h3 className="t-label">Daily check-ins</h3>
         <div className="mt-2 divide-y divide-line rounded-2xl bg-white ring-1 ring-line">
           {(["morning", "evening"] as const).map((k) => (
@@ -143,12 +137,6 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
       </section>
 
       <section className="mt-6">
-        <h3 className="t-label">Bring in your calendar</h3>
-        <p className="t-small mb-3 mt-1 text-ink-2">Events become tasks, each with a reminder. NudgeMe only reads your calendar. It never changes it.</p>
-        <SourceButtons state={state} onPick={(src) => (onClose(), onImport(src))} />
-      </section>
-
-      <section className="mt-6">
         <h3 className="t-label">Reminders</h3>
         <p className="t-small mb-3 mt-1 text-ink-2">
           Add your check-ins to a calendar. It rings every day at {prettyTime(s.morning)} and {prettyTime(s.evening)}, even when NudgeMe is closed.
@@ -183,24 +171,9 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
       </section>
 
       <section className="mt-6">
-        <h3 className="t-label">Appearance</h3>
-        <div className="seg mt-2 grid grid-cols-3 p-1" role="radiogroup" aria-label="Appearance">
-          {(
-            [
-              ["light", "Light"],
-              ["dark", "Dark"],
-              ["auto", "Match phone"],
-            ] as const
-          ).map(([k, name]) => {
-            const on = (s.theme ?? "light") === k;
-            return (
-              <button key={k} type="button" role="radio" aria-checked={on} onClick={() => (actions.setSettings({ theme: k }), feel("tick", "light"))} className="relative h-10 rounded-full text-[14px] font-semibold">
-                {on && <motion.span layoutId="theme-seg" className="seg-knob absolute inset-0" transition={{ type: "spring", bounce: 0, duration: 0.3 }} />}
-                <span className={`relative ${on ? "text-ink" : "text-ink-3"}`}>{name}</span>
-              </button>
-            );
-          })}
-        </div>
+        <h3 className="t-label">Bring in your calendar</h3>
+        <p className="t-small mb-3 mt-1 text-ink-2">Events become tasks, each with a reminder. NudgeMe only reads your calendar. It never changes it.</p>
+        <SourceButtons state={state} onPick={(src) => (onClose(), onImport(src))} />
       </section>
 
       <section className="mt-6">
@@ -222,13 +195,6 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
             </button>
           ))}
         </div>
-      </section>
-
-      <section className="mt-6 space-y-2">
-        <InstallButton />
-        <button type="button" className="btn btn-line mt-2 w-full gap-2" onClick={() => (onClose(), onGuide())}>
-          <CircleHelp className="size-[18px]" /> How NudgeMe works
-        </button>
       </section>
 
       <section className="mt-6 rounded-2xl bg-white ring-1 ring-line">
@@ -254,7 +220,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
                   {[
                     "No account. Your tasks, ideas and settings live only on this phone.",
                     "Nothing is sent to a server. NudgeMe never sees your tasks.",
-                    "If you connect Notion or Calendly, your token is saved on this phone. It passes through a NudgeMe relay that stores nothing.",
+                    "If you connect Calendly or an Apple calendar link, the token or link is saved on this phone as plain text. It passes through a NudgeMe relay that stores nothing. You can remove it any time.",
                     "Voice typing uses your browser's speech feature. Some browsers send the audio to their own online service.",
                     "Clearing your browser data also clears NudgeMe. Download a backup first if you want to keep things.",
                   ].map((t, i) => (
@@ -299,6 +265,16 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
             </motion.div>
           )}
         </AnimatePresence>
+      </section>
+
+      <section className="mt-6">
+        <h3 className="t-label">About</h3>
+        <div className="mt-2">
+          <Credit compact />
+        </div>
+        <button type="button" className="btn btn-line mt-2 w-full gap-2" onClick={() => (onClose(), onGuide())}>
+          <CircleHelp className="size-[18px]" /> How NudgeMe works
+        </button>
       </section>
     </Sheet>
   );

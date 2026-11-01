@@ -230,8 +230,7 @@ export function suggestion(s: State, today = ymd()): Task | undefined {
   }
   const passed = s.meta.passed?.date === today ? s.meta.passed.ids : [];
   const list = todayTasks(s, today);
-  const now = partNow();
-  const ranked = [...list].sort((a, b) => Number(b.part === now) - Number(a.part === now));
+  const ranked = list;
   const pool = ranked.length ? ranked : s.tasks.filter((t) => t.bucket === "week").sort(byPriority);
   return pool.find((t) => !passed.includes(t.id)) ?? pool[0];
 }
@@ -298,10 +297,11 @@ export function sanitize(raw: unknown): State {
       title: title.slice(0, MAX_TITLE),
       steps,
       bucket,
-      part: PARTS.includes(t.part as Part) ? (t.part as Part) : "anytime",
+      // Time of day and How long were removed. Older saves may still carry them, so they are reset here.
+      part: "anytime",
       hue: HUES.includes(t.hue as Hue) ? (t.hue as Hue) : look.hue,
       emoji: str(t.emoji) ?? look.emoji,
-      mins: Number(t.mins) > 0 ? Math.min(600, Math.round(Number(t.mins))) : undefined,
+      mins: undefined,
       due: str(t.due) && /^\d{4}-\d{2}-\d{2}$/.test(str(t.due)!) ? str(t.due) : undefined,
       remindAt: str(t.remindAt) && !Number.isNaN(Date.parse(str(t.remindAt)!)) ? str(t.remindAt) : undefined,
       createdAt: str(t.createdAt) ?? now,

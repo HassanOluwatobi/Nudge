@@ -26,6 +26,7 @@ const PLACEHOLDER: Record<Kind, string> = { task: "Add a task…", idea: "Jot an
  */
 export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind: Kind; state: State; actions: Actions; announce: (s: string) => void; onOpen: (t: Task) => void }) {
   const [text, setText] = useState("");
+  const textState = text;
   const [focused, setFocused] = useState(false);
   const field = useRef<HTMLTextAreaElement>(null);
   // A tap inside the box (the toggle, mic or Save) must not count as leaving.
@@ -33,10 +34,14 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
   // tap came from inside, ignore that blur, and hand focus straight back.
   const inside = useRef(false);
   const refocus = () => requestAnimationFrame(() => field.current?.focus({ preventScroll: true }));
+  // Live words while you speak. They become real text once the browser is sure.
+  const [interim, setInterim] = useState("");
   const speech = useSpeech((t, final) => {
     if (final) setText((v) => (v ? `${v} ${t}` : t).slice(0, kind === "task" ? MAX_TITLE : 2000));
+    else setInterim(t);
+    requestAnimationFrame(grow);
   });
-  const open = focused || !!text || speech.listening;
+  const open = focused || !!text || !!interim || speech.listening;
   const dup = kind === "task" && text.trim().length > 2 && isDuplicate(state, text);
 
   const grow = () => {
@@ -50,7 +55,11 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
     requestAnimationFrame(grow);
   };
   const save = () => {
+    const typed = textState;
     if (speech.listening) speech.toggle();
+    // Keep any words still being heard when Save is tapped.
+    const text = interim ? (typed ? `${typed} ${interim}` : interim) : typed;
+    setInterim("");
     if (!text.trim()) return;
     if (kind === "task") {
       const lines = splitLines(text);
@@ -107,9 +116,9 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
           id="quick"
           ref={field}
           rows={1}
-          value={text}
+          value={interim ? (text ? `${text} ${interim}` : interim) : text}
           maxLength={kind === "task" ? MAX_TITLE : 2000}
-          onChange={(e) => (setText(e.target.value), grow())}
+          onChange={(e) => (setText(e.target.value), setInterim(""), grow())}
           onFocus={() => setFocused(true)}
           onBlur={() => {
             if (inside.current) return;
@@ -146,7 +155,7 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
                     {dup ? "You already have this. Saving adds it again." : HINT[kind]}
                   </motion.p>
                 </AnimatePresence>
-                <button type="submit" {...keepFocus} disabled={!text.trim()} className="btn btn-signal min-h-9 shrink-0 px-4 text-[14px]">
+                <button type="submit" {...keepFocus} disabled={!text.trim() && !interim.trim()} className="btn btn-signal min-h-9 shrink-0 px-4 text-[14px]">
                   Save
                 </button>
               </div>

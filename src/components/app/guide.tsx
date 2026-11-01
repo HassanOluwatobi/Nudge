@@ -1,6 +1,7 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Bell, Lightbulb } from "lucide-react";
+import { AppleMark, GoogleMark, LogoTile, OutlookMark } from "./brands";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { feel } from "@/lib/feedback";
@@ -142,10 +143,66 @@ function Timer() {
   );
 }
 
+function IdeasBack() {
+  return (
+    <div className="flex h-full flex-col items-center justify-center px-6">
+      <motion.div initial={{ opacity: 0, y: 30, rotate: -4 }} animate={{ opacity: 1, y: [30, -6, 0], rotate: [-4, 2, 0] }} transition={{ duration: 0.9, ease }} className="w-full rounded-[16px] bg-white p-3 ring-1 ring-line">
+        <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-signal-ink">
+          <Lightbulb className="size-3" /> An idea came back
+        </p>
+        <p className="mt-1 text-[15px] leading-snug">A newsletter about design in African fintech</p>
+        <div className="mt-2 flex gap-1.5">
+          {["Make it a task", "Not yet", "Let it go"].map((c) => (
+            <span key={c} className="rounded-full bg-white px-2.5 py-1 text-[12px] font-medium ring-1 ring-line">
+              {c}
+            </span>
+          ))}
+        </div>
+      </motion.div>
+      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="mt-3 text-center text-[13px] text-ink-3">
+        3 days · 7 days · 14 days · 30 days
+      </motion.p>
+    </div>
+  );
+}
+
+function Reminders() {
+  const marks = [
+    { el: <GoogleMark className="size-7" />, bleed: false, name: "Google" },
+    { el: <AppleMark className="size-full" />, bleed: true, name: "Apple" },
+    { el: <OutlookMark className="size-8" />, bleed: false, name: "Outlook" },
+  ];
+  return (
+    <div className="flex h-full flex-col items-center justify-center gap-4 px-6">
+      <div className="flex gap-3">
+        {marks.map((m, i) => (
+          <motion.div key={m.name} initial={{ opacity: 0, y: 14, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: 0.1 + i * 0.1, type: "spring", bounce: 0.4, duration: 0.6 }} className="flex flex-col items-center gap-1.5">
+            <span className="rounded-[14px]">
+              <LogoTile bleed={m.bleed} size={52}>{m.el}</LogoTile>
+            </span>
+            <span className="text-[12px] font-medium text-ink-2">{m.name}</span>
+          </motion.div>
+        ))}
+      </div>
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, type: "spring", bounce: 0.2, duration: 0.6 }} className="flex w-full items-center gap-3 rounded-[16px] bg-white px-3.5 py-3 ring-1 ring-line">
+        <motion.span animate={{ rotate: [0, -14, 12, -8, 0] }} transition={{ delay: 1.1, duration: 0.7, repeat: Infinity, repeatDelay: 2 }}>
+          <Bell className="size-5 text-signal-ink" />
+        </motion.span>
+        <span className="flex-1">
+          <span className="block text-[15px] font-semibold">Morning kickoff</span>
+          <span className="block text-[13px] text-ink-2">Every day at 8:30 am</span>
+        </span>
+      </motion.div>
+    </div>
+  );
+}
+
 const PAGES = [
   { art: Capture, title: "Put it all down", body: "Pick Tasks, Ideas or Notes at the top of Home, then type or speak. It lands right in that list. Messy is fine. Press and hold anything for more options." },
   { art: OneThing, title: "Start with one thing", body: "Under Tasks, Home picks one thing and shows its next small step. Not feeling it? Tap Not this one, or Make today easy." },
-  { art: Timer, title: "Focus, one step at a time", body: "Focus shows one subtask at a time. Tap Done, next to move on. Add a timer if it helps, then finish the task. Check-ins and calendars live in Settings." },
+  { art: Timer, title: "Focus, one step at a time", body: "Focus shows one subtask at a time. Tap Done, next to move on. Add a timer if it helps, then finish the task." },
+  { art: IdeasBack, title: "Ideas and notes", body: "Tap Ideas or Notes at the top of Home and type it in. Ideas come back after a few days, so they stop circling in your head. Notes wait until you need them." },
+  { art: Reminders, title: "Reminders that ring", body: "Add a reminder to any task, then tap Google, Apple or Outlook. Your calendar rings even when NudgeMe is closed. You can do the same for your morning and evening check-ins in Settings." },
 ];
 
 export function Guide({ open, onClose }: { open: boolean; onClose: () => void }) {

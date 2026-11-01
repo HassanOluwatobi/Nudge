@@ -4,7 +4,7 @@ import { Archive, ChevronDown, Lightbulb, NotebookPen, Pencil, Sparkles, Trash2 
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { type Entry, type EntryKind, type State, prettyDue, ymd } from "@/lib/tasks";
+import { type Entry, type EntryKind, type State, dueIdeas, prettyDue, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { feel } from "@/lib/feedback";
 import { useHold } from "@/lib/use-hold";
@@ -33,8 +33,37 @@ export function EntryList({ kind, state, actions }: { kind: EntryKind; state: St
   const list = state.entries.filter((e) => e.kind === kind && e.status === "open");
   const archived = state.entries.filter((e) => e.kind === kind && e.status !== "open");
 
+  // Ideas that came back, reviewed one at a time.
+  const back = kind === "idea" ? dueIdeas(state, today) : [];
+  const first = back[0];
+
   return (
     <div>
+      <AnimatePresence initial={false} mode="popLayout">
+        {first && (
+          <motion.section key={first.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: -24 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }} className="mt-5 rounded-[20px] bg-white p-4 ring-1 ring-signal/40" aria-label="Ideas that came back">
+            <div className="flex items-center justify-between">
+              <p className="t-label flex items-center gap-1.5 text-signal-ink">
+                <Lightbulb className="size-3.5" /> {back.length === 1 ? "An idea came back" : `${back.length} ideas came back`}
+              </p>
+              {back.length > 1 && <span className="t-small text-ink-3">One at a time</span>}
+            </div>
+            <p className="mt-2 text-[16px] leading-snug [overflow-wrap:anywhere]">{first.text}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button type="button" className="chip" onClick={() => (actions.entryToTask(first.id), feel("save", "success"), toast("Added to This week."))}>
+                <Sparkles className="mr-1 size-3.5" /> Make it a task
+              </button>
+              <button type="button" className="chip" onClick={() => (actions.snoozeEntry(first.id), feel("tap", "light"))}>
+                Not yet
+              </button>
+              <button type="button" className="chip" onClick={() => (actions.archiveEntry(first.id), feel("tap", "light"))}>
+                Let it go
+              </button>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
+
       {list.length === 0 ? (
         <div className="mt-8 rounded-[24px] bg-white px-5 py-7 text-center ring-1 ring-line">
           <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-signal-soft text-signal-ink">{kind === "idea" ? <Lightbulb className="size-6" /> : <NotebookPen className="size-6" />}</span>

@@ -37,11 +37,13 @@ export function useSpeech(onText: (text: string, final: boolean) => void) {
         if (res.isFinal) finalText += res[0].transcript;
         else interim += res[0].transcript;
       }
+      // Finished words are kept. Words still being heard show live, and are
+      // replaced as the browser refines them.
       if (finalText) cb.current(finalText.trim(), true);
-      else if (interim) cb.current(interim.trim(), false);
+      cb.current(interim.trim(), false);
     };
-    r.onend = () => setListening(false);
-    r.onerror = () => setListening(false);
+    r.onend = () => (setListening(false), cb.current("", false));
+    r.onerror = () => (setListening(false), cb.current("", false));
     rec.current = r;
     setSupported(true);
     return () => {

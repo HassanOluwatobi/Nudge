@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, CalendarSync, ChevronRight, ChevronDown, CircleHelp, Lightbulb, Moon, Plus, Settings2, Sparkles, Sun } from "lucide-react";
+import { ArrowRight, CalendarSync, ChevronRight, Download, ChevronDown, CircleHelp, Lightbulb, Moon, Plus, Settings2, Sun } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -12,14 +12,24 @@ import { type Kind, QuickCapture } from "./quick-capture";
 import { EntryList } from "./ideas";
 import { TaskRow, Tile, DoneList } from "./task-row";
 import { useHold } from "@/lib/use-hold";
+import { backupDue, downloadBackup } from "@/lib/backup";
 
 const round = "btn btn-line btn-icon size-10 text-ink-2";
 
-export function TopBar({ title, onSettings, onAdd, onHelp }: { title?: React.ReactNode; onSettings: () => void; onAdd?: () => void; onHelp?: () => void }) {
+export function TopBar({ title, onSettings, onAdd, onHelp, dark, onTheme }: { title?: React.ReactNode; onSettings: () => void; onAdd?: () => void; onHelp?: () => void; dark?: boolean; onTheme?: () => void }) {
   return (
     <header className="flex min-h-[56px] items-center justify-between gap-3 py-2">
       <div className="min-w-0">{title}</div>
       <div className="flex items-center gap-2">
+        {onTheme && (
+          <button type="button" className={round} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} onClick={() => (onTheme(), feel("tick", "light"))}>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span key={dark ? "moon" : "sun"} initial={{ rotate: -60, opacity: 0, scale: 0.6 }} animate={{ rotate: 0, opacity: 1, scale: 1 }} exit={{ rotate: 60, opacity: 0, scale: 0.6 }} transition={{ type: "spring", bounce: 0.3, duration: 0.35 }} className="grid place-items-center">
+                {dark ? <Moon className="size-[18px]" /> : <Sun className="size-[18px]" />}
+              </motion.span>
+            </AnimatePresence>
+          </button>
+        )}
         {onHelp && (
           <button type="button" className={round} aria-label="How NudgeMe works" onClick={onHelp}>
             <CircleHelp className="size-[18px]" />
@@ -60,6 +70,8 @@ export function Today({
   onMenu,
   view,
   onView,
+  dark,
+  onTheme,
   onFocus,
   onCheckin,
   onHelp,
@@ -74,6 +86,8 @@ export function Today({
   onMenu: (t: Task) => void;
   view: Kind;
   onView: (v: Kind) => void;
+  dark?: boolean;
+  onTheme?: () => void;
   onFocus: (t: Task) => void;
   onCheckin: (k: "morning" | "evening" | "weekly") => void;
   onHelp: () => void;
@@ -86,7 +100,7 @@ export function Today({
   const finished = doneToday(state, today);
   const easy = state.meta.easy?.date === today;
   const due = checkinDue(state);
-  const idea = dueIdeas(state, today)[0];
+  const ideasBack = dueIdeas(state, today).length;
   // Up next: anything with a reminder time comes first, in time order.
   const at = (t: Task) => (t.remindAt ? Date.parse(t.remindAt) : Number.POSITIVE_INFINITY);
   const rest = list.filter((t) => t.id !== pick?.id).sort((a, b) => at(a) - at(b));
@@ -121,7 +135,7 @@ export function Today({
 
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-36 safe-t">
-      <TopBar title={<span className="block leading-tight"><span className="block text-[13px] font-medium text-ink-3">{date}</span><span className="block font-serif text-[28px] leading-none tracking-[-0.02em]">{day}</span></span>} onSettings={onSettings} onHelp={onHelp} />
+      <TopBar dark={dark} onTheme={onTheme} title={<span className="block leading-tight"><span className="block text-[13px] font-medium text-ink-3">{date}</span><span className="block font-serif text-[28px] leading-none tracking-[-0.02em]">{day}</span></span>} onSettings={onSettings} onHelp={onHelp} />
 
       {/* One toggle for everything. What you type lands in the list you are looking at. */}
       <div className="seg mt-6 grid grid-cols-3 p-1" role="tablist" aria-label="Show">
@@ -148,7 +162,9 @@ export function Today({
       ) : (
       <motion.div key="task" custom={dir} variants={slide} initial="enter" animate="center" exit="exit" transition={{ type: "spring", bounce: 0, duration: 0.28 }}>
 
-      {due && (
+      {due === "morning" && <MorningPick state={state} actions={actions} announce={announce} />}
+
+      {due && due !== "morning" && (
         <motion.button
           type="button"
           initial={{ opacity: 0, y: 8 }}
@@ -171,37 +187,38 @@ export function Today({
 
       {/* The one painted moment, with the suggested task under it. */}
       {pick ? (
-        <section aria-label="Start here" className="mt-6 overflow-hidden rounded-[24px] bg-white ring-1 ring-line">
-          <p className="t-label px-4 pt-4 text-signal-ink">Start here</p>
+        <section aria-label="Start here" className="start-card on-color relative mt-6 overflow-hidden rounded-[24px] text-white">
+          <p className="t-label relative px-5 pt-5 !text-white/75">Start here</p>
           <AnimatePresence mode="popLayout" initial={false}>
-            <motion.div key={pick.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ type: "spring", bounce: 0, duration: 0.4 }} className="px-4 pb-3 pt-3">
+            <motion.div key={pick.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ type: "spring", bounce: 0, duration: 0.4 }} className="relative px-5 pb-4 pt-3">
               <button type="button" {...pickHold.bind} onClick={() => onOpen(pick)} className="flex w-full items-start gap-3 text-left" aria-label={`${pick.title}. Open details. Hold for options.`}>
-                <Tile task={pick} size={44} />
+                <span className="grid size-11 shrink-0 place-items-center rounded-[13px] bg-white/15 text-[22px] ring-1 ring-white/20">{pick.emoji ?? pick.title.charAt(0).toUpperCase()}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="t-title block text-[26px]">{pick.title}</span>
-                  <span className="t-small mt-1 block text-ink-2">
+                  <span className="t-title block text-[26px] text-white">{pick.title}</span>
+                  <span className="t-small mt-1 block text-white/80">
                     {step ? (
                       <>
-                        <span className="font-semibold text-signal-ink">Next: </span>
+                        <span className="font-semibold text-white">Next: </span>
                         {step.t}
                       </>
+                    ) : pick.steps.length ? (
+                      "Every subtask is done. Finish it when you are ready."
                     ) : (
-                      pick.steps.length ? "Every subtask is done. Finish it when you are ready." : "Tap Start. You can add subtasks as you go."
+                      "Tap Start. You can add subtasks as you go."
                     )}
                   </span>
                 </span>
               </button>
-              <button type="button" className="btn btn-signal mt-4 w-full text-[17px]" onClick={() => (feel("tap", "light"), onFocus(pick))}>
+              <button type="button" className="btn btn-white mt-5 w-full text-[17px] !text-signal" onClick={() => (feel("tap", "light"), onFocus(pick))}>
                 Start <ArrowRight className="size-5" />
               </button>
-              <div className="mt-1 flex justify-center gap-1">
-                {rest.length > 0 && (
-                  <button type="button" className="btn btn-quiet text-[15px]" onClick={() => (actions.pass(pick.id), feel("tap", "light"), announce("Showing another task."))}>
+              {rest.length > 0 && (
+                <div className="mt-1 flex justify-center">
+                  <button type="button" className="btn btn-quiet text-[15px] !text-white/85" onClick={() => (actions.pass(pick.id), feel("tap", "light"), announce("Showing another task."))}>
                     Not this one
                   </button>
-                )}
-
-              </div>
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
         </section>
@@ -218,33 +235,18 @@ export function Today({
 
       <InstallCard />
 
-      {idea && (
-        <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-8 rounded-[20px] bg-white p-4 ring-1 ring-line" aria-label="An idea came back">
-          <p className="t-label flex items-center gap-1.5 text-signal-ink">
-            <Lightbulb className="size-3.5" /> An idea came back
-          </p>
-          <p className="mt-2 text-[16px] leading-snug [overflow-wrap:anywhere]">{idea.text}</p>
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              className="chip"
-              onClick={() => {
-                const t = actions.entryToTask(idea.id);
-                feel("save", "success");
-                if (t) toast("Added to This week.");
-              }}
-            >
-              <Sparkles className="mr-1 size-3.5" /> Make it a task
-            </button>
-            <button type="button" className="chip" onClick={() => (actions.snoozeEntry(idea.id), feel("tap", "light"), toast("It will come back later."))}>
-              Not yet
-            </button>
-            <button type="button" className="chip" onClick={() => (actions.archiveEntry(idea.id), feel("tap", "light"), toast("Archived. Find it under Ideas."))}>
-              Let it go
-            </button>
-          </div>
-        </motion.section>
+      {ideasBack > 0 && (
+        <button type="button" onClick={() => (onView("idea"), feel("tap"))} className="mt-3 flex min-h-[52px] w-full items-center gap-3 rounded-[18px] bg-white px-3 text-left ring-1 ring-line">
+          <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-signal-soft text-signal-ink">
+            <Lightbulb className="size-[18px]" />
+          </span>
+          <span className="flex-1 text-[15px] font-semibold">{ideasBack === 1 ? "An idea came back" : `${ideasBack} ideas came back`}</span>
+          <span className="text-[13px] text-ink-3">Review</span>
+          <ChevronRight className="size-4 text-ink-3" />
+        </button>
       )}
+
+      <BackupNudge state={state} actions={actions} />
 
       {rest.length > 0 && (
         <section className="mt-7" aria-labelledby="next-h">
@@ -290,6 +292,98 @@ export function Today({
       )}
       </AnimatePresence>
 
+      <MiniCredit />
+
+    </div>
+  );
+}
+
+/** Morning check-in, right on Home: pick your one thing, or skip. */
+function MorningPick({ state, actions, announce }: { state: State; actions: Actions; announce: (s: string) => void }) {
+  const today = ymd();
+  const onToday = todayTasks(state, today);
+  const soon = state.tasks.filter((t) => t.bucket === "week").sort((a, b) => (a.due ?? "9999").localeCompare(b.due ?? "9999"));
+  const options = [...onToday, ...soon].slice(0, 4);
+  const pick = (t: Task) => {
+    if (t.bucket !== "today") actions.planToday([t.id]);
+    actions.choose(t.id);
+    actions.finishCheckin("morning");
+    feel("save", "success");
+    announce(`${t.title} is your one thing today.`);
+    toast("Your one thing is set. Start when you are ready.");
+  };
+  return (
+    <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-3 rounded-[20px] bg-white p-4 ring-1 ring-line" aria-label="Morning check-in">
+      <p className="t-label flex items-center gap-1.5 text-signal-ink">
+        <Sun className="size-3.5" /> Good morning
+      </p>
+      <p className="mt-1.5 text-[17px] font-semibold">What is your one thing today?</p>
+      {options.length ? (
+        <ul className="mt-3 grid gap-1.5">
+          {options.map((t) => (
+            <li key={t.id}>
+              <button type="button" onClick={() => pick(t)} className="flex min-h-[48px] w-full items-center gap-3 rounded-[14px] px-2 text-left ring-1 ring-line transition-colors active:bg-[rgb(6_11_43/0.04)]">
+                <Tile task={t} size={30} />
+                <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{t.title}</span>
+                {t.bucket !== "today" && <span className="text-[12px] text-ink-3">This week</span>}
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="t-small mt-1 text-ink-3">Nothing planned yet. Add something in the field above.</p>
+      )}
+      <button type="button" className="btn btn-quiet mt-1 min-h-10 w-full text-[14px]" onClick={() => (actions.finishCheckin("morning"), feel("tap"))}>
+        Skip for today
+      </button>
+    </motion.section>
+  );
+}
+
+/** One quiet line at the very bottom of Home. */
+function MiniCredit() {
+  return (
+    <p className="mt-12 flex items-center justify-center gap-2 text-[13px] text-ink-3">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/hassan.jpg" alt="" width={20} height={20} className="size-5 rounded-full object-cover" />
+      <span>Made by Hassan</span>
+      <span aria-hidden>·</span>
+      <a href="https://x.com/Art_sassin" target="_blank" rel="noopener noreferrer" className="font-medium text-ink-2 underline-offset-2 hover:underline">
+        Say hi
+      </a>
+      <span aria-hidden>·</span>
+      <a href="https://selar.com/showlove/hassanx" target="_blank" rel="noopener noreferrer" className="font-medium text-ink-2 underline-offset-2 hover:underline">
+        Buy me a coffee
+      </a>
+    </p>
+  );
+}
+
+/** Every couple of weeks, once there is something worth keeping. */
+function BackupNudge({ state, actions }: { state: State; actions: Actions }) {
+  const [hidden, setHidden] = useState(false);
+  if (hidden || !backupDue(state)) return null;
+  return (
+    <div className="mt-3 flex min-h-[52px] items-center gap-3 rounded-[18px] bg-white px-3 ring-1 ring-line">
+      <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-signal-soft text-signal-ink">
+        <Download className="size-[18px]" />
+      </span>
+      <span className="min-w-0 flex-1 text-[14px] font-medium">{state.settings.lastBackup ? "Time for a fresh backup" : "Save a backup of your tasks"}</span>
+      <button type="button" className="text-[13px] text-ink-3" onClick={() => (actions.setSettings({ lastBackup: new Date(Date.now() - 7 * 864e5).toISOString() }), setHidden(true))}>
+        Later
+      </button>
+      <button
+        type="button"
+        className="inline-flex h-8 items-center rounded-full bg-signal px-3.5 text-[13px] font-semibold text-white"
+        onClick={() => {
+          downloadBackup(state);
+          actions.setSettings({ lastBackup: new Date().toISOString() });
+          feel("save", "success");
+          toast("Backup saved to your downloads.");
+        }}
+      >
+        Save
+      </button>
     </div>
   );
 }

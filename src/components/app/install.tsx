@@ -17,7 +17,7 @@ const standalone = () =>
   typeof window !== "undefined" && (matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true);
 
 /** Add to Home Screen. Installed, NudgeMe opens full screen with no address bar. */
-export function InstallButton({ compact = false }: { compact?: boolean }) {
+export function InstallButton({ compact = false, variant = "button" }: { compact?: boolean; variant?: "button" | "row" }) {
   const [installed, setInstalled] = useState(false);
   const [help, setHelp] = useState(false);
   const [ready, setReady] = useState(false);
@@ -34,7 +34,19 @@ export function InstallButton({ compact = false }: { compact?: boolean }) {
     };
   }, []);
   const plat = typeof window === "undefined" ? "other" : platform();
+  const go = async () => {
+    feel("tap", "medium");
+    const o = offer();
+    if (o) {
+      await o.prompt();
+      const r = await o.userChoice;
+      clearOffer();
+      setReady(false);
+      if (r.outcome === "accepted") setInstalled(true);
+    } else setHelp(true);
+  };
 
+  if (installed && variant === "row") return null;
   if (installed)
     return (
       <div className="flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-white text-[15px] font-medium text-signal-ink ring-1 ring-line">
@@ -44,24 +56,23 @@ export function InstallButton({ compact = false }: { compact?: boolean }) {
 
   return (
     <>
-      <button
-        type="button"
-        className="btn btn-ink w-full gap-2"
-        onClick={async () => {
-          feel("tap", "medium");
-          const o = offer();
-          if (o) {
-            await o.prompt();
-            const r = await o.userChoice;
-            clearOffer();
-            setReady(false);
-            if (r.outcome === "accepted") setInstalled(true);
-          } else setHelp(true);
-        }}
-      >
-        <SquarePlus className="size-[18px]" /> Add NudgeMe to Home Screen
-      </button>
-      {!compact && <p className="t-small mt-2 text-center text-ink-3">{ready ? "One tap. Opens full screen, like an app." : plat === "ios" ? "iPhone asks for two taps in Safari. We show you where." : "Opens full screen, like an app. Works offline."}</p>}
+      {variant === "row" ? (
+        <button type="button" onClick={go} className="flex w-full items-center gap-3 rounded-2xl bg-white p-3 text-left ring-1 ring-line transition-transform active:scale-[0.99]">
+          <span className="grid size-10 shrink-0 place-items-center rounded-[12px] bg-signal-soft text-signal-ink">
+            <SquarePlus className="size-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[15px] font-semibold">Add to Home Screen</span>
+            <span className="t-small block text-ink-3">Keeps your tasks safe. Opens like an app.</span>
+          </span>
+          <span className="inline-flex h-8 items-center rounded-full bg-signal px-3.5 text-[13px] font-semibold text-white">Add</span>
+        </button>
+      ) : (
+        <button type="button" className="btn btn-ink w-full gap-2" onClick={go}>
+          <SquarePlus className="size-[18px]" /> Add NudgeMe to Home Screen
+        </button>
+      )}
+      {!compact && variant === "button" && <p className="t-small mt-2 text-center text-ink-3">{ready ? "One tap. Opens full screen, like an app." : plat === "ios" ? "iPhone asks for two taps in Safari. We show you where." : "Opens full screen, like an app. Works offline."}</p>}
       <Sheet open={help} onClose={() => setHelp(false)} title="Add to Home Screen">
         <ol className="mt-2 space-y-3">
           {(plat === "ios"

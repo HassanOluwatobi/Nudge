@@ -98,14 +98,14 @@ export function useTasks() {
       const text = raw.trim();
       if (!text) return null;
       const r = readThought(text);
-      const task = makeTask(r.title, r.bucket, { due: r.due, part: r.part, ...extra });
+      const task = makeTask(r.title, r.bucket, { due: r.due, ...extra, part: "anytime" });
       update((s) => ({ ...s, tasks: [...s.tasks, task] }));
       return task;
     },
     captureMany(lines: string[], extra: Partial<Task> = {}): Task[] {
       const made = lines.map((l) => {
         const r = readThought(l);
-        return makeTask(r.title, r.bucket, { due: r.due, part: r.part, ...extra });
+        return makeTask(r.title, r.bucket, { due: r.due, ...extra, part: "anytime" });
       });
       if (made.length) update((s) => ({ ...s, tasks: [...s.tasks, ...made] }));
       return made;
@@ -305,13 +305,10 @@ export function useTasks() {
           .filter((e) => !have.has(e.key))
           .map((e) => {
             const day = ymd(e.start);
-            const h = e.start.getHours();
-            const mins = e.end ? Math.max(5, Math.min(600, Math.round((e.end.getTime() - e.start.getTime()) / 60000))) : undefined;
             const reminder = !e.allDay && e.start.getTime() - 10 * 60000 > Date.now() ? new Date(e.start.getTime() - 10 * 60000).toISOString() : undefined;
             return makeTask(e.title, day === today ? "today" : day <= addDays(today, 6) ? "week" : "later", {
               due: day,
-              part: e.allDay ? "anytime" : h < 12 ? "morning" : h < 17 ? "afternoon" : "evening",
-              mins: e.allDay ? undefined : mins,
+              part: "anytime",
               remindAt: reminder,
               emoji: "🗓️",
               ext: e.key,
