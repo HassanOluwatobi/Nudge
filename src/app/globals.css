@@ -1153,7 +1153,7 @@ html[data-theme="dark"] [aria-label="How Shrink my day works"] {
   100% { transform: translateY(0); opacity: 0; }
 }
 .lp-grid {
-  background-image: linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-image: linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
   background-size: 56px 56px;
   background-position: center;
 }

@@ -5,6 +5,7 @@ import { ArrowRight, Check, Lock, Moon, ShieldCheck, Smartphone, WifiOff } from 
 import { useEffect, useRef, useState } from "react";
 import { AiSteps, Capture, Devices, IdeasBack, OneThing, Reminders, Timer } from "@/components/app/guide";
 import { Petals } from "@/components/app/petals";
+import { Art } from "@/components/app/art";
 
 /*
   The Shrink my day landing page.
@@ -152,16 +153,16 @@ function Hero() {
 
       {/* Tabs, like flicking between screens of the app */}
       <div className="mt-14 flex justify-center sm:mt-16">
-        <div role="tablist" aria-label="See the app" className="flex rounded-full bg-white p-1 ring-1 ring-line">
+        <div role="tablist" aria-label="See the app" className="flex rounded-full bg-[#e8e2d5] p-1">
           {SHOTS.map((t, i) => (
             <button
               key={t.key}
               role="tab"
               aria-selected={on === i}
               onClick={() => pick(i)}
-              className={`relative h-9 whitespace-nowrap rounded-full px-3 text-[12.5px] font-medium transition-colors sm:h-10 sm:px-5 sm:text-[14px] ${on === i ? "text-white" : "text-ink-2 hover:text-ink"}`}
+              className={`relative h-9 whitespace-nowrap rounded-full px-3 text-[12.5px] font-medium transition-colors sm:h-10 sm:px-5 sm:text-[14px] ${on === i ? "text-ink" : "text-ink-2 hover:text-ink"}`}
             >
-              {on === i && <motion.span layoutId="hero-tab" className="absolute inset-0 rounded-full bg-ink" transition={{ type: "spring", bounce: 0.15, duration: 0.5 }} />}
+              {on === i && <motion.span layoutId="hero-tab" className="absolute inset-0 rounded-full bg-white ring-1 ring-black/[0.06]" transition={{ type: "spring", bounce: 0.15, duration: 0.5 }} />}
               <span className="relative">{t.tab}</span>
             </button>
           ))}
@@ -338,7 +339,7 @@ function How() {
       <h2 className={`mt-4 max-w-[18ch] ${H2}`}>From a full head to a first step</h2>
       <div className="mt-10 grid gap-4 lg:grid-cols-[1fr_1.25fr]">
         <div>
-          <div className="h-full rounded-[24px] bg-white px-5 py-1 ring-1 ring-line lg:flex lg:flex-col lg:justify-center">
+          <div className="h-full rounded-[24px] bg-white px-6 py-2 ring-1 ring-line sm:px-7 lg:flex lg:flex-col lg:justify-center">
             {HOW.map((h, i) => (
               <button key={h.title} type="button" onClick={() => (setOn(i), setPaused(true))} className={`block w-full py-5 text-left ${i ? "border-t border-line" : ""}`}>
                 <span className="flex items-baseline gap-3">
@@ -391,7 +392,7 @@ function Tile({ title, body, children, sky, className = "" }: { title: string; b
         <Sky name={sky} />
         <div className="relative h-full">{seen && children}</div>
       </div>
-      <div className="px-5 pb-5 pt-4">
+      <div className="px-6 pb-6 pt-5 sm:px-7">
         <h3 className="text-[18px] font-medium tracking-[-0.01em] text-ink">{title}</h3>
         <p className="mt-1.5 text-[15px] leading-snug text-ink-2">{body}</p>
       </div>
@@ -406,7 +407,9 @@ function Helpers() {
       <h2 className={`mt-4 max-w-[18ch] ${H2}`}>Small helpers that stay out of your way</h2>
       <div className="mt-10 grid gap-4 md:grid-cols-3">
         <Tile sky="blue" title="Sync multiple devices" body="Tick a task on your phone and it's done on your laptop too. Link them with a code. No sign up." className="md:col-span-2">
-          <Devices />
+          <div className="h-full origin-center scale-[0.84] sm:scale-100">
+            <Devices />
+          </div>
         </Tile>
         <Tile sky="lime" title="Ideas come back" body="Save an idea and let it go. It comes back in a few days, when you have room for it.">
           <IdeasBack />
@@ -414,7 +417,7 @@ function Helpers() {
         <Tile sky="violet" title="Reminders that reach you" body="Your phone rings when it's time, even with the app closed. Your calendar events show up too.">
           <Reminders />
         </Tile>
-        <div className="flex flex-col justify-center rounded-[24px] bg-white px-5 ring-1 ring-line md:col-span-2">
+        <div className="flex flex-col justify-center rounded-[24px] bg-white px-6 py-2 ring-1 ring-line sm:px-7 md:col-span-2">
           {[
             { i: <WifiOff className="size-[18px]" strokeWidth={1.75} />, t: "Works offline", b: "Add tasks on the bus. Everything saves on your device." },
             { i: <ShieldCheck className="size-[18px]" strokeWidth={1.75} />, t: "Free, with no ads", b: "No plans, no paywall and no trial that runs out." },
@@ -439,19 +442,21 @@ function Private() {
   return (
     <section id="private" className="scroll-mt-24 px-3 py-12 sm:px-4 sm:py-16">
       <div className="relative mx-auto max-w-[1240px] overflow-hidden rounded-[24px] px-6 py-24 text-white sm:rounded-[32px] sm:py-32">
-        <Sky name="night" />
+        <div className="absolute inset-0 bg-signal">
+          <Art mode={0} />
+        </div>
         <div className="lp-grid pointer-events-none absolute inset-0" />
         <div className="relative mx-auto max-w-4xl text-center">
-          <span className="mx-auto grid size-14 place-items-center rounded-full bg-white/10 ring-1 ring-white/20">
-            <Lock className="size-6 text-[#cbe653]" />
+          <span className="mx-auto grid size-14 place-items-center rounded-full bg-white/15 ring-1 ring-white/30">
+            <Lock className="size-6 text-white" />
           </span>
           <h2 className="mt-8 font-serif text-[48px] leading-[0.98] tracking-[-0.025em] sm:text-[88px]">
             <span className="block">No account.</span>
-            <span className="block text-white/70">No ads.</span>
-            <span className="block text-white/45">No tracking.</span>
+            <span className="block text-white/80">No ads.</span>
+            <span className="block text-white/60">No tracking.</span>
           </h2>
-          <p className="mx-auto mt-6 max-w-[44ch] text-[17px] leading-relaxed text-white/75 sm:text-[19px]">Your tasks live on your device. When you sync, they&apos;re locked before they leave, so the app only ever holds a scrambled copy nobody can read.</p>
-          <a href="/privacy" className="mt-8 inline-flex items-center gap-1.5 text-[15px] font-medium text-[#cbe653] transition-colors hover:text-white">
+          <p className="mx-auto mt-6 max-w-[44ch] text-[17px] leading-relaxed text-white/85 sm:text-[19px]">Your tasks live on your device. When you sync, they&apos;re locked before they leave, so the app only ever holds a scrambled copy nobody can read.</p>
+          <a href="/privacy" className="mt-8 inline-flex items-center gap-1.5 text-[15px] font-medium text-white underline decoration-white/40 underline-offset-4 transition-colors hover:decoration-white">
             Read the privacy policy <ArrowRight className="size-4" />
           </a>
         </div>
