@@ -933,7 +933,11 @@ html[data-theme="dark"] .text-\[\#5f9a12\] {
   color: #a6d86a;
 }
 html[data-theme="dark"] [class*="hue-"] {
-  --ht: color-mix(in oklab, var(--h) 20%, var(--sheet));
+  --ht: color-mix(in oklab, var(--h) 26%, var(--sheet));
+}
+/* Letters and icons on tiles read as a bright tint in dark mode, never a deep navy. */
+html[data-theme="dark"] .tile {
+  color: color-mix(in oklab, var(--h) 55%, white);
 }
 html[data-theme="dark"] .pill {
   background: color-mix(in oklab, var(--ink-3) 18%, var(--paper));

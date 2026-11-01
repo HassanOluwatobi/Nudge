@@ -38,24 +38,20 @@ const ANDROID: Record<Haptic, number | number[]> = {
 const IOS_GAP: Partial<Record<Haptic, number>> = { success: 90, warning: 140 };
 const RANK: Record<Haptic, number> = { selection: 1, light: 2, medium: 3, success: 4, warning: 4 };
 
-let iosSwitch: HTMLLabelElement | null = null;
+// A fresh hidden switch each time, clicked inside the tap. Toggling a native
+// iOS switch is what plays the system haptic in Safari (iOS 18 and later).
 function iosTap() {
   if (typeof document === "undefined") return;
-  if (!iosSwitch) {
-    const label = document.createElement("label");
-    label.setAttribute("aria-hidden", "true");
-    label.style.cssText = "position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none";
-    const input = document.createElement("input");
-    input.type = "checkbox";
-    input.setAttribute("switch", "");
-    input.tabIndex = -1;
-    label.appendChild(input);
-    iosSwitch = label;
-  }
-  // Modal dialogs make the rest of the page inert, so the switch lives inside whatever is on top.
-  const host = document.querySelector("dialog[open]") ?? document.querySelector("[role='dialog'][aria-modal='true']") ?? document.body;
-  if (iosSwitch.parentElement !== host) host.appendChild(iosSwitch);
-  iosSwitch.click();
+  const label = document.createElement("label");
+  label.setAttribute("aria-hidden", "true");
+  label.style.display = "none";
+  const input = document.createElement("input");
+  input.type = "checkbox";
+  input.setAttribute("switch", "");
+  label.appendChild(input);
+  document.head.appendChild(label);
+  label.click();
+  label.remove();
 }
 
 let last = { t: 0, r: 0 };

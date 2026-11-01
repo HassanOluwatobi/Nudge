@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { feel } from "@/lib/feedback";
-import { type ExtEvent, type Source, GOOGLE_CLIENT_ID, MS_CLIENT_ID, SOURCE_NAME, calendlyEvents, extKey, linkEvents, googleEvents, googleLast, googleLinkEvents, googleReady, googleSignOut, isGoogleLink, notionEvents, outlookEvents, outlookSignOut, parseIcs } from "@/lib/sync";
+import { type ExtEvent, type Source, GOOGLE_CLIENT_ID, MS_CLIENT_ID, SOURCE_NAME, calendlyEvents, extKey, linkEvents, googleEvents, googleLast, googleLinkEvents, googleReady, googleSignOut, isGoogleLink, noteSync, syncLog, syncWords, notionEvents, outlookEvents, outlookSignOut, parseIcs } from "@/lib/sync";
 import type { State } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { AppleMark, CalendlyMark, GoogleMark, LogoTile, NotionMark, OutlookMark } from "./brands";
@@ -86,6 +86,13 @@ export function GoogleRow({ state, actions, onSetup }: { state: State; actions: 
 
 /** A grouped list of sources, used in Settings and the import sheet. */
 export function SourceButtons({ state, onPick }: { state: State; onPick: (s: Source) => void }) {
+  const [log, setLog] = useState(syncLog);
+  useEffect(() => {
+    const up = () => setLog(syncLog());
+    window.addEventListener("nudge:synced", up);
+    const id = setInterval(up, 30_000);
+    return () => (window.removeEventListener("nudge:synced", up), clearInterval(id));
+  }, []);
   const on = (s: Source) => (s === "google" ? !!(state.settings.sync.google || state.settings.sync.gics) : s === "outlook" ? state.settings.sync.outlook : s === "notion" ? !!state.settings.sync.notion : s === "calendly" ? !!state.settings.sync.calendly : !!state.settings.sync.ics);
   return (
     <ul className="overflow-hidden rounded-[20px] bg-white ring-1 ring-line">
@@ -95,7 +102,7 @@ export function SourceButtons({ state, onPick }: { state: State; onPick: (s: Sou
             <LogoTile bleed={TILE[s].bleed}>{TILE[s].el}</LogoTile>
             <span className="min-w-0 flex-1">
               <span className="block text-[15px] font-semibold leading-tight text-ink">{NAME[s]}</span>
-              <span className="t-small mt-0.5 block leading-snug text-ink-3">{SUB[s]}</span>
+              <span className={`t-small mt-0.5 block leading-snug ${on(s) && log[s]?.error ? "text-danger" : "text-ink-3"}`}>{(on(s) && syncWords(log[s])) || SUB[s]}</span>
             </span>
             {on(s) ? (
               <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-signal-ink">
@@ -182,6 +189,7 @@ export function ImportSheet({
     const n = actions.importEvents(chosen.map((e) => ({ key: extKey(e), title: e.title, start: e.start, end: e.end, allDay: e.allDay })));
     const rest = (events ?? []).filter((e) => !picked.has(extKey(e)) && !have.has(extKey(e))).map(extKey);
     if (rest.length) actions.skipEvents(rest);
+    if (source) noteSync(source, { at: Date.now(), added: n });
     feel("done", "success");
     toast(n ? `Added ${n} ${n === 1 ? "task" : "tasks"} from your calendar.` : "Nothing new to add.");
     onClose();

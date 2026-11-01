@@ -7,7 +7,7 @@ import { feel, setFeedback } from "@/lib/feedback";
 import { notify, setBadge } from "@/lib/reminders";
 import { type Bucket, type Part, type Task, doneToday, hhmmToday, suggestion, todayTasks, ymd } from "@/lib/tasks";
 import { useBackClose } from "@/lib/use-back";
-import { type ExtEvent, type Source, calendlyEvents, extKey, googleEvents, googleLinkEvents, googleReady, linkEvents, notionEvents, outlookEvents } from "@/lib/sync";
+import { type ExtEvent, type Source, calendlyEvents, extKey, googleEvents, googleLinkEvents, googleReady, linkEvents, noteSync, notionEvents, outlookEvents } from "@/lib/sync";
 import { useKeyboardInset } from "@/lib/use-keyboard";
 import { useTasks } from "@/lib/use-tasks";
 import { Art } from "./art";
@@ -185,24 +185,32 @@ export function NudgeApp() {
     if (!st || Date.now() - lastPull.current < 10 * 60_000) return;
     lastPull.current = Date.now();
     const y = st.settings.sync;
-    const jobs: Promise<ExtEvent[]>[] = [];
-    if (y.gics) jobs.push(googleLinkEvents(y.gics).catch(() => []));
-    else if (y.google && googleReady()) jobs.push(googleEvents(false).catch(() => []));
-    if (y.outlook) jobs.push(outlookEvents(false).catch(() => []));
-    if (y.calendly) jobs.push(calendlyEvents(y.calendly).catch(() => []));
-    if (y.notion) jobs.push(notionEvents(y.notion).catch(() => []));
-    if (y.ics) jobs.push(linkEvents(y.ics).catch(() => []));
+    type Job = Promise<{ src: Source; list: ExtEvent[]; error?: string }>;
+    const jobs: Job[] = [];
+    const run = (src: Source, p: Promise<ExtEvent[]>) => jobs.push(p.then((list) => ({ src, list })).catch((e) => ({ src, list: [], error: e instanceof Error ? e.message : "It didn't answer." })));
+    if (y.gics) run("google", googleLinkEvents(y.gics));
+    else if (y.google && googleReady()) run("google", googleEvents(false));
+    if (y.outlook) run("outlook", outlookEvents(false));
+    if (y.calendly) run("calendly", calendlyEvents(y.calendly));
+    if (y.notion) run("notion", notionEvents(y.notion));
+    if (y.ics) run("ics", linkEvents(y.ics));
     if (!jobs.length) return;
-    Promise.all(jobs).then((lists) => {
+    Promise.all(jobs).then((results) => {
       const now = stateRef.current ?? st;
       const known = new Set([...now.tasks.map((t) => t.ext).filter(Boolean), ...(now.settings.sync.skipped ?? [])] as string[]);
       const seen = new Set<string>();
-      const fresh = lists.flat().filter((e) => {
-        const k = extKey(e);
-        if (known.has(k) || seen.has(k)) return false;
-        seen.add(k);
-        return true;
-      });
+      const fresh: ExtEvent[] = [];
+      for (const r of results) {
+        let added = 0;
+        for (const e of r.list) {
+          const k = extKey(e);
+          if (known.has(k) || seen.has(k)) continue;
+          seen.add(k);
+          fresh.push(e);
+          added++;
+        }
+        noteSync(r.src, { at: Date.now(), added, error: r.error });
+      }
       if (!fresh.length) return;
       actions.importEvents(fresh.map((e) => ({ key: extKey(e), title: e.title, start: e.start, end: e.end, allDay: e.allDay })));
       toast(`Added ${fresh.length} ${fresh.length === 1 ? "event" : "events"} from your calendar.`);

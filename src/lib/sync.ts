@@ -249,3 +249,30 @@ export const notionEvents = (token: string) => relay("notion", token);
 export const calendlyEvents = (token: string) => relay("calendly", token);
 
 export const extKey = (e: Pick<ExtEvent, "src" | "id">) => `${e.src}:${e.id}`;
+
+// ---------- what happened on the last check, per source ----------
+export type SyncNote = { at: number; added: number; error?: string };
+const LOG_KEY = "nudgeme.synclog";
+export function syncLog(): Partial<Record<Source, SyncNote>> {
+  try {
+    return JSON.parse(localStorage.getItem(LOG_KEY) ?? "{}");
+  } catch {
+    return {};
+  }
+}
+export function noteSync(src: Source, n: SyncNote) {
+  try {
+    localStorage.setItem(LOG_KEY, JSON.stringify({ ...syncLog(), [src]: n }));
+    window.dispatchEvent(new Event("nudge:synced"));
+  } catch {
+    /* fine */
+  }
+}
+/** "Checked 5 min ago. Added 2." in plain words. */
+export function syncWords(n?: SyncNote) {
+  if (!n) return "";
+  const mins = Math.round((Date.now() - n.at) / 60000);
+  const when = mins < 1 ? "just now" : mins < 60 ? `${mins} min ago` : mins < 1440 ? `${Math.round(mins / 60)} h ago` : `${Math.round(mins / 1440)} d ago`;
+  if (n.error) return `Couldn't check ${when}. ${n.error}`;
+  return `Checked ${when}. ${n.added ? `Added ${n.added} ${n.added === 1 ? "task" : "tasks"}.` : "Nothing new."}`;
+}

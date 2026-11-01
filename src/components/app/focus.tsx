@@ -9,7 +9,7 @@ import { type Settings, type State, type Task, MAX_STEP, nextStep, smallerStep, 
 import type { Actions } from "@/lib/use-tasks";
 import { BreakItDown } from "./breakdown";
 import { Sheet } from "./sheet";
-import { AddSubtask } from "./steps";
+import { AddSubtask, SubtaskList } from "./steps";
 import { burstFrom } from "./petals";
 import { Tile } from "./task-row";
 import { TopBar } from "./today";
@@ -84,19 +84,10 @@ export function Focus({
           onTheme={onTheme}
           onSettings={onSettings}
           onHelp={onHelp}
-          title={
-            <span className="block min-w-0">
-              <span className="block text-[13px] font-medium text-ink-3">Focusing on</span>
-              <button type="button" onClick={() => setPicker(true)} className="flex max-w-full items-center gap-1.5 text-left" aria-label="Choose what to focus on">
-                {task && <Tile task={task} size={26} />}
-                <span className="truncate font-serif text-[24px] leading-tight tracking-[-0.01em]">{task ? task.title : "Just a timer"}</span>
-                <ChevronDown className="size-4 shrink-0 text-ink-3" />
-              </button>
-            </span>
-          }
+          title={<span className="block font-serif text-[32px] leading-none tracking-[-0.02em]">Focus</span>}
         />
 
-        {task ? <NowCard task={task} actions={actions} ai={state.settings.ai} onFinish={finish} announce={announce} /> : <NoTaskCard onPick={() => setPicker(true)} />}
+        {task ? <NowCard task={task} actions={actions} ai={state.settings.ai} onFinish={finish} onSwitch={() => setPicker(true)} announce={announce} /> : <NoTaskCard onPick={() => setPicker(true)} />}
 
         <TimerCard state={state} actions={actions} task={task} announce={announce} />
 
@@ -128,7 +119,7 @@ export function Focus({
 }
 
 /** 1. The one thing to do now. */
-function NowCard({ task, actions, ai, onFinish, announce }: { task: Task; actions: Actions; ai: Settings["ai"]; onFinish: () => void; announce: (s: string) => void }) {
+function NowCard({ task, actions, ai, onFinish, onSwitch, announce }: { task: Task; actions: Actions; ai: Settings["ai"]; onFinish: () => void; onSwitch: () => void; announce: (s: string) => void }) {
   const current = nextStep(task);
   const n = task.steps.length;
   const k = task.steps.filter((s) => s.d).length;
@@ -146,15 +137,20 @@ function NowCard({ task, actions, ai, onFinish, announce }: { task: Task; action
 
   return (
     <section className="mt-5 overflow-hidden rounded-[24px] bg-white p-5 ring-1 ring-line" aria-live="polite">
+      {/* The task you're on, and the one place to switch it. */}
+      <div className="-mt-1 mb-3 flex items-center gap-2.5 border-b border-line pb-3">
+        <Tile task={task} size={28} />
+        <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{task.title}</span>
+        <button type="button" onClick={onSwitch} className="inline-flex shrink-0 items-center gap-1 text-[14px] font-medium text-signal-ink" aria-label={`Switch from ${task.title} to another task`}>
+          Switch <ChevronDown className="size-4" />
+        </button>
+      </div>
       <AnimatePresence mode="wait" initial={false}>
         {n > 0 && current ? (
           <motion.div key={current.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }}>
-            <div className="flex items-center justify-between">
-              <p className="t-label text-signal-ink">Now</p>
-              <p className="t-small tabular-nums text-ink-3">
-                {k + 1} of {n}
-              </p>
-            </div>
+            <p className="t-label tabular-nums text-signal-ink">
+              Step {k + 1} of {n}
+            </p>
             {smaller === null ? (
               <>
                 <p className="mt-2 font-serif text-[28px] leading-tight tracking-[-0.01em] [overflow-wrap:anywhere]">{current.t}</p>
@@ -202,8 +198,7 @@ function NowCard({ task, actions, ai, onFinish, announce }: { task: Task; action
           </motion.div>
         ) : (
           <motion.div key="none" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }}>
-            <p className="t-label text-signal-ink">Now</p>
-            <p className="mt-2 font-serif text-[24px] leading-tight tracking-[-0.01em]">Not sure where to start?</p>
+            <p className="font-serif text-[24px] leading-tight tracking-[-0.01em]">Not sure where to start?</p>
             <p className="t-small mt-1 text-ink-3">Let your AI split it into tiny steps. Then you just do the first one.</p>
             <div className="mt-4">
               <BreakItDown task={task} actions={actions} ai={ai} announce={announce} />
@@ -355,16 +350,32 @@ function TimerCard({ state, actions, task, announce }: { state: State; actions: 
   );
 }
 
-/** 3. Finishing early. The full subtask list lives in task details, so Focus stays on one thing. */
-function MoreSubtasks({ task, onFinish }: { task: Task; actions?: Actions; onFinish: () => void }) {
+/** 3. Folded away: the full list of subtasks, and finishing early. */
+function MoreSubtasks({ task, actions, onFinish }: { task: Task; actions: Actions; onFinish: () => void }) {
+  const [open, setOpen] = useState(false);
   const n = task.steps.length;
   const k = task.steps.filter((s) => s.d).length;
   const allDone = n > 0 && k === n;
   if (!n) return null;
   return (
-    <section className="mt-4">
+    <section className="mt-6">
+      <button type="button" className="flex w-full items-center justify-between px-1" aria-expanded={open} onClick={() => (setOpen((v) => !v), feel("tap"))}>
+        <span className="text-[15px] font-semibold">
+          All subtasks <span className="font-medium tabular-nums text-ink-3">{k}/{n}</span>
+        </span>
+        <ChevronDown className={`size-5 text-ink-3 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }} className="overflow-hidden">
+            <div className="pt-3">
+              <SubtaskList task={task} actions={actions} suggest={false} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {!allDone && (
-        <button type="button" className="btn btn-quiet mx-auto flex min-h-10 gap-1.5 text-[14px]" onClick={onFinish}>
+        <button type="button" className="btn btn-quiet mx-auto mt-4 flex min-h-10 gap-1.5 text-[14px]" onClick={onFinish}>
           <Check className="size-4" /> Finish the whole task now
         </button>
       )}
