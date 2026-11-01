@@ -61,8 +61,10 @@ export function useSpeech(onText: (text: string, final: boolean) => void) {
     // If listening stops before the browser marks the last words final, keep them anyway.
     const finish = () => {
       setListening(false);
-      if (pending.current) cb.current(pending.current, true);
+      if (pending.current && !muted.current) cb.current(pending.current, true);
       pending.current = "";
+      // Ignore anything the browser sends after it has stopped, so words never arrive twice.
+      muted.current = true;
       cb.current("", false);
     };
     r.onend = finish;

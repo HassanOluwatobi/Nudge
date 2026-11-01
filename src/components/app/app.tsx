@@ -100,13 +100,9 @@ export function NudgeApp() {
     const apply = () => {
       const resolved = theme === "auto" ? (mq.matches ? "dark" : "light") : theme;
       document.documentElement.dataset.theme = resolved;
-      let m = document.querySelector('meta[name="theme-color"]');
-      if (!m) {
-        m = document.createElement("meta");
-        m.setAttribute("name", "theme-color");
-        document.head.appendChild(m);
-      }
-      m.setAttribute("content", resolved === "dark" ? "#08090a" : "#f3eee4");
+      // Safari on iPhone paints its toolbars with theme-color and stops the page
+      // flowing under them, so it only gets one where it was added at load (not Safari tabs).
+      document.querySelector('meta[name="theme-color"]')?.setAttribute("content", resolved === "dark" ? "#08090a" : "#f3eee4");
     };
     apply();
     mq.addEventListener("change", apply);

@@ -25,7 +25,6 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f3eee4",
   interactiveWidget: "resizes-content",
 };
 
@@ -37,7 +36,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "try{var t=(JSON.parse(localStorage.getItem('nudgeme.v11')||'{}').settings||{}).theme||'light';if(t==='auto')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;}catch(e){}",
+              "try{var t=(JSON.parse(localStorage.getItem('nudgeme.v11')||'{}').settings||{}).theme||'light';if(t==='auto')t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';document.documentElement.dataset.theme=t;if(!/iPhone|iPad|iPod|Macintosh/.test(navigator.userAgent)||matchMedia('(display-mode: standalone)').matches){var m=document.createElement('meta');m.name='theme-color';m.content=t==='dark'?'#08090a':'#f3eee4';document.head.appendChild(m);}}catch(e){}",
           }}
         />
         {/* Catch Chrome's install offer as early as possible, so the Install button can use it with one tap. */}
