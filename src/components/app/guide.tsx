@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { feel } from "@/lib/feedback";
 import { Art } from "./art";
-import { AppleMark, GoogleMark, OutlookMark } from "./calendars";
+import { AppleMark, CalendlyMark, GoogleMark, LogoTile, NotionMark } from "./brands";
 
 /*
   The user guide. Five short pages, each with a small live illustration.
@@ -157,17 +157,18 @@ function IdeasBack() {
 
 function Calendars() {
   const marks = [
-    { el: <GoogleMark />, name: "Google" },
-    { el: <AppleMark />, name: "Apple" },
-    { el: <OutlookMark />, name: "Outlook" },
+    { el: <GoogleMark className="size-[64px] max-w-none" />, bleed: true, name: "Google" },
+    { el: <AppleMark className="size-full" />, bleed: true, name: "Apple" },
+    { el: <NotionMark className="size-8" />, bleed: false, name: "Notion" },
+    { el: <CalendlyMark className="size-8" />, bleed: false, name: "Calendly" },
   ];
   return (
     <div className="flex h-full flex-col items-center justify-center gap-4 px-6">
-      <div className="flex gap-4">
+      <div className="flex gap-3">
         {marks.map((m, i) => (
           <motion.div key={m.name} initial={{ opacity: 0, y: 14, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: 0.1 + i * 0.1, type: "spring", bounce: 0.4, duration: 0.6 }} className="flex flex-col items-center gap-1.5">
-            <span className="grid size-14 place-items-center rounded-full bg-white shadow-[0_8px_18px_-10px_rgb(6_11_43/0.4)] ring-1 ring-line">
-              {m.el}
+            <span className="rounded-[14px] shadow-[0_8px_18px_-10px_rgb(6_11_43/0.4)]">
+              <LogoTile bleed={m.bleed} size={52}>{m.el}</LogoTile>
             </span>
             <span className="text-[12px] font-medium text-ink-2">{m.name}</span>
           </motion.div>

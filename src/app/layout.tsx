@@ -33,6 +33,12 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en" className={`${GeistSans.variable} ${GeistSerif.variable}`}>
       <body>
+        {/* Catch Chrome's install offer as early as possible, so the Install button can use it with one tap. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();window.__bip=e;window.dispatchEvent(new Event('nudge:installable'))});",
+          }}
+        />
         {children}
         <Toaster position="top-center" offset={16} mobileOffset={{ top: 12 }} />
       </body>

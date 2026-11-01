@@ -42,7 +42,7 @@ export type Entry = {
 export type Settings = {
   morning: string; // "HH:MM"
   evening: string;
-  weeklyDay: number; // 0 = Sunday
+  weeklyDay: number; // 0 = Sunday, -1 = never
   ai: "chatgpt" | "claude" | "gemini" | "grok";
   notify: boolean;
   sound: boolean;
@@ -316,7 +316,7 @@ export function sanitize(raw: unknown): State {
   const settings: Settings = {
     morning: hhmm(st.morning, DEFAULT_SETTINGS.morning),
     evening: hhmm(st.evening, DEFAULT_SETTINGS.evening),
-    weeklyDay: Number.isInteger(st.weeklyDay) && st.weeklyDay! >= 0 && st.weeklyDay! <= 6 ? st.weeklyDay! : 0,
+    weeklyDay: Number.isInteger(st.weeklyDay) && st.weeklyDay! >= -1 && st.weeklyDay! <= 6 ? st.weeklyDay! : 0,
     ai: ["chatgpt", "claude", "gemini", "grok"].includes(st.ai as string) ? (st.ai as Settings["ai"]) : "chatgpt",
     notify: !!st.notify,
     sound: st.sound !== false,

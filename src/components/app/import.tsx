@@ -8,53 +8,57 @@ import { feel } from "@/lib/feedback";
 import { type ExtEvent, type Source, GOOGLE_CLIENT_ID, MS_CLIENT_ID, SOURCE_NAME, calendlyEvents, extKey, googleEvents, notionEvents, outlookEvents, outlookSignOut, parseIcs } from "@/lib/sync";
 import type { State } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
-import { AppleMark, GoogleMark, OutlookMark } from "./calendars";
+import { AppleMark, CalendlyMark, GoogleMark, LogoTile, NotionMark, OutlookMark } from "./brands";
 import { Sheet } from "./sheet";
 
-export function NotionMark() {
-  return (
-    <svg viewBox="0 0 32 32" className="size-7" aria-hidden>
-      <rect x="4" y="4" width="24" height="24" rx="5" fill="#fff" stroke="#111" strokeWidth="2" />
-      <path d="M11 22V10.5l10 11.5V10" fill="none" stroke="#111" strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
-    </svg>
-  );
-}
-export function CalendlyMark() {
-  return (
-    <svg viewBox="0 0 32 32" className="size-7" aria-hidden>
-      <circle cx="16" cy="16" r="12" fill="#006BFF" />
-      <path d="M20.5 12.2a6 6 0 1 0 0 7.6" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" />
-    </svg>
-  );
-}
+export { CalendlyMark, NotionMark } from "./brands";
 
-export const MARK: Record<Source, () => React.ReactElement> = { google: GoogleMark, outlook: OutlookMark, ics: AppleMark, notion: NotionMark, calendly: CalendlyMark };
+export const MARK: Record<Source, (p: { className?: string }) => React.ReactElement> = { google: GoogleMark, outlook: OutlookMark, ics: AppleMark, notion: NotionMark, calendly: CalendlyMark };
 // Outlook shows up once its app ID is set. Until then, Outlook users import a file.
 export const SOURCES: Source[] = (["google", "outlook", "ics", "notion", "calendly"] as Source[]).filter((s) => s !== "outlook" || !!MS_CLIENT_ID);
-const SHORT: Record<Source, string> = { google: "Google", outlook: "Outlook", ics: MS_CLIENT_ID ? "Apple / file" : "Apple, Outlook, file", notion: "Notion", calendly: "Calendly" };
 
-/** Round source buttons, used in Settings and the import sheet. */
+const SUB: Record<Source, string> = {
+  google: "Next two weeks of events",
+  outlook: "Next two weeks of events",
+  ics: MS_CLIENT_ID ? "From a calendar file" : "Or Outlook, from a file",
+  notion: "Pages that have a date",
+  calendly: "Meetings booked with you",
+};
+const NAME: Record<Source, string> = { google: "Google Calendar", outlook: "Outlook", ics: "Apple Calendar", notion: "Notion", calendly: "Calendly" };
+const TILE: Record<Source, { el: React.ReactNode; bleed: boolean }> = {
+  google: { el: <GoogleMark className="size-[49px] max-w-none" />, bleed: true },
+  ics: { el: <AppleMark className="size-full" />, bleed: true },
+  outlook: { el: <OutlookMark className="size-7" />, bleed: false },
+  notion: { el: <NotionMark className="size-7" />, bleed: false },
+  calendly: { el: <CalendlyMark className="size-7" />, bleed: false },
+};
+
+/** A grouped list of sources, used in Settings and the import sheet. */
 export function SourceButtons({ state, onPick }: { state: State; onPick: (s: Source) => void }) {
   const on = (s: Source) => (s === "google" ? state.settings.sync.google : s === "outlook" ? state.settings.sync.outlook : s === "notion" ? !!state.settings.sync.notion : s === "calendly" ? !!state.settings.sync.calendly : false);
   return (
-    <div className={`grid gap-1 ${SOURCES.length === 5 ? "grid-cols-5" : "grid-cols-4"}`}>
-      {SOURCES.map((s, i) => {
-        const M = MARK[s];
-        return (
-          <motion.button key={s} type="button" onClick={() => onPick(s)} initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: i * 0.04, type: "spring", bounce: 0.35, duration: 0.5 }} whileTap={{ scale: 0.9 }} className="flex flex-col items-center gap-1.5" aria-label={`Bring in from ${SOURCE_NAME[s]}`}>
-            <span className="relative grid size-14 place-items-center rounded-full bg-white shadow-[0_1px_2px_rgb(6_11_43/0.08),0_8px_18px_-10px_rgb(6_11_43/0.35)] ring-1 ring-line">
-              <M />
-              {on(s) && (
-                <span className="absolute -right-0.5 -top-0.5 grid size-5 place-items-center rounded-full bg-success ring-2 ring-white" aria-label="Connected">
-                  <Check className="size-3 text-white" strokeWidth={3} />
-                </span>
-              )}
+    <ul className="overflow-hidden rounded-[20px] bg-white ring-1 ring-line">
+      {SOURCES.map((s, i) => (
+        <motion.li key={s} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04, type: "spring", bounce: 0, duration: 0.45 }} className={i ? "border-t border-line/70" : ""}>
+          <button type="button" onClick={() => onPick(s)} aria-label={`Bring in from ${SOURCE_NAME[s]}`} className="flex min-h-[64px] w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors active:bg-[rgb(6_11_43/0.04)]">
+            <LogoTile bleed={TILE[s].bleed}>{TILE[s].el}</LogoTile>
+            <span className="min-w-0 flex-1">
+              <span className="block text-[15px] font-semibold leading-tight text-ink">{NAME[s]}</span>
+              <span className="t-small mt-0.5 block leading-snug text-ink-3">{SUB[s]}</span>
             </span>
-            <span className="text-center text-[11.5px] font-medium leading-tight text-ink-2">{SHORT[s]}</span>
-          </motion.button>
-        );
-      })}
-    </div>
+            {on(s) ? (
+              <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-success">
+                <Check className="size-4" strokeWidth={2.6} /> On
+              </span>
+            ) : s === "ics" ? (
+              <span className="inline-flex h-8 items-center rounded-full bg-paper px-3.5 text-[13px] font-semibold text-ink">Import</span>
+            ) : (
+              <span className="inline-flex h-8 items-center rounded-full bg-paper px-3.5 text-[13px] font-semibold text-ink">Connect</span>
+            )}
+          </button>
+        </motion.li>
+      ))}
+    </ul>
   );
 }
 
@@ -225,7 +229,7 @@ export function ImportSheet({
               </button>
             )}
             <div className="mt-2 flex items-center gap-3">
-              <span className="grid size-14 place-items-center rounded-full bg-white ring-1 ring-line">{(() => { const M = MARK[source]; return <M />; })()}</span>
+              <LogoTile bleed={TILE[source].bleed} size={48}>{TILE[source].el}</LogoTile>
               <p className="t-small flex-1 text-ink-2">
                 {source === "google" && "Sign in with Google and allow read-only access. The sign-in lasts about an hour and is never saved."}
                 {source === "outlook" && "Sign in with your Microsoft account and allow read-only access to your calendar."}

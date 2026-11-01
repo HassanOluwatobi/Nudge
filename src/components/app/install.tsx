@@ -7,13 +7,11 @@ import { platform } from "@/lib/reminders";
 import { Sheet } from "./sheet";
 
 type Prompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
-let deferred: Prompt | null = null;
-if (typeof window !== "undefined") {
-  window.addEventListener("beforeinstallprompt", (e) => {
-    e.preventDefault();
-    deferred = e as Prompt;
-  });
-}
+// The offer is caught by a tiny script in the page head, before React loads.
+const offer = () => (typeof window === "undefined" ? null : ((window as Window & { __bip?: Prompt | null }).__bip ?? null));
+const clearOffer = () => {
+  (window as Window & { __bip?: Prompt | null }).__bip = null;
+};
 
 const standalone = () =>
   typeof window !== "undefined" && (matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true);
@@ -22,7 +20,19 @@ const standalone = () =>
 export function InstallButton() {
   const [installed, setInstalled] = useState(false);
   const [help, setHelp] = useState(false);
-  useEffect(() => setInstalled(standalone()), []);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    setInstalled(standalone());
+    setReady(!!offer());
+    const on = () => setReady(true);
+    const done = () => setInstalled(true);
+    window.addEventListener("nudge:installable", on);
+    window.addEventListener("appinstalled", done);
+    return () => {
+      window.removeEventListener("nudge:installable", on);
+      window.removeEventListener("appinstalled", done);
+    };
+  }, []);
   const plat = typeof window === "undefined" ? "other" : platform();
 
   if (installed)
@@ -39,17 +49,19 @@ export function InstallButton() {
         className="btn btn-ink w-full gap-2"
         onClick={async () => {
           feel("tap", "medium");
-          if (deferred) {
-            await deferred.prompt();
-            const r = await deferred.userChoice;
-            deferred = null;
+          const o = offer();
+          if (o) {
+            await o.prompt();
+            const r = await o.userChoice;
+            clearOffer();
+            setReady(false);
             if (r.outcome === "accepted") setInstalled(true);
           } else setHelp(true);
         }}
       >
         <SquarePlus className="size-[18px]" /> Add NudgeMe to Home Screen
       </button>
-      <p className="t-small mt-2 text-center text-ink-3">Opens full screen, like an app. Works offline.</p>
+      <p className="t-small mt-2 text-center text-ink-3">{ready ? "One tap. Opens full screen, like an app." : plat === "ios" ? "iPhone asks for two taps in Safari. We show you where." : "Opens full screen, like an app. Works offline."}</p>
       <Sheet open={help} onClose={() => setHelp(false)} title="Add to Home Screen">
         <ol className="mt-2 space-y-3">
           {(plat === "ios"
