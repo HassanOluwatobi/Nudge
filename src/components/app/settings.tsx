@@ -182,11 +182,9 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
       </section>
 
       <section className="mt-6">
-        <h3 className="t-label">Sound and touch</h3>
+        <h3 className="t-label">Touch</h3>
         <div className="mt-2 rounded-2xl bg-white px-4 ring-1 ring-line">
-          <Switch label="Sounds" hint="A soft little sound when you finish something." checked={s.sound} onChange={(v) => (actions.setSettings({ sound: v }), v && setTimeout(() => feel("done"), 50))} />
-          <div className="border-t border-line" />
-          <Switch label="Haptics" hint="A gentle buzz when you tick things off." checked={s.haptics} onChange={(v) => (actions.setSettings({ haptics: v }), v && setTimeout(() => feel("tick", "success"), 50))} />
+          <Switch label="Haptics" hint="A light tap when you tick a step, and a double tap when you finish a task." checked={s.haptics} onChange={(v) => (actions.setSettings({ haptics: v }), v && setTimeout(() => feel("done"), 50))} />
         </div>
       </section>
 

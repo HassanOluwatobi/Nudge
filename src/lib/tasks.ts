@@ -74,12 +74,92 @@ export const BUCKETS: Bucket[] = ["today", "week", "later", "done"];
 export const PARTS: Part[] = ["anytime", "morning", "afternoon", "evening"];
 export const HUES: Hue[] = ["blue", "cyan", "aqua", "lime", "peach", "coral", "pink", "lilac"];
 /** Brain dump: one task per line. Bullets, numbers and empty lines are ignored. */
+// Words that usually start a to-do. Used to tell "buy milk and pay rent" (two tasks)
+// from "call mum and dad" (one task).
+const VERBS = new Set(
+  "add answer apply ask attend back bake book bring buy call cancel change charge check clean clear collect confirm cook copy create cut delete design do download draft drink drop eat edit email fill find finish fix follow get give go hang have help invite iron join learn leave let look mail make meet message move order organise organize pack paint pass pay phone pick plan post practice practise prepare print put read record remind renew reply research return review ring run save schedule sell send set share shop sign sort start study submit take talk text think tidy top transfer try turn update upload visit wake walk wash watch water write".split(" ")
+);
+const SOFT = new Set("a an the my your his her our their this that these those some to for of in on at with and or".split(" "));
+const FILLER = /^(?:(?:and|also|then|so|oh|ok|okay|um|uh)\s+)*(?:(?:i\s+(?:need|have|want|got|ought)\s+to|i\s+gotta|i\s+should|i\s+must|need\s+to|have\s+to|got\s+to|gotta|remember\s+to|don'?t\s+forget\s+to|i'?ll|i\s+will|must|should)\s+)/i;
+
+const clean = (l: string) => {
+  let t = l.replace(/^\s*(?:[-*•–]|\d+[.)])\s*/, "").replace(/[\s,.;:!]+$/, "").trim();
+  for (let i = 0; i < 3 && FILLER.test(t); i++) t = t.replace(FILLER, "").trim();
+  t = t.replace(/^(?:and|also|then)\s+/i, "").trim();
+  return t ? t[0].toUpperCase() + t.slice(1) : "";
+};
+const firstWord = (t: string) => t.trim().split(/\s+/)[0]?.toLowerCase().replace(/[^a-z']/g, "") ?? "";
+const startsWithVerb = (t: string) => VERBS.has(firstWord(t.replace(FILLER, "")));
+
+/** Splits " and " only when what follows reads like a new to-do. */
+function splitAnd(t: string): string[] {
+  const parts = t.split(/\s+(?:and then|and also|and|then|also|plus)\s+/i);
+  if (parts.length < 2) return [t];
+  const out = [parts[0]];
+  for (const p of parts.slice(1)) {
+    if (startsWithVerb(p)) out.push(p);
+    else out[out.length - 1] += ` and ${p}`;
+  }
+  return out;
+}
+
+/**
+ * "pay rent, email Sade" is two tasks. "Buy eggs, milk, bread" is one.
+ * "groceries, laundry, gym" has no to-do words at all, so each is its own task.
+ */
+function splitCommas(t: string): string[] {
+  const parts = t.split(/,\s*/).filter((p) => p.trim());
+  const verbs = parts.map((p) => startsWithVerb(p.replace(/^(?:and|then|also)\s+/i, "")));
+  if (!verbs.some(Boolean)) return parts;
+  const out: string[] = [];
+  parts.forEach((p, i) => {
+    if (i === 0 || verbs[i]) out.push(p);
+    else out[out.length - 1] += `, ${p}`;
+  });
+  return out;
+}
+
+/** Dictation has no punctuation: "pay rent email sade book the dentist". Split before a to-do word. */
+function splitRunOn(t: string): string[] {
+  const w = t.trim().split(/\s+/);
+  if (w.length < 5) return [t];
+  const cuts: number[] = [0];
+  for (let i = 2; i < w.length - 1; i++) {
+    const word = w[i].toLowerCase();
+    const prev = w[i - 1].toLowerCase();
+    if (VERBS.has(word) && !SOFT.has(prev) && !VERBS.has(prev) && i - cuts[cuts.length - 1] >= 2) cuts.push(i);
+  }
+  if (cuts.length < 2) return [t];
+  return cuts.map((c, k) => w.slice(c, cuts[k + 1] ?? w.length).join(" "));
+}
+
+/**
+ * Turns a brain dump into separate tasks. Handles lists, one task per line,
+ * sentences, commas, "and" between two to-dos, and unpunctuated dictation.
+ */
 export function splitLines(text: string): string[] {
-  return text
-    .split(/\r?\n/)
-    .map((l) => l.replace(/^\s*(?:[-*•–]|\d+[.)])\s*/, "").trim())
-    .filter(Boolean)
-    .slice(0, 50);
+  const out: string[] = [];
+  for (const line of text.split(/\r?\n/)) {
+    const bare = line.replace(/^\s*(?:[-*•–]|\d+[.)])\s*/, "");
+    if (!bare.trim()) continue;
+    // Sentences and semicolons first.
+    const sentences = bare.split(/(?<=[.!?])\s+(?=\S)|;\s*/);
+    for (const sen of sentences) {
+      const hasPunct = /[,.;!?]/.test(sen.replace(/[.!?]\s*$/, ""));
+      const pieces = sen.includes(",") ? splitCommas(sen) : [sen];
+      for (const piece of pieces) {
+        const ands = splitAnd(piece);
+        for (const a of ands) {
+          const runs = !hasPunct && pieces.length === 1 && ands.length === 1 ? splitRunOn(a) : [a];
+          for (const r of runs) {
+            const c = clean(r);
+            if (c) out.push(c);
+          }
+        }
+      }
+    }
+  }
+  return out.slice(0, 50);
 }
 
 export const BUCKET_NAME: Record<Bucket, string> = { today: "Today", week: "This week", later: "Later", done: "Done" };

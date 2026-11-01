@@ -3,7 +3,7 @@
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { feel, installTapHaptics, setFeedback } from "@/lib/feedback";
+import { feel, setFeedback } from "@/lib/feedback";
 import { notify, setBadge } from "@/lib/reminders";
 import { type Bucket, type Part, type Task, doneToday, hhmmToday, suggestion, todayTasks, ymd } from "@/lib/tasks";
 import { useBackClose } from "@/lib/use-back";
@@ -73,8 +73,8 @@ export function NudgeApp() {
   }, []);
 
   useEffect(() => {
-    if (state) setFeedback({ sound: state.settings.sound, haptics: state.settings.haptics });
-  }, [state?.settings.sound, state?.settings.haptics]); // eslint-disable-line react-hooks/exhaustive-deps
+    if (state) setFeedback({ haptics: state.settings.haptics });
+  }, [state?.settings.haptics]); // eslint-disable-line react-hooks/exhaustive-deps
   // First visit: show the guide once.
   const introShown = useRef(false);
   useEffect(() => {
@@ -116,7 +116,6 @@ export function NudgeApp() {
     window.scrollTo({ top: 0 });
   }, [tab, over]);
 
-  useEffect(() => installTapHaptics(), []);
   // Ask the browser to keep NudgeMe's data instead of clearing it to save space.
   useEffect(() => {
     navigator.storage?.persist?.().catch(() => {});

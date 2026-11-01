@@ -74,7 +74,7 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
         field.current?.blur();
         return;
       }
-      const t = actions.capture(text);
+      const t = actions.capture(lines[0] ?? text);
       if (!t) return;
       feel("save", "success");
       announce(`Saved: ${t.title}.`);

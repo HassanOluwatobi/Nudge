@@ -1003,18 +1003,3 @@ html[data-theme="dark"] [data-sonner-toaster] [data-sonner-toast] {
 html[data-theme="dark"] dialog.sheet::backdrop {
   background: rgb(0 0 0 / 0.55);
 }
-
-
-/* Guide illustration canvas: a soft wash of the electric blue, same calm family as the Start card. */
-.guide-canvas {
-  background:
-    radial-gradient(120% 90% at 100% 0%, rgb(29 77 245 / 0.16), transparent 60%),
-    radial-gradient(90% 80% at 0% 100%, rgb(111 151 255 / 0.18), transparent 60%),
-    var(--paper);
-}
-html[data-theme="dark"] .guide-canvas {
-  background:
-    radial-gradient(120% 90% at 100% 0%, rgb(47 92 255 / 0.22), transparent 60%),
-    radial-gradient(90% 80% at 0% 100%, rgb(111 151 255 / 0.12), transparent 60%),
-    var(--paper);
-}

@@ -45,7 +45,7 @@ function Capture() {
   const typed = n >= DUMP.length;
   return (
     <div className="flex h-full flex-col justify-center gap-2 px-6">
-      <div className="rounded-[14px] bg-white px-3 py-2.5 text-[16px] ring-1 ring-signal/40">
+      <div className="mb-1 overflow-hidden whitespace-nowrap rounded-[14px] bg-white px-3 py-2.5 font-serif text-[15px] ring-1 ring-line">
         <span className={typed ? "text-ink-3 transition-colors duration-500" : ""}>{DUMP.slice(0, n)}</span>
         {!typed && <motion.span className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 bg-signal" animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 0.9 }} />}
       </div>
@@ -326,7 +326,7 @@ export function Guide({ open, onClose }: { open: boolean; onClose: () => void })
               {last && <span className="h-10" />}
             </div>
 
-            <div className="relative mx-5 mt-2 h-[230px] overflow-hidden rounded-[22px] guide-canvas">
+            <div className="relative mx-5 mt-2 h-[230px] overflow-hidden rounded-[22px] bg-[#efe9dd]">
               <AnimatePresence mode="popLayout" initial={false} custom={dir}>
                 <motion.div
                   key={i}
@@ -359,8 +359,7 @@ export function Guide({ open, onClose }: { open: boolean; onClose: () => void })
             <div className="relative min-h-[148px] px-6 pt-5">
               <AnimatePresence mode="popLayout" initial={false} custom={dir}>
                 <motion.div key={i} custom={dir} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ type: "spring", bounce: 0, duration: 0.4 }}>
-                  <p className="t-label text-signal-ink">{PAGES[i].tag}</p>
-                  <h2 className="t-title mt-1">{PAGES[i].title}</h2>
+                  <h2 className="t-title">{PAGES[i].title}</h2>
                   <p className="t-body mt-2 text-ink-2">{PAGES[i].body}</p>
                 </motion.div>
               </AnimatePresence>
