@@ -1158,10 +1158,40 @@ html[data-theme="dark"] [aria-label="How Shrink my day works"] {
   background-position: center;
 }
 .lp-wordmark {
-  font-size: clamp(36px, 14.5vw, 210px);
-  color: var(--ink);
-  opacity: 0.08;
+  font-size: clamp(34px, 12.4vw, 168px);
+  background: linear-gradient(90deg, #7fa6ff, #b9a2ff 25%, #ff9bd0 48%, #ff9a7a 68%, #ffc89e 82%, #8ff0d6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  padding-bottom: 0.08em;
+}
+/* Painted skies: light drifts by transform only, so it stays smooth. */
+@keyframes sky-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(6%, 5%, 0) scale(1.08); }
+}
+@keyframes sky-drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+  50% { transform: translate3d(-7%, -4%, 0) scale(0.97); }
+}
+@keyframes sky-drift-c {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-10%, 8%, 0); }
+}
+@keyframes cloud-a {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(4%, -3%, 0); }
+}
+.sky-drift { animation: sky-drift 22s ease-in-out infinite; will-change: transform; }
+.sky-drift-b { animation: sky-drift-b 26s ease-in-out infinite; will-change: transform; }
+.sky-drift-c { animation: sky-drift-c 30s ease-in-out infinite; will-change: transform; }
+.cloud-a { animation: cloud-a 18s ease-in-out infinite; }
+.cloud-b { animation: cloud-a 24s ease-in-out infinite reverse; }
+.sky-grain {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  opacity: 0.22;
+  mix-blend-mode: soft-light;
 }
 @media (prefers-reduced-motion: reduce) {
-  .lp-float, .lp-hint::after { animation: none; }
+  .lp-float, .lp-hint::after, .sky-drift, .sky-drift-b, .sky-drift-c, .cloud-a, .cloud-b { animation: none; }
 }
