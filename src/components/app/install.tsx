@@ -154,6 +154,8 @@ const ASK = "nudgeme.installAsk";
 /** Should the Home Screen popup show now? Never when installed, at most 3 times, 3 days apart. */
 export function installAskDue() {
   if (typeof window === "undefined" || standalone()) return false;
+  // Computers have no Home Screen. Only phones and tablets get the popup.
+  if (matchMedia("(pointer: fine) and (min-width: 1024px)").matches) return false;
   try {
     const a = JSON.parse(localStorage.getItem(ASK) || "{}") as { n?: number; at?: number; never?: boolean };
     if (a.never || (a.n ?? 0) >= 3) return false;

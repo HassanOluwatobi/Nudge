@@ -383,7 +383,7 @@ function MorningPick({ state, actions, announce }: { state: State; actions: Acti
 /** One quiet line at the very bottom of Home. */
 function MiniCredit() {
   return (
-    <p className="mt-12 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[13px] text-ink-3">
+    <p className="mt-12 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[13px] text-ink-3 lg:hidden">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/hassan.jpg" alt="" width={20} height={20} className="size-5 rounded-full object-cover" />
       <span>Made by Hassan</span>
