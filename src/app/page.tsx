@@ -1,4 +1,4 @@
-import { NudgeApp } from "@/components/nudge/app";
+import { NudgeApp } from "@/components/app/app";
 
 export default function Page() {
   return <NudgeApp />;

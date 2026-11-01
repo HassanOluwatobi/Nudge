@@ -15,6 +15,8 @@ export function useBackClose(open: boolean, close: () => void) {
     history.pushState({ nudge: tag }, "");
     let popped = false;
     const onPop = () => {
+      // A deeper layer (like a sheet) was closed and we are back on our own entry.
+      if (history.state?.nudge === tag) return;
       popped = true;
       closeRef.current();
     };
