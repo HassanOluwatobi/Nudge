@@ -1,5 +1,7 @@
 "use client";
 
+import { isOwnEvent } from "./tasks";
+
 /*
   Bring events in from the calendars people already use.
 
@@ -118,7 +120,7 @@ export async function googleEvents(interactive = true): Promise<ExtEvent[]> {
   }
   const j = (await r.json()) as { items?: { id: string; summary?: string; status?: string; start?: { dateTime?: string; date?: string }; end?: { dateTime?: string; date?: string } }[] };
   return (j.items ?? [])
-    .filter((e) => e.status !== "cancelled" && e.summary)
+    .filter((e) => e.status !== "cancelled" && e.summary && !isOwnEvent(e.summary))
     .map((e) => ({
       src: "google" as const,
       id: e.id,
@@ -168,7 +170,7 @@ export async function outlookEvents(interactive = true): Promise<ExtEvent[]> {
   if (!r.ok) throw new Error("Outlook did not answer.");
   const j = (await r.json()) as { value?: { id: string; subject?: string; isAllDay?: boolean; isCancelled?: boolean; start: { dateTime: string }; end: { dateTime: string } }[] };
   return (j.value ?? [])
-    .filter((e) => !e.isCancelled && e.subject)
+    .filter((e) => !e.isCancelled && e.subject && !isOwnEvent(e.subject))
     .map((e) => ({ src: "outlook" as const, id: e.id, title: e.subject!, start: new Date(`${e.start.dateTime}Z`), end: new Date(`${e.end.dateTime}Z`), allDay: !!e.isAllDay }));
 }
 
@@ -220,7 +222,7 @@ export function parseIcs(text: string): ExtEvent[] {
     const get = (k: string) => body.match(new RegExp(`^${k}(?:;[^:\\n]*)?:(.*)$`, "m"))?.[1]?.trim();
     const title = get("SUMMARY")?.replace(/\\,/g, ",").replace(/\\;/g, ";").replace(/\\n/g, " ");
     const start = get("DTSTART");
-    if (!title || !start) continue;
+    if (!title || !start || isOwnEvent(title)) continue;
     const s = icsDate(start);
     if (!s) continue;
     const e = get("DTEND") ? icsDate(get("DTEND")!) : null;
@@ -243,7 +245,7 @@ async function relay(path: "notion" | "calendly", token: string, extra: Record<s
   const r = await fetch(`/api/${path}`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ token, from: from.toISOString(), to: to.toISOString(), ...extra }) });
   const j = (await r.json().catch(() => ({}))) as { events?: { id: string; title: string; start: string; end?: string; allDay?: boolean }[]; error?: string };
   if (!r.ok) throw new Error(j.error ?? `${path === "notion" ? "Notion" : "Calendly"} did not answer.`);
-  return (j.events ?? []).map((e) => ({ src: path, id: e.id, title: e.title, start: new Date(e.start), end: e.end ? new Date(e.end) : undefined, allDay: !!e.allDay }) as ExtEvent);
+  return (j.events ?? []).filter((e) => !isOwnEvent(e.title)).map((e) => ({ src: path, id: e.id, title: e.title, start: new Date(e.start), end: e.end ? new Date(e.end) : undefined, allDay: !!e.allDay }) as ExtEvent);
 }
 export const notionEvents = (token: string) => relay("notion", token);
 export const calendlyEvents = (token: string) => relay("calendly", token);

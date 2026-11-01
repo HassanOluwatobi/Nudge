@@ -140,6 +140,9 @@ function splitRunOn(t: string): string[] {
  * Turns a brain dump into separate tasks. Handles lists, one task per line,
  * sentences, commas, "and" between two to-dos, and unpunctuated dictation.
  */
+/** Calendar events this app created itself (check-ins and task reminders). Never import them as tasks. */
+export const isOwnEvent = (title: string) => /^(nudgeme|shrink my day)\s*:/i.test(title.trim());
+
 export function splitLines(text: string): string[] {
   const out: string[] = [];
   for (const line of text.split(/\r?\n/)) {
@@ -362,6 +365,8 @@ export function sanitize(raw: unknown): State {
     const t = x as Record<string, unknown>;
     const title = str(t.title)?.trim();
     if (!title) continue;
+    // The app's own calendar reminders once came back in as tasks. Drop them.
+    if (str(t.ext) && isOwnEvent(title)) continue;
     let id = str(t.id) || uid();
     if (seen.has(id)) id = uid();
     seen.add(id);
