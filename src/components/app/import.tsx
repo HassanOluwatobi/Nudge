@@ -361,7 +361,7 @@ export function ImportSheet({
                 <label htmlFor="ext-token" className="t-small mt-4 block font-semibold text-ink-2">
                   {source === "notion" ? "Notion secret" : "Calendly token"}
                 </label>
-                <input id="ext-token" value={token} onChange={(e) => setToken(e.target.value)} autoComplete="off" spellCheck={false} placeholder={source === "notion" ? "ntn_…" : "eyJ…"} className="field mt-1.5 font-mono text-[14px]" />
+                <input id="ext-token" value={token} onChange={(e) => setToken(e.target.value)} autoComplete="off" spellCheck={false} placeholder={source === "notion" ? "ntn_…" : "eyJ…"} className="field mt-1.5 font-mono text-[16px]" />
                 <p className="t-small mt-1.5 text-ink-3">Saved only on this phone. NudgeMe passes it to {source === "notion" ? "Notion" : "Calendly"} through a relay that stores nothing.</p>
                 <button type="submit" className="btn btn-signal mt-4 w-full" disabled={busy || !token.trim()}>
                   {busy ? <Loader2 className="size-5 animate-spin" /> : "Connect and check"}

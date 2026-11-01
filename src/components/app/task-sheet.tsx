@@ -186,7 +186,7 @@ export function TaskSheet({
                       <label htmlFor="ai-paste" className="t-small font-semibold text-ink-2">
                         2. Paste the answer here
                       </label>
-                      <textarea id="ai-paste" rows={4} value={pasted} onChange={(e) => setPasted(e.target.value)} placeholder="Paste the list" className="field mt-1.5 resize-none text-[15px]" />
+                      <textarea id="ai-paste" rows={4} value={pasted} onChange={(e) => setPasted(e.target.value)} placeholder="Paste the list" className="field mt-1.5 resize-none text-[16px]" />
                     </li>
                   </ol>
                   {parsed.length > 0 && (

@@ -51,7 +51,7 @@ export function AddSubtask({ onAdd, placeholder = "Add a subtask", className = "
         enterKeyHint="next"
         placeholder={placeholder}
         aria-label="Add a subtask"
-        className="min-w-0 flex-1 bg-transparent py-3 text-[15px] placeholder:text-ink-3 focus:outline-none"
+        className="min-w-0 flex-1 bg-transparent py-3 text-[16px] placeholder:text-ink-3 focus:outline-none"
       />
       {draft.trim() && <span className="shrink-0 text-[12px] font-medium text-ink-3">Return to add</span>}
     </label>
@@ -76,7 +76,7 @@ export function SubtaskList({ task, actions, suggest = true }: { task: Task; act
                   maxLength={MAX_STEP}
                   aria-label="Subtask"
                   onBlur={(e) => e.target.value.trim() && e.target.value !== s.t && actions.editStep(task.id, s.id, e.target.value)}
-                  className={`min-w-0 flex-1 bg-transparent py-3 text-[15px] focus:outline-none ${s.d ? "text-ink-3 line-through" : ""}`}
+                  className={`min-w-0 flex-1 bg-transparent py-3 text-[16px] focus:outline-none ${s.d ? "text-ink-3 line-through" : ""}`}
                 />
                 <button type="button" className="icon-btn size-9 text-ink-3" aria-label="Remove subtask" onClick={() => (actions.removeStep(task.id, s.id), feel("tap"))}>
                   <X className="size-4" />
