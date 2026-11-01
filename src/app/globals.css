@@ -1157,14 +1157,6 @@ html[data-theme="dark"] [aria-label="How Shrink my day works"] {
   background-size: 56px 56px;
   background-position: center;
 }
-.lp-wordmark {
-  font-size: clamp(34px, 12.4vw, 168px);
-  background: linear-gradient(90deg, #7fa6ff, #b9a2ff 25%, #ff9bd0 48%, #ff9a7a 68%, #ffc89e 82%, #8ff0d6);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  padding-bottom: 0.08em;
-}
 /* Painted skies: light drifts by transform only, so it stays smooth. */
 @keyframes sky-drift {
   0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
@@ -1193,5 +1185,5 @@ html[data-theme="dark"] [aria-label="How Shrink my day works"] {
   mix-blend-mode: soft-light;
 }
 @media (prefers-reduced-motion: reduce) {
-  .lp-float, .lp-hint::after, .sky-drift, .sky-drift-b, .sky-drift-c, .cloud-a, .cloud-b { animation: none; }
+  .lp-float, .lp-hint::after, .sky-drift, .sky-drift-b, .sky-drift-c { animation: none; }
 }

@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useInView, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
 import { ArrowRight, Check, Lock, Moon, ShieldCheck, Smartphone, WifiOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { AiSteps, Capture, Devices, IdeasBack, OneThing, Reminders, Timer } from "@/components/app/guide";
+import { Devices, IdeasBack, Reminders } from "@/components/app/guide";
 import { Petals } from "@/components/app/petals";
 
 /*
@@ -19,7 +19,6 @@ const X_URL = "https://x.com/Art_sassin";
 // Flat buttons, like the best product sites: solid fill, medium weight, colour shifts on hover. No shadows.
 const BTN = "group inline-flex h-12 items-center gap-2 rounded-full bg-ink px-6 text-[16px] font-medium text-white transition-colors duration-200 hover:bg-[#1c2552] active:bg-[#0f1638]";
 const BTN_SM = "inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-[14px] font-medium text-white transition-colors duration-200 hover:bg-[#1c2552]";
-const BTN_GHOST = "inline-flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-[14px] font-medium text-ink ring-1 ring-line transition-colors duration-200 hover:bg-[#f7f4ec]";
 const SUPPORT_URL = "https://selar.com/showlove/hassanx";
 
 /*
@@ -27,60 +26,23 @@ const SUPPORT_URL = "https://selar.com/showlove/hassanx";
   band. The light drifts slowly using transform only, which stays smooth on any
   phone. Each section gets its own sky, the way a day changes colour.
 */
-type SkyName = "dawn" | "sunset" | "lilac" | "mint" | "lime" | "sky" | "night";
-const SKIES: Record<SkyName, { base: string; a: string; b: string; c: string; clouds: boolean }> = {
-  dawn: { base: "linear-gradient(180deg,#a9c4ff 0%,#cfc6ff 42%,#ffd3c0 78%,#ffe6d6 100%)", a: "#7fa6ff", b: "#ffb08a", c: "#ff9bd6", clouds: true },
-  sunset: { base: "linear-gradient(165deg,#ffc89e 0%,#ff9a7a 45%,#ff9bd0 100%)", a: "#ffdf9e", b: "#ff6b4a", c: "#b9a2ff", clouds: true },
-  lilac: { base: "linear-gradient(160deg,#d9ccff 0%,#b9a2ff 50%,#9cb8ff 100%)", a: "#ffc6ec", b: "#7f8cff", c: "#e8ddff", clouds: false },
-  mint: { base: "linear-gradient(160deg,#d6fbef 0%,#8ff0d6 50%,#a9e6f5 100%)", a: "#e9ffb8", b: "#4fd9c4", c: "#bfe3ff", clouds: false },
-  lime: { base: "linear-gradient(160deg,#f1fbcf 0%,#cdef7f 55%,#a6e3b0 100%)", a: "#fff3b0", b: "#9bd65a", c: "#d2f5e3", clouds: false },
-  sky: { base: "linear-gradient(180deg,#6f9dff 0%,#9cc0ff 50%,#dce9ff 100%)", a: "#4f7dff", b: "#c7dcff", c: "#e8ddff", clouds: true },
-  night: { base: "linear-gradient(180deg,#060b2b 0%,#0b1440 100%)", a: "#1d4df5", b: "#19d3e6", c: "#b9a2ff", clouds: false },
+type SkyName = "blue" | "violet" | "lime" | "night";
+// Calendly's one blue-to-violet family, built on the brand blue. Granola's acid lime as the one accent. Near-black for the dark moment.
+const SKIES: Record<SkyName, { base: string; a: string; b: string; c: string }> = {
+  blue: { base: "linear-gradient(170deg,#3f5cf6 0%,#6d7cff 38%,#a99bff 72%,#dcb9f5 100%)", a: "#2f4cf0", b: "#e7b5ef", c: "#8e8cff" },
+  violet: { base: "linear-gradient(165deg,#7a83ff 0%,#a497ff 55%,#d7b8f7 100%)", a: "#5f6cff", b: "#efc2f0", c: "#b9a2ff" },
+  lime: { base: "linear-gradient(165deg,#e2f37a 0%,#cbe653 100%)", a: "#f0fa9e", b: "#b9d93a", c: "#e2f37a" },
+  night: { base: "linear-gradient(180deg,#141414 0%,#1c1c1f 100%)", a: "#2a3aa8", b: "#3d2f7a", c: "#cbe653" },
 };
 
 export function Sky({ name, className = "" }: { name: SkyName; className?: string }) {
   const k = SKIES[name];
-  const glow = name === "night" ? 0.55 : 0.85;
+  const glow = name === "night" ? 0.45 : name === "lime" ? 0.6 : 0.8;
   return (
     <div aria-hidden className={`pointer-events-none absolute inset-0 overflow-hidden ${className}`} style={{ background: k.base }}>
       <div className="sky-drift absolute -left-[20%] -top-[30%] h-[90%] w-[70%] rounded-full" style={{ background: `radial-gradient(closest-side, ${k.a}, transparent)`, opacity: glow }} />
       <div className="sky-drift-b absolute -bottom-[35%] -right-[15%] h-[100%] w-[75%] rounded-full" style={{ background: `radial-gradient(closest-side, ${k.b}, transparent)`, opacity: glow }} />
-      <div className="sky-drift-c absolute left-[35%] top-[30%] h-[60%] w-[50%] rounded-full" style={{ background: `radial-gradient(closest-side, ${k.c}, transparent)`, opacity: glow * 0.7 }} />
-      {k.clouds && (
-        <>
-          <Cloud className="cloud-a -bottom-[6%] -left-[6%] w-[46%] max-w-[560px]" />
-          <Cloud className="cloud-b right-[-8%] top-[8%] w-[30%] max-w-[380px] opacity-80" />
-        </>
-      )}
       <div className="sky-grain absolute inset-0" />
-    </div>
-  );
-}
-
-/** A soft cloud made of overlapping round puffs. */
-function Cloud({ className = "" }: { className?: string }) {
-  return (
-    <div className={`absolute aspect-[2.4/1] ${className}`}>
-      {[
-        [8, 46, 34],
-        [26, 22, 44],
-        [50, 12, 46],
-        [70, 34, 36],
-        [36, 50, 40],
-        [62, 54, 34],
-      ].map(([x, y, s], i) => (
-        <span
-          key={i}
-          className="absolute rounded-full"
-          style={{
-            left: `${x}%`,
-            top: `${y}%`,
-            width: `${s}%`,
-            aspectRatio: "1",
-            background: "radial-gradient(circle at 40% 35%, rgba(255,255,255,0.98), rgba(255,255,255,0.85) 45%, rgba(236,236,255,0.55) 70%, rgba(255,255,255,0) 72%)",
-          }}
-        />
-      ))}
     </div>
   );
 }
@@ -207,7 +169,7 @@ function Hero() {
 
       {/* The product, on its own patch of sky */}
       <motion.div ref={stage} style={reduce ? {} : { scale: lift }} className="relative mx-auto mt-6 max-w-[1240px] origin-top overflow-hidden rounded-[24px] sm:rounded-[32px]">
-        <Sky name="dawn" />
+        <Sky name="blue" />
         {/* Desktop: the full app in a window, with the phone beside it */}
         <div className="relative hidden pl-[5%] pr-[17%] pt-[5%] md:block">
           <div className="relative">
@@ -311,19 +273,19 @@ function InlineTile({ kind }: { kind: NonNullable<Tok["tile"]> }) {
   const base = "relative mx-[0.12em] inline-grid h-[0.9em] w-[1.25em] -translate-y-[0.06em] place-items-center rounded-[0.24em] align-middle";
   if (kind === "stack")
     return (
-      <span className={`${base} bg-[linear-gradient(135deg,#ffc89e,#ff9bd0)]`}>
+      <span className={`${base} bg-[linear-gradient(135deg,#a99bff,#6d7cff)]`}>
         <span className="absolute h-[0.36em] w-[0.7em] -translate-y-[0.12em] rotate-[-6deg] rounded-[0.08em] bg-white/70" />
         <span className="absolute h-[0.36em] w-[0.7em] translate-y-[0.06em] rotate-[4deg] rounded-[0.08em] bg-white" />
       </span>
     );
-  if (kind === "wall") return <span className={`${base} bg-[linear-gradient(135deg,#d9ccff,#9cb8ff)] text-[0.55em]`}>🧱</span>;
+  if (kind === "wall") return <span className={`${base} bg-[#1c1c1f] text-[0.55em]`}>🧱</span>;
   if (kind === "one")
     return (
-      <span className={`${base} bg-[linear-gradient(135deg,#5f8bff,#1d4df5)]`}>
+      <span className={`${base} bg-[#1d4df5]`}>
         <Check className="size-[0.55em] text-white" strokeWidth={3.5} />
       </span>
     );
-  return <span className={`${base} bg-[linear-gradient(135deg,#e9ffb8,#8ff0d6)] text-[0.55em]`}>👣</span>;
+  return <span className={`${base} bg-[#cbe653] text-[0.55em]`}>👣</span>;
 }
 function Statement() {
   const ref = useRef<HTMLDivElement>(null);
@@ -351,10 +313,10 @@ function Word({ p, at, bold, children }: { p: MotionValue<number>; at: number; b
 }
 
 const HOW = [
-  { title: "Dump it all out", body: "Type it or say it in one go. Every pause becomes its own task, so nothing gets lost.", art: Capture, sky: "sunset" as SkyName },
-  { title: "Shrink the big ones", body: "Ask the AI you already use to break a scary task into tiny steps. Paste them back in.", art: AiSteps, sky: "lilac" as SkyName },
-  { title: "See one thing", body: "Home shows one task and its next step. Not feeling it? Pick another.", art: OneThing, sky: "sky" as SkyName },
-  { title: "Do one step", body: "Focus hides everything else. Tick a step and the next one shows up. Add a timer if it helps.", art: Timer, sky: "mint" as SkyName },
+  { title: "Dump it all out", body: "Type it or say it in one go. It splits into separate tasks as you go, so nothing gets lost.", img: "/landing/how-1.webp", alt: "Typing three things at once, split into three tasks", sky: "blue" as SkyName },
+  { title: "Shrink the big ones", body: "Ask the AI you already use to break a scary task into tiny steps. Paste them back in.", img: "/landing/how-2.webp", alt: "Breaking a big task down with Claude", sky: "lime" as SkyName },
+  { title: "See one thing", body: "Home shows one task and its next step. Not feeling it? Pick another.", img: "/landing/how-3.webp", alt: "Home, showing one task and its next step", sky: "violet" as SkyName },
+  { title: "Do one step", body: "Focus hides everything else. Tick a step and the next one shows up. Add a timer if it helps.", img: "/landing/how-4.webp", alt: "Focus, with one step and a timer running", sky: "night" as SkyName },
 ];
 
 function How() {
@@ -368,7 +330,6 @@ function How() {
     const t = setTimeout(() => setOn((v) => (v + 1) % HOW.length), 6500);
     return () => clearTimeout(t);
   }, [on, seen, paused]);
-  const Pic = HOW[on].art;
   return (
     <section id="how" ref={ref} className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-24 sm:px-6 sm:pb-32">
       <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
@@ -404,14 +365,14 @@ function How() {
               <Sky name={HOW[on].sky} />
             </motion.div>
           </AnimatePresence>
-          <div className="absolute inset-[7%] flex items-center justify-center">
-            <AnimatePresence mode="wait">
-              <motion.div key={on} initial={{ opacity: 0, y: 18, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, transition: { duration: 0.15 } }} transition={{ type: "spring", bounce: 0.15, duration: 0.6 }} className="w-full max-w-[420px]">
-                <Window>
-                  <div className="h-[250px] bg-paper">{ever && <Pic />}</div>
-                </Window>
-              </motion.div>
-            </AnimatePresence>
+          <div className="absolute inset-x-0 top-[9%] flex justify-center">
+            <div className="relative w-[46%] max-w-[300px]">
+              {HOW.map((h, i) => (
+                <div key={h.img} className={`${i === 0 ? "relative" : "absolute inset-0"} transition-[opacity,transform] duration-500 ease-out ${i === on ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"}`} aria-hidden={i !== on}>
+                  {ever && <Phone src={h.img} alt={i === on ? h.alt : ""} />}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -443,26 +404,28 @@ function Helpers() {
         Small helpers <span className="text-ink-3">that stay out of your way</span>
       </h2>
       <div className="mt-10 grid gap-4 md:grid-cols-3">
-        <Tile sky="sky" title="Sync multiple devices" body="Tick a task on your phone and it's done on your laptop too. Link them with a code. No sign up." className="md:col-span-2">
+        <Tile sky="blue" title="Sync multiple devices" body="Tick a task on your phone and it's done on your laptop too. Link them with a code. No sign up." className="md:col-span-2">
           <Devices />
         </Tile>
         <Tile sky="lime" title="Ideas come back" body="Save an idea and let it go. It comes back in a few days, when you have room for it.">
           <IdeasBack />
         </Tile>
-        <Tile sky="sunset" title="Reminders that reach you" body="Your phone rings when it's time, even with the app closed. Your calendar events show up too.">
+        <Tile sky="violet" title="Reminders that reach you" body="Your phone rings when it's time, even with the app closed. Your calendar events show up too.">
           <Reminders />
         </Tile>
-        <div className="grid gap-4 md:col-span-2 sm:grid-cols-2">
+        <div className="flex flex-col justify-center rounded-[24px] bg-white px-5 ring-1 ring-line md:col-span-2">
           {[
-            { i: <WifiOff className="size-5" />, t: "Works offline", b: "Add tasks on the bus. It all saves on your device.", c: "bg-[linear-gradient(135deg,#e9ffb8,#9bd65a)] text-[#2c4a06]" },
-            { i: <ShieldCheck className="size-5" />, t: "Free, with no ads", b: "No plans, no paywall, no trial that runs out.", c: "bg-[linear-gradient(135deg,#ffc6ec,#b9a2ff)] text-[#3a1f7a]" },
-            { i: <Moon className="size-5" />, t: "Dark mode", b: "Easy on the eyes late at night.", c: "bg-[linear-gradient(135deg,#101a4d,#060b2b)] text-moon" },
-            { i: <Smartphone className="size-5" />, t: "Feels like an app", b: "Add it to your Home Screen and it opens full screen.", c: "bg-[linear-gradient(135deg,#ffdf9e,#ff9a7a)] text-[#6b2a12]" },
-          ].map((f) => (
-            <div key={f.t} className="rounded-[24px] bg-white p-5 ring-1 ring-line">
-              <span className={`grid size-10 place-items-center rounded-[12px] ${f.c}`}>{f.i}</span>
-              <h3 className="mt-4 text-[17px] font-semibold">{f.t}</h3>
-              <p className="mt-1 text-[15px] leading-snug text-ink-2">{f.b}</p>
+            { i: <WifiOff className="size-[18px]" strokeWidth={1.75} />, t: "Works offline", b: "Add tasks on the bus. Everything saves on your device." },
+            { i: <ShieldCheck className="size-[18px]" strokeWidth={1.75} />, t: "Free, with no ads", b: "No plans, no paywall and no trial that runs out." },
+            { i: <Moon className="size-[18px]" strokeWidth={1.75} />, t: "Dark mode", b: "Easy on the eyes late at night." },
+            { i: <Smartphone className="size-[18px]" strokeWidth={1.75} />, t: "Feels like an app", b: "Add it to your Home Screen and it opens full screen." },
+          ].map((f, i) => (
+            <div key={f.t} className={`flex gap-3.5 py-5 ${i ? "border-t border-line" : ""}`}>
+              <span className="mt-[3px] text-ink-2">{f.i}</span>
+              <span>
+                <span className="block text-[16px] font-medium text-ink">{f.t}</span>
+                <span className="mt-0.5 block text-[15px] leading-snug text-ink-2">{f.b}</span>
+              </span>
             </div>
           ))}
         </div>
@@ -479,7 +442,7 @@ function Private() {
         <div className="lp-grid pointer-events-none absolute inset-0" />
         <div className="relative mx-auto max-w-4xl text-center">
           <span className="mx-auto grid size-14 place-items-center rounded-full bg-white/10 ring-1 ring-white/20">
-            <Lock className="size-6 text-moon" />
+            <Lock className="size-6 text-[#cbe653]" />
           </span>
           <h2 className="mt-8 font-serif text-[48px] leading-[0.98] tracking-[-0.025em] sm:text-[88px]">
             <span className="block">No account.</span>
@@ -487,7 +450,7 @@ function Private() {
             <span className="block text-white/45">No tracking.</span>
           </h2>
           <p className="mx-auto mt-6 max-w-[44ch] text-[17px] leading-relaxed text-white/75 sm:text-[19px]">Your tasks live on your device. When you sync, they&apos;re locked before they leave, so the app only ever holds a scrambled copy nobody can read.</p>
-          <a href="/privacy" className="mt-8 inline-flex items-center gap-1.5 text-[15px] font-semibold text-moon hover:text-white">
+          <a href="/privacy" className="mt-8 inline-flex items-center gap-1.5 text-[15px] font-medium text-[#cbe653] transition-colors hover:text-white">
             Read the privacy policy <ArrowRight className="size-4" />
           </a>
         </div>
@@ -498,16 +461,14 @@ function Private() {
 
 function Final() {
   return (
-    <section className="px-3 pt-24 sm:px-4 sm:pt-32">
-      <div className="relative mx-auto max-w-[1240px] overflow-hidden rounded-[24px] sm:rounded-[32px]">
-        <Sky name="sunset" />
-        <div className="relative flex flex-col items-center px-6 py-24 text-center sm:py-36">
-          <h2 className="font-serif text-[56px] leading-[0.95] tracking-[-0.03em] text-ink sm:text-[110px]">Shrink your day.</h2>
-          <p className="mt-5 max-w-[32ch] text-[17px] text-ink/75 sm:text-[19px]">It&apos;s free, it opens in your browser, and there&apos;s nothing to sign up for.</p>
-          <a href="/app" className={`${BTN} mt-8`}>
-            Open Shrink my day <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-          </a>
-        </div>
+    <section className="px-6 pb-8 pt-32 sm:pb-12 sm:pt-44">
+      <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
+        <Logo className="size-12" />
+        <h2 className="mt-8 font-serif text-[48px] leading-[1] tracking-[-0.03em] text-ink sm:text-[72px]">Shrink your day.</h2>
+        <p className="mt-5 max-w-[34ch] text-[18px] leading-[1.45] text-ink-2">It&apos;s free, it opens in your browser, and there&apos;s nothing to sign up for.</p>
+        <a href="/app" className={`${BTN} mt-8`}>
+          Open Shrink my day <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+        </a>
       </div>
     </section>
   );
@@ -515,33 +476,28 @@ function Final() {
 
 function Footer() {
   return (
-    <footer className="overflow-hidden px-4 pb-6 pt-16 sm:px-6">
-      <div className="mx-auto flex max-w-6xl flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <p className="text-[15px] font-semibold">Made by Hassan</p>
-          <p className="mt-1 text-[15px] text-ink-2">An independent designer who needed it too.</p>
-          <div className="mt-3 flex gap-2">
-            <a href={X_URL} target="_blank" rel="noopener noreferrer" className={BTN_SM}>
-              Say hi on X
-            </a>
-            <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer" className={BTN_GHOST}>
-              ☕ Buy me a coffee
-            </a>
-          </div>
+    <footer className="mx-auto mt-16 max-w-6xl px-5 pb-10 sm:px-6">
+      <div className="flex flex-col gap-6 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <Logo className="size-6" />
+          <span className="font-serif text-[18px] tracking-[-0.01em]">Shrink my day</span>
+          <span className="ml-2 text-[14px] text-ink-3">Made by Hassan</span>
         </div>
-        <div className="flex gap-5 text-[14px] text-ink-2">
-          <a href="/app" className="hover:text-ink">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[14px] text-ink-2">
+          <a href="/app" className="transition-colors hover:text-ink">
             Open the app
           </a>
-          <a href="/privacy" className="hover:text-ink">
+          <a href="/privacy" className="transition-colors hover:text-ink">
             Privacy
           </a>
-          <span className="text-ink-3">© {new Date().getFullYear()}</span>
+          <a href={X_URL} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-ink">
+            Say hi on X
+          </a>
+          <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-ink">
+            Buy me a coffee
+          </a>
         </div>
       </div>
-      <p aria-hidden className="lp-wordmark mx-auto mt-10 max-w-6xl select-none whitespace-nowrap text-center font-serif leading-[0.8] tracking-[-0.04em]">
-        Shrink my day
-      </p>
     </footer>
   );
 }
