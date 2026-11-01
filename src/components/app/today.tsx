@@ -355,7 +355,7 @@ function MorningPick({ state, actions, announce }: { state: State; actions: Acti
 /** One quiet line at the very bottom of Home. */
 function MiniCredit() {
   return (
-    <p className="mt-12 flex items-center justify-center gap-2 text-[13px] text-ink-3">
+    <p className="mt-12 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[13px] text-ink-3">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/hassan.jpg" alt="" width={20} height={20} className="size-5 rounded-full object-cover" />
       <span>Made by Hassan</span>
@@ -366,6 +366,10 @@ function MiniCredit() {
       <span aria-hidden>·</span>
       <a href="https://selar.com/showlove/hassanx" target="_blank" rel="noopener noreferrer" className="font-medium text-ink-2 underline-offset-2 hover:underline">
         Buy me a coffee
+      </a>
+      <span aria-hidden>·</span>
+      <a href="/privacy" className="font-medium text-ink-2 underline-offset-2 hover:underline">
+        Privacy
       </a>
     </p>
   );

@@ -286,6 +286,9 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
         <button type="button" className="btn btn-line mt-2 w-full gap-2" onClick={() => (onClose(), onGuide())}>
           <CircleHelp className="size-[18px]" /> How NudgeMe works
         </button>
+        <a href="/privacy" className="btn btn-quiet mt-1 w-full text-[14px]">
+          Privacy policy
+        </a>
       </section>
     </Sheet>
   );
