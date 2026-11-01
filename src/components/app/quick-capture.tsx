@@ -27,6 +27,11 @@ export function QuickCapture({ state, actions, announce, onOpen }: { state: Stat
   const [kind, setKind] = useState<Kind>("task");
   const [focused, setFocused] = useState(false);
   const field = useRef<HTMLTextAreaElement>(null);
+  // A tap inside the box (the toggle, mic or Save) must not count as leaving.
+  // iPhone moves focus off the field on any button tap, so we remember the
+  // tap came from inside, ignore that blur, and hand focus straight back.
+  const inside = useRef(false);
+  const refocus = () => requestAnimationFrame(() => field.current?.focus({ preventScroll: true }));
   const speech = useSpeech((t, final) => {
     if (final) setText((v) => (v ? `${v} ${t}` : t).slice(0, kind === "task" ? MAX_TITLE : 2000));
   });
@@ -60,11 +65,22 @@ export function QuickCapture({ state, actions, announce, onOpen }: { state: Stat
       toast(kind === "idea" ? "Idea saved. It comes back in a few days." : "Note saved in Ideas.");
     }
     reset();
+    inside.current = false;
+    setFocused(false);
     field.current?.blur();
   };
 
   return (
     <form
+      onPointerDownCapture={(e) => {
+        if (e.target === field.current) return;
+        inside.current = true;
+        setTimeout(() => (inside.current = false), 700);
+      }}
+      onClickCapture={() => {
+        if (!inside.current) return;
+        setTimeout(() => (inside.current = false), 0);
+      }}
       className={`mt-6 rounded-[20px] bg-white ring-1 transition-shadow ${open ? "ring-signal/40 shadow-[0_0_0_4px_rgb(29_77_245/0.08)]" : "ring-line"}`}
       onSubmit={(e) => {
         e.preventDefault();
@@ -83,7 +99,10 @@ export function QuickCapture({ state, actions, announce, onOpen }: { state: Stat
           maxLength={kind === "task" ? MAX_TITLE : 2000}
           onChange={(e) => (setText(e.target.value), grow())}
           onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
+          onBlur={() => {
+            if (inside.current) return;
+            setFocused(false);
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey && kind === "task") {
               e.preventDefault();
@@ -91,6 +110,7 @@ export function QuickCapture({ state, actions, announce, onOpen }: { state: Stat
             }
             if (e.key === "Escape") {
               reset();
+              inside.current = false;
               field.current?.blur();
             }
           }}
@@ -99,7 +119,7 @@ export function QuickCapture({ state, actions, announce, onOpen }: { state: Stat
           className="min-h-[54px] flex-1 resize-none bg-transparent py-[15px] text-[17px] leading-snug placeholder:text-ink-3 focus:outline-none"
         />
         {speech.supported && (
-          <button type="button" {...keepFocus} onClick={() => (speech.toggle(), feel("tap", "light"))} aria-pressed={speech.listening} aria-label={speech.listening ? "Stop listening" : "Speak instead"} className={`btn btn-icon mt-[7px] size-10 ${speech.listening ? "btn-danger" : "btn-quiet text-ink-2"}`}>
+          <button type="button" {...keepFocus} onClick={() => (speech.toggle(), feel("tap", "light"), refocus())} aria-pressed={speech.listening} aria-label={speech.listening ? "Stop listening" : "Speak instead"} className={`btn btn-icon mt-[7px] size-10 ${speech.listening ? "btn-danger" : "btn-quiet text-ink-2"}`}>
             <Mic className="size-[18px]" />
           </button>
         )}
@@ -111,7 +131,7 @@ export function QuickCapture({ state, actions, announce, onOpen }: { state: Stat
               <div className="flex items-center gap-2">
                 <div className="seg inline-grid grid-cols-3 p-0.5" role="tablist" aria-label="What is it?">
                   {(["task", "idea", "note"] as Kind[]).map((k) => (
-                    <button key={k} type="button" role="tab" aria-selected={kind === k} {...keepFocus} onClick={() => (setKind(k), feel("tick", "light"))} className="relative h-8 rounded-full px-3 text-[13px] font-semibold">
+                    <button key={k} type="button" role="tab" aria-selected={kind === k} {...keepFocus} onClick={() => (setKind(k), feel("tick", "light"), refocus())} className="relative h-8 rounded-full px-3 text-[13px] font-semibold">
                       {kind === k && <motion.span layoutId="quick-seg" className="seg-knob absolute inset-0" transition={{ type: "spring", bounce: 0, duration: 0.28 }} />}
                       <span className={`relative capitalize ${kind === k ? "text-ink" : "text-ink-3"}`}>{k}</span>
                     </button>

@@ -32,7 +32,7 @@ export function Counter({ done, total }: { done: number; total: number }) {
 
 const round = "btn btn-line btn-icon size-10 text-ink-2";
 
-export function TopBar({ done, total, onSettings, onAdd, onHelp }: { done: number; total: number; onSettings: () => void; onAdd: () => void; onHelp?: () => void }) {
+export function TopBar({ done, total, onSettings, onAdd, onHelp }: { done: number; total: number; onSettings: () => void; onAdd?: () => void; onHelp?: () => void }) {
   return (
     <header className="flex items-center justify-between py-2">
       <Counter done={done} total={total} />
@@ -45,9 +45,11 @@ export function TopBar({ done, total, onSettings, onAdd, onHelp }: { done: numbe
         <button type="button" className={round} aria-label="Settings, reminders and privacy" onClick={onSettings}>
           <Settings2 className="size-[18px]" />
         </button>
-        <button type="button" className="btn btn-ink btn-icon size-10" aria-label="Add a thought" onClick={onAdd}>
-          <Plus className="size-5" />
-        </button>
+        {onAdd && (
+          <button type="button" className="btn btn-ink btn-icon size-10" aria-label="Add a thought" onClick={onAdd}>
+            <Plus className="size-5" />
+          </button>
+        )}
       </div>
     </header>
   );
@@ -110,7 +112,7 @@ export function Today({
 
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-36 safe-t">
-      <TopBar done={finished.length} total={list.length + finished.length} onSettings={onSettings} onAdd={onAdd} onHelp={onHelp} />
+      <TopBar done={finished.length} total={list.length + finished.length} onSettings={onSettings} onHelp={onHelp} />
 
       <div className="mt-4 text-center">
         <h1 className="font-serif text-[44px] leading-none tracking-[-0.025em]">{day}</h1>
@@ -198,13 +200,10 @@ export function Today({
       ) : (
         <section className="mt-6 overflow-hidden rounded-[24px] bg-white ring-1 ring-line">
           <div className="p-5">
-            <h2 className="t-title">{finished.length ? "Today is clear." : "What is on your mind?"}</h2>
+            <h2 className="t-title">{finished.length ? "Today is clear." : "Nothing on today yet."}</h2>
             <p className="t-body mt-2 text-ink-2">
-              {finished.length ? `You finished ${finished.length === 1 ? "one task" : `${finished.length} tasks`}. You can stop here, or add something.` : "Put it here. NudgeMe holds it, then helps you start with one small step."}
+              {finished.length ? `You finished ${finished.length === 1 ? "one task" : `${finished.length} tasks`}. You can stop here, or add something above.` : "Type it in the field above. NudgeMe holds it, then helps you start with one small step."}
             </p>
-            <button type="button" className={`btn mt-5 w-full ${finished.length ? "btn-line" : "btn-signal"}`} onClick={onAdd}>
-              <Plus className="size-5" /> Add a thought
-            </button>
           </div>
         </section>
       )}
