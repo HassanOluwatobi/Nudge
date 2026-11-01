@@ -209,10 +209,26 @@
      ink      midnight fill. Capture in the dock.
      white    on brand fields.
      line     secondary on cream.
-     quiet    text button.
+     quiet    text button. Stays flat on purpose.
      glass    secondary on brand fields.
+     danger   destructive.
+
+     Construction: a tactile, softly embossed capsule. Each variant only sets
+     its own colours below. The base turns them into a top-to-bottom tonal
+     gradient, a thin darker edge and a light catch along the top. No drop
+     shadows. Every tone is mixed from the variant's existing colour,
+     so no new colours enter the palette.
   */
   .btn {
+    --b-top: var(--b-fill);
+    --b-bot: var(--b-fill);
+    --b-edge: transparent;
+    --b-hi: rgb(255 255 255 / 0.2);
+    --b-lo: rgb(0 0 0 / 0.08);
+    --b-tint: rgb(255 255 255 / 0.08);
+    --b-text-shadow: none;
+    position: relative;
+    isolation: isolate;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -220,73 +236,154 @@
     min-height: 52px;
     padding: 0 1.4rem;
     border-radius: 999px;
+    border: 1px solid var(--b-edge);
+    background: linear-gradient(180deg, var(--b-top), var(--b-bot));
+    box-shadow:
+      inset 0 1px 0 var(--b-hi),
+      inset 0 -1px 0 var(--b-lo);
+    text-shadow: var(--b-text-shadow);
     font-weight: 600;
     font-size: 16px;
     letter-spacing: -0.005em;
-    transition: transform 220ms cubic-bezier(0.32, 0.72, 0, 1), background-color 160ms, box-shadow 220ms, color 160ms, border-color 160ms, opacity 160ms;
+    transition: transform 220ms cubic-bezier(0.32, 0.72, 0, 1), box-shadow 220ms cubic-bezier(0.32, 0.72, 0, 1), color 160ms, border-color 160ms, opacity 160ms, filter 160ms;
     cursor: pointer;
     will-change: transform;
   }
-  .btn:active {
-    transform: scale(0.96);
-    transition-duration: 90ms;
-  }
-  .btn:disabled {
-    opacity: 0.4;
+  /* Hover tint sits between the fill and the label, so it can fade smoothly. */
+  .btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--b-tint);
+    opacity: 0;
+    transition: opacity 160ms;
     pointer-events: none;
   }
-  .btn-signal {
-    background: var(--signal);
-    color: #fff;
-    box-shadow: 0 1px 0 rgb(255 255 255 / 0.22) inset, 0 12px 26px -14px rgb(29 77 245 / 0.8);
+  .btn:active {
+    transform: translateY(1px) scale(0.985);
+    box-shadow:
+      inset 0 1px 2px rgb(0 0 0 / 0.16),
+      inset 0 -1px 0 rgb(255 255 255 / 0.06);
+    transition-duration: 90ms;
   }
-  .btn-signal:active {
-    background: var(--signal-ink);
+  .btn:focus-visible {
+    outline: 2.5px solid var(--signal);
+    outline-offset: 3px;
+  }
+  .on-night .btn:focus-visible {
+    outline-color: var(--moon);
+  }
+  .btn:active:not(.btn-quiet) {
+    --b-tint: rgb(6 11 43 / 0.07);
+  }
+  .btn:active:not(.btn-quiet)::after {
+    opacity: 1;
+  }
+  .btn:disabled,
+  .btn[aria-disabled="true"] {
+    opacity: 0.55;
+    box-shadow: inset 0 1px 0 var(--b-hi);
+    transform: none;
+    pointer-events: none;
+  }
+
+  .btn-signal {
+    --b-fill: var(--signal);
+    --b-top: color-mix(in oklab, var(--signal) 86%, white);
+    --b-bot: color-mix(in oklab, var(--signal) 90%, var(--signal-ink));
+    --b-edge: color-mix(in oklab, var(--signal-ink) 80%, black);
+    --b-hi: rgb(255 255 255 / 0.3);
+    --b-lo: rgb(0 0 0 / 0.12);
+    --b-text-shadow: 0 1px 0 rgb(6 11 43 / 0.22);
+    color: #fff;
   }
   .btn-ink {
-    background: var(--night);
+    --b-fill: var(--night);
+    --b-top: color-mix(in oklab, var(--night) 82%, white);
+    --b-bot: var(--night);
+    --b-edge: color-mix(in oklab, var(--night) 70%, black);
+    --b-hi: rgb(255 255 255 / 0.16);
+    --b-lo: rgb(0 0 0 / 0.3);
+    --b-text-shadow: 0 1px 0 rgb(0 0 0 / 0.35);
     color: var(--paper);
   }
   .btn-white {
-    background: #fff;
+    --b-fill: #fff;
+    --b-top: #fff;
+    --b-bot: color-mix(in oklab, #fff 94%, var(--paper));
+    --b-edge: rgb(6 11 43 / 0.14);
+    --b-hi: #fff;
+    --b-lo: rgb(6 11 43 / 0.05);
+    --b-tint: rgb(6 11 43 / 0.03);
     color: var(--night);
-    box-shadow: 0 14px 30px -18px rgb(6 11 43 / 0.7);
   }
   .btn-line {
-    background: var(--sheet);
+    --b-fill: var(--sheet);
+    --b-top: var(--sheet);
+    --b-bot: color-mix(in oklab, var(--sheet) 92%, var(--paper));
+    --b-edge: color-mix(in oklab, var(--line) 82%, var(--ink-3));
+    --b-hi: #fff;
+    --b-lo: rgb(6 11 43 / 0.04);
+    --b-tint: rgb(6 11 43 / 0.03);
     color: var(--ink);
-    border: 1px solid var(--line);
   }
+  .btn-danger {
+    --b-fill: var(--danger);
+    --b-top: color-mix(in oklab, var(--danger) 88%, white);
+    --b-bot: color-mix(in oklab, var(--danger) 92%, black);
+    --b-edge: color-mix(in oklab, var(--danger) 70%, black);
+    --b-hi: rgb(255 255 255 / 0.26);
+    --b-lo: rgb(0 0 0 / 0.14);
+    --b-text-shadow: 0 1px 0 rgb(0 0 0 / 0.2);
+    color: #fff;
+  }
+  .btn-glass,
+  .btn-night-quiet {
+    --b-top: rgb(255 255 255 / 0.16);
+    --b-bot: rgb(255 255 255 / 0.07);
+    --b-edge: rgb(255 255 255 / 0.28);
+    --b-hi: rgb(255 255 255 / 0.3);
+    --b-lo: rgb(0 0 0 / 0.1);
+    color: #fff;
+  }
+  /* The text button keeps no fill, edge or shadow. It still presses and shows focus. */
   .btn-quiet {
     background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+    text-shadow: none;
+    --b-tint: rgb(6 11 43 / 0.05);
     color: var(--ink-2);
     min-height: 44px;
     padding: 0 0.9rem;
     font-weight: 500;
   }
-  .btn-glass,
-  .btn-night-quiet {
-    background: rgb(255 255 255 / 0.1);
-    color: #fff;
-    border: 1px solid rgb(255 255 255 / 0.26);
+  .btn-quiet:active {
+    box-shadow: none;
   }
-  .btn-danger {
-    background: var(--danger);
-    color: #fff;
+  .btn-quiet::after {
+    transition: opacity 120ms;
+  }
+  .btn-quiet:active::after {
+    opacity: 1;
   }
   @media (hover: hover) and (pointer: fine) {
-    .btn-signal:hover {
-      background: var(--signal-ink);
+    .btn:hover::after {
+      opacity: 1;
     }
-    .btn-quiet:hover {
-      background: rgb(6 11 43 / 0.05);
+    .btn:not(.btn-quiet):hover {
+      transform: translateY(-1px);
+      box-shadow:
+        inset 0 1px 0 var(--b-hi),
+        inset 0 -1px 0 var(--b-lo);
     }
-    .btn-line:hover {
-      border-color: var(--ink-3);
-    }
-    .btn-glass:hover,
-    .btn-night-quiet:hover {
-      background: rgb(255 255 255 / 0.18);
+    .btn:not(.btn-quiet):active {
+      transform: translateY(1px) scale(0.985);
+      box-shadow:
+        inset 0 1px 2px rgb(0 0 0 / 0.16),
+        inset 0 -1px 0 rgb(255 255 255 / 0.06);
     }
     .icon-btn:hover {
       background: rgb(6 11 43 / 0.06);
