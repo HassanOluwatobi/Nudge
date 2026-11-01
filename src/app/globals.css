@@ -389,26 +389,53 @@
     }
   }
 
-  /* ---------- Brand field texture ----------
-     Stipple: a printed dot screen, masked to one corner so it never sits under body text.
-     Grain: fine mono noise in soft-light, low strength.
-  */
-  .stipple {
-    background-image: radial-gradient(circle, rgb(255 255 255 / 0.55) 0.7px, transparent 1.15px);
-    background-size: 5px 5px;
-    -webkit-mask-image: radial-gradient(120% 90% at 100% 100%, #000 0%, transparent 62%);
-    mask-image: radial-gradient(120% 90% at 100% 100%, #000 0%, transparent 62%);
-    opacity: 0.5;
-  }
-  .field-drift {
-    animation: drift 30s ease-in-out infinite alternate;
-  }
 }
 
-@keyframes drift {
-  to {
-    transform: translate3d(-3%, 2%, 0) scale(1.05);
-  }
+
+/* ---------- Task colours ----------
+   Each task has one hue. The tile uses the tint, checks use the strong colour. */
+.hue-blue { --h: #1d4df5; --ht: #e4eaff; }
+.hue-cyan { --h: #0aa9bf; --ht: #dcf6f9; }
+.hue-aqua { --h: #13a883; --ht: #dbf7ef; }
+.hue-lime { --h: #5f9a12; --ht: #eef8d9; }
+.hue-peach { --h: #e07a35; --ht: #ffeddf; }
+.hue-coral { --h: #e5482a; --ht: #ffe5df; }
+.hue-pink { --h: #d4459a; --ht: #ffe6f3; }
+.hue-lilac { --h: #6d4fe0; --ht: #ece6ff; }
+.tile { background: var(--ht); color: var(--h); }
+
+/* Section pills, after Tiimo: soft tint, small caps, a count. */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.pill-anytime { background: #ebe6db; color: #4a4f6a; }
+.pill-morning { background: #ffe9d9; color: #9a4a12; }
+.pill-afternoon { background: #e2e9ff; color: #1f3fb8; }
+.pill-evening { background: #ece6ff; color: #4f36b3; }
+.pill-today { background: #e2e9ff; color: #1f3fb8; }
+.pill-week { background: #ffe9d9; color: #9a4a12; }
+.pill-later { background: #ece6ff; color: #4f36b3; }
+.pill-done { background: #ebe6db; color: #4a4f6a; }
+
+/* A task row: a soft white strip, after Tiimo. */
+.task-row {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 1px 0 rgb(255 255 255) inset, 0 1px 2px rgb(6 11 43 / 0.06), 0 8px 20px -14px rgb(6 11 43 / 0.25);
+}
+.add-row {
+  border: 1.5px dashed #d9d2c3;
+  border-radius: 18px;
+  color: var(--ink-3);
 }
 
 /* ---------- Sheets (native dialog) ---------- */
