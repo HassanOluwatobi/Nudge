@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { AI_NAME } from "@/lib/ai";
+import { disablePush, enablePush, pushSupported } from "@/lib/push";
 import { feel } from "@/lib/feedback";
 import { askNotify, canNotify, dailyEvents, platform, prettyTime } from "@/lib/reminders";
 import { type Settings as S, type State, sanitize, ymd } from "@/lib/tasks";
@@ -152,14 +153,24 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
             <Switch
               icon={<Bell className="size-4" />}
               label="Notifications"
-              hint="Phone alerts for task reminders and check-ins while NudgeMe is open or in the background. For alerts when it is fully closed, add them to your calendar above."
+              hint={
+                pushSupported()
+                  ? "Task reminders and check-ins ring on this phone, even when NudgeMe is closed."
+                  : platform() === "ios"
+                    ? "On iPhone, add NudgeMe to your Home Screen and open it from there. Then reminders ring even when it's closed."
+                    : "Alerts while NudgeMe is open or in the background. For alerts when it's fully closed, add them to your calendar above."
+              }
               checked={s.notify}
               onChange={async (v) => {
-                if (!v) return actions.setSettings({ notify: false });
-                const ok = await askNotify();
+                if (!v) {
+                  actions.setSettings({ notify: false });
+                  await disablePush();
+                  return;
+                }
+                const ok = pushSupported() ? await enablePush().catch(() => false) : await askNotify();
                 actions.setSettings({ notify: ok });
-                if (!ok) toast("Notifications are blocked in this browser's settings.");
-                else feel("save", "success");
+                if (!ok) toast("Notifications are blocked. You can allow them in your phone's settings.");
+                else (feel("save"), toast(pushSupported() ? "Reminders are on. They'll ring even with NudgeMe closed." : "Notifications are on."));
               }}
             />
           ) : (

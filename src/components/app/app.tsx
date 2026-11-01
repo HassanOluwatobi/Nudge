@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { feel, setFeedback } from "@/lib/feedback";
 import { notify, setBadge } from "@/lib/reminders";
 import { type Bucket, type Part, type Task, doneToday, hhmmToday, suggestion, todayTasks, ymd } from "@/lib/tasks";
+import { type PushItem, enablePush, pushOn, pushSupported, syncPush } from "@/lib/push";
 import { useBackClose } from "@/lib/use-back";
 import { type ExtEvent, type Source, calendlyEvents, extKey, googleEvents, googleLinkEvents, googleReady, linkEvents, noteSync, notionEvents, outlookEvents } from "@/lib/sync";
 import { useKeyboardInset } from "@/lib/use-keyboard";
@@ -152,12 +153,12 @@ export function NudgeApp() {
       const ring = () => {
         remember(key);
         toast(`Reminder: ${t.title}`, { duration: 10000, action: { label: "Start", onClick: () => (setFocusId(t.id), setTab("focus")) } });
-        if (state.settings.notify) notify(`NudgeMe: ${t.title}`, "Time for a small step.");
+        if (state.settings.notify && !pushOn()) notify(`NudgeMe: ${t.title}`, "Time for a small step.");
       };
       if (at <= now && now - at < 12 * 3600_000) ring();
       else if (at > now && at - now < 24 * 3600_000) timers.push(setTimeout(ring, at - now));
     }
-    if (state.settings.notify) {
+    if (state.settings.notify && !pushOn()) {
       const today = ymd();
       (["morning", "evening"] as const).forEach((k) => {
         const at = hhmmToday(state.settings[k]).getTime();
@@ -173,6 +174,38 @@ export function NudgeApp() {
     }
     setBadge(todayTasks(state).length);
     return () => timers.forEach(clearTimeout);
+  }, [state]);
+
+  // People who already allowed notifications move to closed-app reminders quietly. No new prompt.
+  const notifyOn = !!state?.settings.notify;
+  useEffect(() => {
+    if (notifyOn && pushSupported() && !pushOn() && Notification.permission === "granted") enablePush().catch(() => {});
+  }, [notifyOn]);
+
+  // Hand the next two weeks of reminders to the reminder sender, sealed on this phone,
+  // so they ring even when NudgeMe is closed.
+  useEffect(() => {
+    if (!state || !state.settings.notify || !pushOn()) return;
+    const id = setTimeout(() => {
+      const now = Date.now();
+      const until = now + 14 * 864e5;
+      const items: PushItem[] = [];
+      for (const t of state.tasks) {
+        if (!t.remindAt || t.bucket === "done") continue;
+        const at = Date.parse(t.remindAt);
+        if (at > now && at < until) items.push({ at, title: t.title, body: "Time for a small step.", url: "/", tag: `task-${t.id}` });
+      }
+      for (let d = 0; d < 14; d++) {
+        const day = new Date(now + d * 864e5);
+        (["morning", "evening"] as const).forEach((k) => {
+          const [h, m] = state.settings[k].split(":").map(Number);
+          const at = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h, m).getTime();
+          if (at > now) items.push({ at, title: k === "morning" ? "Morning kickoff" : "Evening wrap-up", body: k === "morning" ? "Two minutes to pick what matters today." : "See what you did and let the rest wait.", url: `/?from=${k}`, tag: `${k}-${ymd(day)}` });
+        });
+      }
+      syncPush(items.sort((a, b) => a.at - b.at).slice(0, 250)).catch(() => {});
+    }, 1500);
+    return () => clearTimeout(id);
   }, [state]);
 
   // Quietly check connected calendars when the app opens, and again when you come back to it.

@@ -1,5 +1,5 @@
 // NudgeMe service worker: network first, fall back to cache so the app opens offline.
-const CACHE = "nudgeme-v20-0";
+const CACHE = "nudgeme-v20-1";
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/manifest.webmanifest", "/icon-192.png"])));
   self.skipWaiting();
@@ -21,6 +21,24 @@ self.addEventListener("fetch", (e) => {
       .catch(() => caches.match(req).then((r) => r || caches.match("/")))
   );
 });
+// A reminder sent by the NudgeMe reminder sender. The phone sealed it, the push service opened it here.
+self.addEventListener("push", (e) => {
+  let d = {};
+  try {
+    d = e.data ? e.data.json() : {};
+  } catch (err) {
+    d = { title: "NudgeMe", body: e.data ? e.data.text() : "" };
+  }
+  e.waitUntil(
+    self.registration.showNotification(d.title || "NudgeMe", {
+      body: d.body || "",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      tag: d.tag || undefined,
+      data: { url: d.url || "/" },
+    })
+  );
+});
 // Tapping a NudgeMe notification opens the app.
 self.addEventListener("notificationclick", (e) => {
   e.notification.close();
@@ -28,7 +46,8 @@ self.addEventListener("notificationclick", (e) => {
   e.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((cs) => {
       const c = cs.find((x) => "focus" in x);
-      return c ? c.focus() : self.clients.openWindow(url);
+      if (c) return c.focus().then((w) => (w && "navigate" in w && url !== "/" ? w.navigate(url) : w));
+      return self.clients.openWindow(url);
     })
   );
 });
