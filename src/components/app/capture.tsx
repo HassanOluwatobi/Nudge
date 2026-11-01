@@ -54,7 +54,7 @@ export function Capture({
     if (final) {
       setInterim("");
       setText((v) => {
-        const next = (v ? `${v} ${t}` : t).slice(0, kind === "task" ? MAX_TITLE : 2000);
+        const next = (v ? `${v}\n${t}` : t).slice(0, 2000);
         writeDraft(next);
         return next;
       });
@@ -129,7 +129,7 @@ export function Capture({
             ref={input}
             autoFocus
             value={text + (interim ? (text ? " " : "") + interim : "")}
-            maxLength={kind === "task" ? MAX_TITLE : 2000}
+            maxLength={2000}
             rows={3}
             placeholder={kind === "task" ? "What do you need to do?" : kind === "idea" ? "What is the idea?" : "What do you want to keep?"}
             onChange={(e) => {

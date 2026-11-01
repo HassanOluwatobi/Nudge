@@ -37,14 +37,15 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
   // Live words while you speak. They become real text once the browser is sure.
   const [interim, setInterim] = useState("");
   const speech = useSpeech((t, final) => {
-    if (final) setText((v) => (v ? `${v} ${t}` : t).slice(0, kind === "task" ? MAX_TITLE : 2000));
+    // Each pause in speech is a new line, so each thing you say becomes its own task.
+    if (final) setText((v) => (v ? `${v}\n${t}` : t).slice(0, 2000));
     else setInterim(t);
     requestAnimationFrame(grow);
   });
   const open = focused || !!text || !!interim || speech.listening;
   const dup = kind === "task" && text.trim().length > 2 && isDuplicate(state, text);
   // Show how a brain dump will be cut up, live, while you type or speak.
-  const live = interim ? (text ? `${text} ${interim}` : interim) : text;
+  const live = interim ? (text ? `${text}\n${interim}` : interim) : text;
   const parts = kind === "task" && live.trim() ? splitLines(live) : [];
 
   const grow = () => {
@@ -61,7 +62,7 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
     const typed = textState;
     if (speech.listening) speech.stopQuiet();
     // Keep any words still being heard when Save is tapped.
-    const text = interim ? (typed ? `${typed} ${interim}` : interim) : typed;
+    const text = interim ? (typed ? `${typed}\n${interim}` : interim) : typed;
     setInterim("");
     if (!text.trim()) return;
     if (kind === "task") {
@@ -119,8 +120,8 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
           id="quick"
           ref={field}
           rows={1}
-          value={interim ? (text ? `${text} ${interim}` : interim) : text}
-          maxLength={kind === "task" ? MAX_TITLE : 2000}
+          value={interim ? (text ? `${text}\n${interim}` : interim) : text}
+          maxLength={2000}
           onChange={(e) => (setText(e.target.value), setInterim(""), grow())}
           onFocus={() => setFocused(true)}
           onBlur={() => {
