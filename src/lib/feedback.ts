@@ -220,26 +220,68 @@ function iosTap() {
     input.setAttribute("switch", "");
     input.tabIndex = -1;
     label.appendChild(input);
-    document.body.appendChild(label);
     iosSwitch = label;
   }
+  // Modal dialogs make the rest of the page inert, so the switch lives inside whatever is on top.
+  const host = document.querySelector("dialog[open]") ?? document.querySelector("[role='dialog'][aria-modal='true']") ?? document.body;
+  if (iosSwitch.parentElement !== host) host.appendChild(iosSwitch);
   iosSwitch.click();
 }
 
-export type Haptic = "light" | "medium" | "success" | "warning";
+export type Haptic = "light" | "medium" | "heavy" | "success" | "warning";
+
+const RANK: Record<Haptic, number> = { light: 1, medium: 2, heavy: 3, success: 4, warning: 4 };
+let last = { t: 0, r: 0 };
 
 export function haptic(h: Haptic = "light") {
   if (!enabledHaptics || typeof navigator === "undefined") return;
+  // One haptic per moment. A stronger one may replace a weaker one fired a beat earlier.
+  const now = performance.now();
+  if (now - last.t < 60 && RANK[h] <= last.r) return;
+  last = { t: now, r: RANK[h] };
   if ("vibrate" in navigator && typeof navigator.vibrate === "function") {
-    navigator.vibrate(h === "light" ? 8 : h === "medium" ? 16 : h === "success" ? [12, 60, 24] : [20, 40, 20]);
+    const pattern: Record<Haptic, number | number[]> = { light: 10, medium: 18, heavy: 28, success: [14, 50, 14, 50, 30], warning: [26, 70, 26] };
+    navigator.vibrate(pattern[h]);
     return;
   }
   iosTap();
-  if (h === "success" || h === "warning") setTimeout(iosTap, 90);
+  if (h === "heavy") setTimeout(iosTap, 40);
+  if (h === "success") {
+    setTimeout(iosTap, 80);
+    setTimeout(iosTap, 170);
+  }
+  if (h === "warning") setTimeout(iosTap, 110);
 }
+
+// Every sound has a matching touch, so the two always arrive together.
+const DEFAULT_HAPTIC: Record<Sound, Haptic> = {
+  tap: "light",
+  tick: "light",
+  open: "medium",
+  step: "medium",
+  unstep: "light",
+  save: "medium",
+  start: "heavy",
+  undo: "light",
+  done: "success",
+  finish: "success",
+  end: "warning",
+};
 
 /** Sound and touch together, on the same frame. */
 export function feel(s: Sound, h?: Haptic) {
   play(s);
-  if (h) haptic(h);
+  haptic(h && RANK[h] > RANK[DEFAULT_HAPTIC[s]] ? h : DEFAULT_HAPTIC[s]);
+}
+
+/** A light touch on every button press, app-wide. Specific moments add stronger ones. */
+export function installTapHaptics() {
+  if (typeof document === "undefined") return () => {};
+  const on = (e: PointerEvent) => {
+    const el = (e.target as Element | null)?.closest("button, a, [role='button'], [role='tab'], label, select, input[type='checkbox']");
+    if (!el || el.closest("[data-nohaptic]") || (el as HTMLButtonElement).disabled) return;
+    haptic("light");
+  };
+  document.addEventListener("pointerdown", on, { passive: true });
+  return () => document.removeEventListener("pointerdown", on);
 }

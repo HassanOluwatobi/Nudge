@@ -3,7 +3,7 @@
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { feel, setFeedback } from "@/lib/feedback";
+import { feel, installTapHaptics, setFeedback } from "@/lib/feedback";
 import { notify, setBadge } from "@/lib/reminders";
 import { type Bucket, type Part, type Task, doneToday, hhmmToday, suggestion, todayTasks, ymd } from "@/lib/tasks";
 import { useBackClose } from "@/lib/use-back";
@@ -93,6 +93,7 @@ export function NudgeApp() {
     window.scrollTo({ top: 0 });
   }, [tab, over]);
 
+  useEffect(() => installTapHaptics(), []);
   useEffect(() => {
     if ("serviceWorker" in navigator && !["localhost", "127.0.0.1"].includes(location.hostname)) navigator.serviceWorker.register("/sw.js").catch(() => {});
     // Opened from a calendar reminder: go straight to the check-in.

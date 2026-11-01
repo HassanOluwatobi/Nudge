@@ -1,21 +1,19 @@
 "use client";
 
-import { Bell, CalendarPlus, CircleHelp, Download, Trash2, Upload } from "lucide-react";
+import { Bell, ChevronDown, CircleHelp, Download, Trash2, Upload } from "lucide-react";
+import { AnimatePresence, motion } from "motion/react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { AI_NAME } from "@/lib/ai";
-import { askNotify, canNotify, downloadIcs, googleLink, platform, prettyTime } from "@/lib/reminders";
+import { feel } from "@/lib/feedback";
+import { askNotify, canNotify, dailyEvents, prettyTime } from "@/lib/reminders";
 import { type Settings as S, type State, sanitize, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
-import { feel } from "@/lib/feedback";
-import { Art } from "./art";
+import { CalendarButtons } from "./calendars";
+import { InstallButton } from "./install";
 import { Sheet } from "./sheet";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-
-/** Reminders, check-ins, your AI, and your data. Plain words throughout. */
-// Fill in to show a support button in the credit card.
-const SUPPORT_URL = "";
 const X_URL = "https://x.com/Art_sassin";
 
 function Switch({ label, hint, checked, onChange, icon }: { label: string; hint: string; checked: boolean; onChange: (v: boolean) => void; icon?: React.ReactNode }) {
@@ -34,12 +32,35 @@ function Switch({ label, hint, checked, onChange, icon }: { label: string; hint:
   );
 }
 
+const XMark = () => (
+  <svg viewBox="0 0 24 24" className="size-3.5" fill="currentColor" aria-hidden>
+    <path d="M18.9 2H22l-6.8 7.8L23 22h-6.2l-4.9-6.4L6.3 22H3.2l7.3-8.3L1 2h6.3l4.4 5.9L18.9 2Zm-1.1 18h1.7L6.3 3.9H4.5L17.8 20Z" />
+  </svg>
+);
+
+/** Made by Hassan. Shown at the top of Settings and the foot of Today. */
+export function Credit({ compact = false }: { compact?: boolean }) {
+  return (
+    <a href={X_URL} target="_blank" rel="noopener noreferrer" onClick={() => feel("tap", "light")} className={`flex items-center gap-3 rounded-2xl bg-white ring-1 ring-line transition-transform active:scale-[0.98] ${compact ? "p-2.5 pl-3" : "p-3"}`}>
+      <span className="grid size-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-signal to-[#7b5cff] text-[15px] font-semibold text-white">H</span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[15px] font-semibold">Made by Hassan</span>
+        <span className="t-small block text-ink-2">Say hi or share feedback</span>
+      </span>
+      <span className="inline-flex h-9 items-center gap-1.5 rounded-full bg-ink px-3 text-[13px] font-semibold text-white">
+        <XMark /> @Art_sassin
+      </span>
+    </a>
+  );
+}
+
+/** Reminders, check-ins, your AI, and your data. Plain words throughout. */
 export function Settings({ open, onClose, state, actions, onCheckin, onGuide }: { open: boolean; onClose: () => void; state: State; actions: Actions; onCheckin: (k: "morning" | "evening" | "weekly") => void; onGuide: () => void }) {
   const [clear, setClear] = useState(false);
+  const [dataOpen, setDataOpen] = useState(false);
   const file = useRef<HTMLInputElement>(null);
   const s = state.settings;
   const count = state.tasks.length + state.entries.length;
-  const plat = typeof window === "undefined" ? "other" : platform();
 
   const exportData = () => {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
@@ -47,9 +68,9 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide }: 
     a.href = URL.createObjectURL(blob);
     a.download = `nudgeme-backup-${ymd()}.json`;
     a.click();
-    feel("save", "light");
-    toast("Backup downloaded. Keep the file somewhere safe.");
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    feel("save", "medium");
+    toast("Backup downloaded. Keep the file somewhere safe.");
   };
   const importData = async (f: File) => {
     try {
@@ -66,62 +87,53 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide }: 
   };
 
   return (
-    <Sheet open={open} onClose={() => (setClear(false), onClose())} title="Settings">
-      {/* Check-ins and reminders */}
-      <section className="mt-2">
+    <Sheet open={open} onClose={() => (setClear(false), setDataOpen(false), onClose())} title="Settings">
+      <div className="mt-2">
+        <Credit compact />
+      </div>
+
+      <section className="mt-6">
         <h3 className="t-label">Daily check-ins</h3>
         <div className="mt-2 divide-y divide-line rounded-2xl bg-white ring-1 ring-line">
           {(["morning", "evening"] as const).map((k) => (
-            <label key={k} className="flex min-h-[56px] items-center justify-between px-4">
+            <div key={k} className="flex min-h-[60px] items-center justify-between px-4">
               <span>
                 <span className="block font-medium">{k === "morning" ? "Morning kickoff" : "Evening wrap-up"}</span>
-                <button type="button" className="t-small text-signal-ink underline-offset-2 hover:underline" onClick={(e) => (e.preventDefault(), onClose(), onCheckin(k))}>
+                <button type="button" className="t-small text-signal-ink" onClick={() => (onClose(), onCheckin(k))}>
                   Do it now
                 </button>
               </span>
-              <input type="time" value={s[k]} onChange={(e) => e.target.value && actions.setSettings({ [k]: e.target.value } as Partial<S>)} className="rounded-xl bg-[#f4efe6] px-3 py-2 text-[16px] font-medium tabular-nums" aria-label={`${k} check-in time`} />
-            </label>
+              <input type="time" value={s[k]} onChange={(e) => e.target.value && actions.setSettings({ [k]: e.target.value } as Partial<S>)} className="rounded-xl bg-white px-3 py-2 text-[16px] font-medium tabular-nums ring-1 ring-line" aria-label={`${k} check-in time`} />
+            </div>
           ))}
-          <label className="flex min-h-[56px] items-center justify-between px-4">
+          <div className="flex min-h-[60px] items-center justify-between px-4">
             <span>
               <span className="block font-medium">Weekly reset</span>
-              <button type="button" className="t-small text-signal-ink underline-offset-2 hover:underline" onClick={(e) => (e.preventDefault(), onClose(), onCheckin("weekly"))}>
+              <button type="button" className="t-small text-signal-ink" onClick={() => (onClose(), onCheckin("weekly"))}>
                 Do it now
               </button>
             </span>
-            <select value={s.weeklyDay} onChange={(e) => actions.setSettings({ weeklyDay: Number(e.target.value) })} className="rounded-xl bg-paper px-3 py-2 text-[16px] font-medium" aria-label="Weekly reset day">
+            <select value={s.weeklyDay} onChange={(e) => actions.setSettings({ weeklyDay: Number(e.target.value) })} className="rounded-xl bg-white px-3 py-2 text-[16px] font-medium ring-1 ring-line" aria-label="Weekly reset day">
               {DAYS.map((d, i) => (
                 <option key={d} value={i}>
                   {d}
                 </option>
               ))}
             </select>
-          </label>
+          </div>
         </div>
       </section>
 
       <section className="mt-6">
         <h3 className="t-label">Reminders</h3>
         <div className="mt-2 rounded-2xl bg-white p-4 ring-1 ring-line">
-          <p className="font-medium">Get nudged even when NudgeMe is closed</p>
+          <p className="font-medium">Add your check-ins to a calendar</p>
           <p className="t-small mt-1 text-ink-2">
-            Your phone&apos;s calendar rings at {prettyTime(s.morning)} and {prettyTime(s.evening)} every day and opens NudgeMe. Free and private.
+            Every day at {prettyTime(s.morning)} and {prettyTime(s.evening)}. It works even when NudgeMe is closed.
           </p>
-          {plat === "android" ? (
-            <div className="mt-3 grid grid-cols-2 gap-2">
-              {(["morning", "evening"] as const).map((k) => (
-                <a key={k} href={googleLink(k, s[k])} target="_blank" rel="noopener noreferrer" className="btn btn-line min-h-11 gap-1.5 px-3 text-[14px]" onClick={() => actions.setSettings({ calendarAdded: ymd() })}>
-                  <CalendarPlus className="size-4" /> Add {k}
-                </a>
-              ))}
-            </div>
-          ) : (
-            <button type="button" className="btn btn-line mt-3 min-h-11 w-full gap-2 text-[15px]" onClick={() => (downloadIcs({ morning: s.morning, evening: s.evening }), actions.setSettings({ calendarAdded: ymd() }))}>
-              <CalendarPlus className="size-4" /> {s.calendarAdded ? "Add to my calendar again" : "Add to my calendar"}
-            </button>
-          )}
-          {s.calendarAdded && <p className="t-small mt-2 text-success">Added. If you change the times, add them again.</p>}
-
+          <div className="mt-3">
+            <CalendarButtons events={dailyEvents({ morning: s.morning, evening: s.evening })} file="nudgeme-check-ins" onAdded={() => actions.setSettings({ calendarAdded: ymd() })} label={s.calendarAdded ? "Added. If you change the times, add them again." : "Google, Apple or Outlook. Tap one."} />
+          </div>
           {canNotify() && (
             <div className="mt-3 border-t border-line">
               <Switch
@@ -147,7 +159,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide }: 
         <div className="mt-2 rounded-2xl bg-white px-4 ring-1 ring-line">
           <Switch label="Sounds" hint="Soft wooden taps and chimes when you get things done." checked={s.sound} onChange={(v) => (actions.setSettings({ sound: v }), v && setTimeout(() => feel("done"), 50))} />
           <div className="border-t border-line" />
-          <Switch label="Haptics" hint="Small vibrations on taps and wins, where your phone supports it." checked={s.haptics} onChange={(v) => (actions.setSettings({ haptics: v }), v && setTimeout(() => feel("tick", "success"), 50))} />
+          <Switch label="Haptics" hint="Little taps you can feel, where your phone supports it." checked={s.haptics} onChange={(v) => (actions.setSettings({ haptics: v }), v && setTimeout(() => feel("tick", "success"), 50))} />
         </div>
       </section>
 
@@ -163,73 +175,63 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide }: 
         </div>
       </section>
 
-      <section className="mt-6">
-        <h3 className="t-label">Your data</h3>
-        <div className="mt-2 rounded-2xl bg-white p-4 ring-1 ring-line">
-          <p className="font-medium">Everything stays on this device</p>
-          <p className="t-small mt-1 text-ink-2">No account, and nothing is sent to a server. Voice typing uses your browser&apos;s own speech feature, and some browsers send audio to their online service for it. Clearing your browser data also clears NudgeMe.</p>
-          <p className="t-small mt-2 text-ink-2">
-            <span className="font-semibold text-ink">Download a backup</span> saves one file with all your tasks, ideas and settings. Keep it somewhere safe.{" "}
-            <span className="font-semibold text-ink">Restore from a backup</span> loads that file back, for example on a new phone or after clearing your browser. It replaces what is here now, and you can undo.
-          </p>
-        </div>
-        <div className="mt-2 grid gap-2">
-          <button type="button" className="btn btn-line w-full justify-start gap-3" onClick={exportData} disabled={!count}>
-            <Download className="size-[18px] text-ink-2" /> Download a backup
-          </button>
-          <button type="button" className="btn btn-line w-full justify-start gap-3" onClick={() => file.current?.click()}>
-            <Upload className="size-[18px] text-ink-2" /> Restore from a backup
-          </button>
-          <input ref={file} type="file" accept="application/json,.json" className="hidden" onChange={(e) => (e.target.files?.[0] && importData(e.target.files[0]), (e.target.value = ""))} />
-          {clear ? (
-            <div className="flex items-center justify-between gap-2 rounded-2xl bg-danger-soft p-2 pl-4" role="group" aria-label="Confirm clear">
-              <span className="text-[15px]">Delete everything?</span>
-              <div className="flex gap-1">
-                <button type="button" className="btn btn-quiet min-h-11" onClick={() => setClear(false)}>
-                  Keep
-                </button>
-                <button type="button" className="btn btn-danger min-h-11 px-4" onClick={() => (actions.clearAll(), setClear(false), onClose(), toast("Everything was cleared."))}>
-                  Delete all
-                </button>
-              </div>
-            </div>
-          ) : (
-            <button type="button" className="btn btn-quiet w-full justify-start gap-3 text-danger" onClick={() => setClear(true)} disabled={!count}>
-              <Trash2 className="size-[18px]" /> Clear everything
-            </button>
-          )}
-        </div>
-        <p className="t-small mt-4 text-ink-3">Add NudgeMe to your home screen from your browser&apos;s Share or menu button. It works offline after the first visit.</p>
-      </section>
-
-      <section className="mt-6">
-        <button type="button" className="btn btn-line w-full gap-2" onClick={() => (onClose(), onGuide())}>
+      <section className="mt-6 space-y-2">
+        <InstallButton />
+        <button type="button" className="btn btn-line mt-2 w-full gap-2" onClick={() => (onClose(), onGuide())}>
           <CircleHelp className="size-[18px]" /> How NudgeMe works
         </button>
       </section>
 
-      <section className="mt-6 overflow-hidden rounded-[22px] bg-white ring-1 ring-line">
-        <div className="relative h-20">
-          <Art mode={0} shift={0.25} />
-        </div>
-        <div className="p-4">
-          <p className="t-label">Made by</p>
-          <p className="mt-1 text-[19px] font-semibold tracking-[-0.01em]">Hassan</p>
-          <p className="t-small mt-1 text-ink-2">A designer in Lagos building calm tools for busy minds. Say hi, share feedback, or follow along as NudgeMe grows.</p>
-          <div className={`mt-3 grid gap-2 ${SUPPORT_URL ? "grid-cols-2" : ""}`}>
-            <a href={X_URL} target="_blank" rel="noopener noreferrer" className="btn btn-ink min-h-11 gap-2 text-[15px]">
-              <svg viewBox="0 0 24 24" className="size-4" fill="currentColor" aria-hidden>
-                <path d="M18.9 2H22l-6.8 7.8L23 22h-6.2l-4.9-6.4L6.3 22H3.2l7.3-8.3L1 2h6.3l4.4 5.9L18.9 2Zm-1.1 18h1.7L6.3 3.9H4.5L17.8 20Z" />
-              </svg>
-              @Art_sassin
-            </a>
-            {SUPPORT_URL && (
-              <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer" className="btn btn-line min-h-11 gap-2 text-[15px]">
-                ☕ Buy me a coffee
-              </a>
-            )}
-          </div>
-        </div>
+      <section className="mt-6 rounded-2xl bg-white ring-1 ring-line">
+        <button type="button" aria-expanded={dataOpen} onClick={() => (setDataOpen((v) => !v), feel("tap", "light"))} className="flex min-h-[60px] w-full items-center justify-between px-4 text-left">
+          <span>
+            <span className="block font-medium">Your data</span>
+            <span className="t-small text-ink-2">Stays on this device. Backup, restore, clear.</span>
+          </span>
+          <motion.span animate={{ rotate: dataOpen ? 180 : 0 }} transition={{ type: "spring", bounce: 0, duration: 0.3 }}>
+            <ChevronDown className="size-5 text-ink-3" />
+          </motion.span>
+        </button>
+        <AnimatePresence initial={false}>
+          {dataOpen && (
+            <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.36 }} className="overflow-hidden">
+              <div className="border-t border-line px-4 pb-4 pt-3">
+                <p className="t-small text-ink-2">No account, and nothing is sent to a server. Voice typing uses your browser&apos;s speech feature, and some browsers send audio to their online service for it. Clearing your browser data also clears NudgeMe.</p>
+                <div className="mt-3 grid gap-2">
+                  <button type="button" className="btn btn-line w-full justify-start gap-3 px-4" onClick={exportData} disabled={!count}>
+                    <Download className="size-[18px] text-ink-2" />
+                    <span className="text-left">
+                      <span className="block">Download a backup</span>
+                    </span>
+                  </button>
+                  <p className="t-small -mt-1 px-1 text-ink-3">Saves one file with all your tasks, ideas and settings.</p>
+                  <button type="button" className="btn btn-line w-full justify-start gap-3 px-4" onClick={() => file.current?.click()}>
+                    <Upload className="size-[18px] text-ink-2" /> Restore from a backup
+                  </button>
+                  <p className="t-small -mt-1 px-1 text-ink-3">Loads that file back, for example on a new phone. You can undo.</p>
+                  <input ref={file} type="file" accept="application/json,.json" className="hidden" onChange={(e) => (e.target.files?.[0] && importData(e.target.files[0]), (e.target.value = ""))} />
+                  {clear ? (
+                    <div className="flex items-center justify-between gap-2 rounded-2xl bg-danger-soft p-2 pl-4" role="group" aria-label="Confirm clear">
+                      <span className="text-[15px]">Delete everything?</span>
+                      <div className="flex gap-1">
+                        <button type="button" className="btn btn-quiet min-h-11" onClick={() => setClear(false)}>
+                          Keep
+                        </button>
+                        <button type="button" className="btn btn-danger min-h-11 px-4" onClick={() => (actions.clearAll(), feel("undo", "warning"), setClear(false), onClose(), toast("Everything was cleared."))}>
+                          Delete all
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button type="button" className="btn btn-quiet w-full justify-start gap-3 px-4 text-danger" onClick={() => (setClear(true), feel("tap", "warning"))} disabled={!count}>
+                      <Trash2 className="size-[18px]" /> Clear everything
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </section>
     </Sheet>
   );

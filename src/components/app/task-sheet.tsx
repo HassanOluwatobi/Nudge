@@ -81,7 +81,7 @@ export function TaskSheet({
           <label htmlFor="t-title" className="sr-only">
             Task
           </label>
-          <textarea id="t-title" value={title} rows={2} maxLength={MAX_TITLE} onChange={(e) => setTitle(e.target.value)} onBlur={commit} className="t-title w-full resize-none bg-transparent text-[25px] focus:outline-none" />
+          <textarea id="t-title" value={title} rows={2} maxLength={MAX_TITLE} onChange={(e) => setTitle(e.target.value)} onBlur={commit} className="t-title w-full resize-none rounded-[16px] border border-line bg-white px-3.5 py-2.5 text-[23px] transition-[border-color,box-shadow] focus:border-signal focus:shadow-[0_0_0_4px_rgb(29_77_245/0.12)] focus:outline-none" />
         </div>
       </div>
 
@@ -118,7 +118,7 @@ export function TaskSheet({
           </div>
           <ul className="mt-2 space-y-1.5">
             {t.steps.map((s) => (
-              <li key={s.id} className="flex items-center gap-2 rounded-xl bg-white pl-2 pr-1 ring-1 ring-line/70">
+              <li key={s.id} className="flex items-center gap-2 rounded-[14px] bg-white pl-2 pr-1 ring-1 ring-line transition-shadow focus-within:ring-2 focus-within:ring-signal/50">
                 <button type="button" aria-pressed={s.d} aria-label={s.d ? "Mark step not done" : "Mark step done"} onClick={() => (actions.toggleStep(t.id, s.id), feel(s.d ? "unstep" : "step", "light"))} className="grid size-9 shrink-0 place-items-center">
                   <StepCheck done={s.d} hue={t.hue} size={20} />
                 </button>

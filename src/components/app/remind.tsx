@@ -1,11 +1,12 @@
 "use client";
 
-import { Bell, CalendarPlus, X } from "lucide-react";
+import { Bell, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { feel } from "@/lib/feedback";
-import { askNotify, remindChoices, remindOnce } from "@/lib/reminders";
+import { askNotify, remindChoices, taskEvent } from "@/lib/reminders";
+import { CalendarButtons } from "./calendars";
 import { type Task, addDays, prettyWhen, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 
@@ -43,10 +44,13 @@ export function RemindPicker({ task, actions, compact = false }: { task: Task; a
             Remove
           </button>
         </div>
-        <button type="button" className="btn btn-line mt-2 min-h-11 w-full gap-2 text-[15px]" onClick={() => remindOnce(task.title, new Date(task.remindAt!))}>
-          <CalendarPlus className="size-4" /> Add to my calendar too
-        </button>
-        {!compact && <p className="t-small mt-2 text-ink-3">Your calendar rings even when NudgeMe is closed. NudgeMe also pings you while it is open.</p>}
+        <div className="mt-3 border-t border-line pt-3">
+          <CalendarButtons
+            events={[taskEvent(task.title, new Date(task.remindAt!))]}
+            file="nudgeme-reminder"
+            label={compact ? "Add it to a calendar so your phone rings." : "Add it to a calendar so your phone rings even when NudgeMe is closed."}
+          />
+        </div>
       </div>
     );
   }
