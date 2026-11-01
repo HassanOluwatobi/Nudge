@@ -78,9 +78,9 @@ function Logo({ className = "size-7" }: { className?: string }) {
 }
 
 const SHOTS = [
-  { key: "plan", tab: "Empty your head", alt: "The Plan screen in Shrink my day, with this week's tasks and someday ideas" },
-  { key: "home", tab: "Pick one thing", alt: "The Home screen in Shrink my day, showing one task and its next step" },
-  { key: "focus", tab: "Take one tiny step", alt: "The Focus screen in Shrink my day, with one step and a timer" },
+  { key: "plan", short: "Empty head", tab: "Empty your head", alt: "The Plan screen in Shrink my day, with this week's tasks and someday ideas" },
+  { key: "home", short: "Pick one", tab: "Pick one thing", alt: "The Home screen in Shrink my day, showing one task and its next step" },
+  { key: "focus", short: "Tiny step", tab: "Take one tiny step", alt: "The Focus screen in Shrink my day, with one step and a timer" },
 ] as const;
 
 function Phone({ src, alt }: { src: string; alt: string }) {
@@ -153,18 +153,19 @@ function Hero() {
       </div>
 
       {/* Tabs, like flicking between screens of the app */}
-      <div className="mt-14 flex justify-center sm:mt-16">
-        <div role="tablist" aria-label="See the app" className="flex rounded-full bg-[#e8e2d5] p-1">
+      <div className="mt-14 flex justify-center px-2 sm:mt-16 sm:px-0">
+        <div role="tablist" aria-label="See the app" className="grid w-full max-w-[340px] grid-cols-3 rounded-full bg-[#e8e2d5] p-1 sm:flex sm:w-auto sm:max-w-none">
           {SHOTS.map((t, i) => (
             <button
               key={t.key}
               role="tab"
               aria-selected={on === i}
               onClick={() => pick(i)}
-              className={`relative h-9 whitespace-nowrap rounded-full px-3 text-[12.5px] font-medium transition-colors sm:h-10 sm:px-5 sm:text-[14px] ${on === i ? "text-ink" : "text-ink-2 hover:text-ink"}`}
+              className={`relative h-9 whitespace-nowrap rounded-full px-2 text-[13px] font-medium transition-colors sm:h-10 sm:px-5 sm:text-[14px] ${on === i ? "text-ink" : "text-ink-2 hover:text-ink"}`}
             >
               {on === i && <motion.span layoutId="hero-tab" className="absolute inset-0 rounded-full bg-white ring-1 ring-black/[0.06]" transition={{ type: "spring", bounce: 0.15, duration: 0.5 }} />}
-              <span className="relative">{t.tab}</span>
+              <span className="relative sm:hidden">{t.short}</span>
+              <span className="relative hidden sm:inline">{t.tab}</span>
             </button>
           ))}
         </div>
@@ -338,7 +339,16 @@ function How() {
     <section id="how" ref={ref} className="mx-auto max-w-6xl scroll-mt-24 px-5 py-12 sm:px-6 sm:py-16">
       <p className={EYEBROW}>How it works</p>
       <h2 className={`mt-4 max-w-[18ch] ${H2}`}>From a full head to a first step</h2>
-      <div className="mt-10 grid gap-4 lg:grid-cols-[1fr_1.25fr]">
+      <div className="mt-10 grid gap-4 lg:hidden">
+        {HOW.map((h) => (
+          <Tile key={h.title} tall sky={h.sky} title={h.title} body={h.body}>
+            <Window>
+              <PlayWhenSeen art={h.art} />
+            </Window>
+          </Tile>
+        ))}
+      </div>
+      <div className="mt-10 hidden gap-4 lg:grid lg:grid-cols-[1fr_1.25fr]">
         <div>
           <div className="h-full rounded-[24px] bg-white px-6 py-2 ring-1 ring-line sm:px-7 lg:flex lg:flex-col lg:justify-center">
             {HOW.map((h, i) => (
@@ -384,14 +394,25 @@ function How() {
   );
 }
 
-function Tile({ title, body, children, sky, className = "" }: { title: string; body: string; children: React.ReactNode; sky: SkyName; className?: string }) {
+/** Keeps the space from the start, and plays the picture once you reach it. */
+function PlayWhenSeen({ art: Pic }: { art: () => React.JSX.Element }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const seen = useInView(ref, { once: true, amount: 0.6 });
+  return (
+    <div ref={ref} className="h-[250px] bg-paper">
+      {seen && <Pic />}
+    </div>
+  );
+}
+
+function Tile({ title, body, children, sky, className = "", tall = false }: { title: string; body: string; children: React.ReactNode; sky: SkyName; className?: string; tall?: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
   const seen = useInView(ref, { once: true, amount: 0.5 });
   return (
     <div ref={ref} className={`flex flex-col overflow-hidden rounded-[24px] bg-white ring-1 ring-line ${className}`}>
-      <div className="relative mx-2 mt-2 h-[250px] overflow-hidden rounded-[16px]">
+      <div className={`relative mx-2 mt-2 overflow-hidden rounded-[16px] ${tall ? "px-3 py-6" : "h-[250px]"}`}>
         <Sky name={sky} />
-        <div className="relative h-full">{seen && children}</div>
+        <div className="relative h-full">{tall || seen ? children : null}</div>
       </div>
       <div className="px-6 pb-6 pt-5 sm:px-7">
         <h3 className="text-[18px] font-medium tracking-[-0.01em] text-ink">{title}</h3>
