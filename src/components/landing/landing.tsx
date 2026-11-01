@@ -26,11 +26,13 @@ const SUPPORT_URL = "https://selar.com/showlove/hassanx";
   band. The light drifts slowly using transform only, which stays smooth on any
   phone. Each section gets its own sky, the way a day changes colour.
 */
-type SkyName = "blue" | "violet" | "lime" | "night";
+type SkyName = "blue" | "violet" | "pink" | "peach" | "lime" | "night";
 // Calendly's one blue-to-violet family, built on the brand blue. Granola's acid lime as the one accent. Near-black for the dark moment.
 const SKIES: Record<SkyName, { base: string; a: string; b: string; c: string }> = {
   blue: { base: "linear-gradient(170deg,#3f5cf6 0%,#6d7cff 38%,#a99bff 72%,#dcb9f5 100%)", a: "#2f4cf0", b: "#e7b5ef", c: "#8e8cff" },
-  violet: { base: "linear-gradient(165deg,#7a83ff 0%,#a497ff 55%,#d7b8f7 100%)", a: "#5f6cff", b: "#efc2f0", c: "#b9a2ff" },
+  violet: { base: "linear-gradient(165deg,#b7a8ff 0%,#cdbcff 55%,#e6d8ff 100%)", a: "#a593ff", b: "#f0e4ff", c: "#cdbcff" },
+  pink: { base: "linear-gradient(160deg,#c9a6ff 0%,#e6a9ec 55%,#f6b8d4 100%)", a: "#b08cff", b: "#ffc1dc", c: "#e6a9ec" },
+  peach: { base: "linear-gradient(165deg,#ffe0c7 0%,#ffc2b0 55%,#f7b3cc 100%)", a: "#fff0d9", b: "#ff9f8a", c: "#ffc2b0" },
   lime: { base: "linear-gradient(165deg,#e2f37a 0%,#cbe653 100%)", a: "#f0fa9e", b: "#b9d93a", c: "#e2f37a" },
   night: { base: "linear-gradient(180deg,#141414 0%,#1c1c1f 100%)", a: "#2a3aa8", b: "#3d2f7a", c: "#cbe653" },
 };
@@ -314,9 +316,9 @@ function Word({ p, at, bold, children }: { p: MotionValue<number>; at: number; b
 
 const HOW = [
   { title: "Empty your head", body: "Type it or say it in one go. Every pause becomes its own task, so nothing gets lost.", art: Capture, sky: "blue" as SkyName },
-  { title: "Make big tasks small", body: "Ask the AI you already use to break a scary task into tiny steps. Paste them back in.", art: AiSteps, sky: "violet" as SkyName },
-  { title: "Pick one thing", body: "Home shows one task and its next step. Not feeling it? Pick another.", art: OneThing, sky: "blue" as SkyName },
-  { title: "Start with one tiny step", body: "Focus hides everything else. Tick a step and the next one shows up. Add a timer if it helps.", art: Timer, sky: "night" as SkyName },
+  { title: "Make big tasks small", body: "Ask the AI you already use to break a scary task into tiny steps. Paste them back in.", art: AiSteps, sky: "pink" as SkyName },
+  { title: "Pick one thing", body: "Home shows one task and its next step. Not feeling it? Pick another.", art: OneThing, sky: "peach" as SkyName },
+  { title: "Start with one tiny step", body: "Focus hides everything else. Tick a step and the next one shows up. Add a timer if it helps.", art: Timer, sky: "violet" as SkyName },
 ];
 
 function How() {
