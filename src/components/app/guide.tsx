@@ -302,7 +302,7 @@ const PAGES = [
   { art: Timer, tag: "Focus", title: "One step at a time", body: "Focus hides everything else. Tick a step and the next one shows up. Add a timer if it helps." },
   { art: IdeasBack, tag: "Ideas", title: "Save ideas for later", body: "Write it down and stop holding it in your head. I'll bring it back in a few days." },
   { art: Reminders, tag: "Reminders", title: "Timely reminders", body: "Your phone notifies you when it's time, even with the site closed." },
-  { art: Devices, tag: "Devices", title: "Your phone and laptop, in step", body: "In Settings, tap Show a code and type it on your other device. Your tasks stay the same on both. No account, and I still can't see them." },
+  { art: Devices, tag: "Devices", title: "Sync multiple devices", body: "No sign-up needed. Tap Show a code in Settings and type it on your other device. Your tasks are locked before they leave, so the app never stores anything it can read." },
 ];
 
 export function Guide({ open, onClose }: { open: boolean; onClose: () => void }) {
