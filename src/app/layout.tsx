@@ -18,6 +18,20 @@ export const metadata: Metadata = {
   title: "Shrink my day",
   description: "One calm step at a time. Put down what is on your mind, choose one thing, and start with a small first step. Free, no account, works offline.",
   manifest: "/manifest.webmanifest",
+  openGraph: {
+    type: "website",
+    url: "https://shrinkmyday.com",
+    siteName: "Shrink my day",
+    title: "Shrink my day | A calm to-do list for ADHD brains",
+    description: "Put it all down, pick one thing, and start with a tiny step. Free, no sign up, works on your phone and laptop.",
+    images: [{ url: "/og.png", width: 1200, height: 630, alt: "Shrink my day: too much on your mind?" }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Shrink my day | A calm to-do list for ADHD brains",
+    description: "Put it all down, pick one thing, and start with a tiny step. Free, no sign up.",
+    images: ["/og.png"],
+  },
   appleWebApp: { capable: true, title: "Shrink my day", statusBarStyle: "default" },
   icons: { icon: [{ url: "/icon.svg", type: "image/svg+xml" }], apple: "/apple-touch-icon.png" },
 };
