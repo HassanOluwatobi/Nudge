@@ -1116,10 +1116,10 @@ html[data-theme="dark"] [aria-label="How Shrink my day works"] {
     color: var(--ink);
   }
   .task-row {
-    transition: box-shadow 160ms ease, transform 160ms ease;
+    transition: border-color 160ms ease, background-color 160ms ease;
   }
   .task-row:hover {
-    box-shadow: 0 0 0 1px color-mix(in oklab, var(--line) 50%, var(--ink-3));
+    border-color: color-mix(in oklab, var(--line) 55%, var(--ink-3));
   }
   .chip:hover,
   .btn-line:hover,

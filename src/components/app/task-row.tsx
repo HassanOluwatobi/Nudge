@@ -1,7 +1,7 @@
 "use client";
 
 import { Bell, ChevronDown, SunMedium, Trash2 } from "lucide-react";
-import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion } from "motion/react";
+import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { feel, haptic } from "@/lib/feedback";
@@ -105,16 +105,19 @@ export function SwipeDelete({ children, onDelete, onTomorrow, label, onDragStart
   const [open, setOpen] = useState(false);
   const spring = { type: "spring" as const, bounce: 0, duration: 0.32 };
   const close = () => (animate(x, 0, spring), setOpen(false));
+  // The actions behind a row only show while it is moved, so nothing peeks out at the rounded corners.
+  const showDelete = useTransform(x, (v) => (v < -0.5 ? 1 : 0));
+  const showTomorrow = useTransform(x, (v) => (v > 0.5 ? 1 : 0));
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative isolate overflow-hidden rounded-[18px]">
       {onTomorrow && (
-        <button type="button" tabIndex={open ? 0 : -1} aria-label={`Move ${label} to tomorrow`} onClick={() => (feel("save", "light"), onTomorrow())} className="absolute inset-y-0 left-0 flex w-[92px] flex-col items-center justify-center gap-0.5 bg-signal text-[12px] font-semibold text-white">
+        <motion.button style={{ opacity: showTomorrow }} type="button" tabIndex={open ? 0 : -1} aria-label={`Move ${label} to tomorrow`} onClick={() => (feel("save", "light"), onTomorrow())} className="absolute inset-y-0 left-0 flex w-[92px] flex-col items-center justify-center gap-0.5 bg-signal text-[12px] font-semibold text-white">
           <SunMedium className="size-[18px]" /> Tomorrow
-        </button>
+        </motion.button>
       )}
-      <button type="button" tabIndex={open ? 0 : -1} aria-label={`Delete ${label}`} onClick={() => (feel("undo", "warning"), onDelete())} className="absolute inset-y-0 right-0 flex w-[92px] flex-col items-center justify-center gap-0.5 bg-danger text-[12px] font-semibold text-white">
+      <motion.button style={{ opacity: showDelete }} type="button" tabIndex={open ? 0 : -1} aria-label={`Delete ${label}`} onClick={() => (feel("undo", "warning"), onDelete())} className="absolute inset-y-0 right-0 flex w-[92px] flex-col items-center justify-center gap-0.5 bg-danger text-[12px] font-semibold text-white">
         <Trash2 className="size-[18px]" /> Delete
-      </button>
+      </motion.button>
       <motion.div
         style={{ x }}
         drag="x"
