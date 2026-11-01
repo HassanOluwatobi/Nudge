@@ -1,10 +1,10 @@
 "use client";
 
-import { Check, Mic, Sparkles } from "lucide-react";
+import { Check, Mic } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { type Bucket, type EntryKind, type Part, type State, type Task, BUCKET_NAME, MAX_TITLE, PARTS, PART_NAME, isDuplicate, suggestStep } from "@/lib/tasks";
+import { type Bucket, type EntryKind, type Part, type State, type Task, BUCKET_NAME, MAX_TITLE, PARTS, PART_NAME, isDuplicate } from "@/lib/tasks";
 import { type Actions, DRAFT_KEY } from "@/lib/use-tasks";
 import { useSpeech } from "@/lib/use-speech";
 import { feel } from "@/lib/feedback";

@@ -1,13 +1,14 @@
 "use client";
 
-import { ArrowUp, ChevronDown, Lightbulb, Mic, NotebookPen, Sparkles, Trash2 } from "lucide-react";
+import { Archive, ArrowUp, ChevronDown, Lightbulb, Mic, NotebookPen, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { type Entry, type EntryKind, type State, prettyDue, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { useSpeech } from "@/lib/use-speech";
 import { feel } from "@/lib/feedback";
+import { useHold } from "@/lib/use-hold";
 import { keepFocus } from "./steps";
 import { Sheet } from "./sheet";
 import { TopBar } from "./today";
@@ -22,6 +23,12 @@ export function Ideas({ state, actions, onAdd, onSettings, onHelp, doneCount, to
   const [kind, setKind] = useState<EntryKind>("idea");
   const [text, setText] = useState("");
   const [open, setOpen] = useState<Entry | null>(null);
+  const [menu, setMenu] = useState<Entry | null>(null);
+  // Keep the last item while the menu sheet slides away.
+  const [menuLast, setMenuLast] = useState<Entry | null>(null);
+  useEffect(() => {
+    if (menu) setMenuLast(menu);
+  }, [menu]);
   const [edit, setEdit] = useState("");
   const [showArchived, setShowArchived] = useState(false);
   const speech = useSpeech((t, final) => final && setText((v) => (v ? `${v} ${t}` : t)));
@@ -96,15 +103,7 @@ export function Ideas({ state, actions, onAdd, onSettings, onHelp, doneCount, to
         <ul className="mt-6 space-y-2">
           <AnimatePresence initial={false}>
             {list.map((e) => (
-              <motion.li key={e.id} layout="position" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97 }} className="task-row">
-                <button type="button" className="w-full p-4 text-left" onClick={() => (setOpen(e), setEdit(e.text))}>
-                  <p className="whitespace-pre-wrap text-[16px] leading-snug [overflow-wrap:anywhere]">{e.text}</p>
-                  <p className="t-small mt-1.5 text-ink-3">
-                    {ago(e.createdAt)}
-                    {e.kind === "idea" && e.resurfaceAt && ` · comes back ${e.resurfaceAt <= today ? "today" : prettyDue(e.resurfaceAt, today).toLowerCase()}`}
-                  </p>
-                </button>
-              </motion.li>
+              <EntryItem key={e.id} entry={e} today={today} onOpen={() => (setOpen(e), setEdit(e.text))} onMenu={() => setMenu(e)} />
             ))}
           </AnimatePresence>
         </ul>
@@ -171,6 +170,48 @@ export function Ideas({ state, actions, onAdd, onSettings, onHelp, doneCount, to
           </div>
         )}
       </Sheet>
+      <Sheet open={!!menu} onClose={() => setMenu(null)} title={menu?.kind === "note" ? "Note" : "Idea"}>
+        {menuLast && (
+          <ul className="mt-1 pb-2">
+            {[
+              { label: "Edit", icon: <Pencil className="size-5" />, fn: () => (setOpen(menuLast), setEdit(menuLast.text)) },
+              { label: "Make it a task", icon: <Sparkles className="size-5" />, fn: () => (actions.entryToTask(menuLast.id), toast("Added to This week.")) },
+              { label: "Archive", icon: <Archive className="size-5" />, fn: () => (actions.archiveEntry(menuLast.id), toast("Archived.")) },
+              {
+                label: "Delete",
+                icon: <Trash2 className="size-5" />,
+                danger: true,
+                fn: () => {
+                  const gone = actions.removeEntry(menuLast.id);
+                  if (gone) toast("Deleted.", { action: { label: "Undo", onClick: () => actions.putEntry(gone) } });
+                },
+              },
+            ].map((it) => (
+              <li key={it.label}>
+                <button type="button" className={`flex min-h-[52px] w-full items-center gap-3 rounded-xl px-2 text-left text-[16px] transition-colors active:bg-ink/5 ${it.danger ? "text-danger" : ""}`} onClick={() => (setMenu(null), feel("tap", "light"), it.fn())}>
+                  <span className="grid size-6 place-items-center">{it.icon}</span>
+                  {it.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Sheet>
     </div>
+  );
+}
+
+function EntryItem({ entry: e, today, onOpen, onMenu }: { entry: Entry; today: string; onOpen: () => void; onMenu: () => void }) {
+  const { bind, pressing } = useHold(() => (feel("open"), onMenu()));
+  return (
+    <motion.li layout="position" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0, scale: pressing ? 0.975 : 1 }} exit={{ opacity: 0, scale: 0.97 }} className="task-row">
+      <button type="button" {...bind} className="w-full p-4 text-left" onClick={onOpen} aria-label={`${e.text}. Open. Hold for options.`}>
+        <p className="whitespace-pre-wrap text-[16px] leading-snug [overflow-wrap:anywhere]">{e.text}</p>
+        <p className="t-small mt-1.5 text-ink-3">
+          {ago(e.createdAt)}
+          {e.kind === "idea" && e.resurfaceAt && ` · comes back ${e.resurfaceAt <= today ? "today" : prettyDue(e.resurfaceAt, today).toLowerCase()}`}
+        </p>
+      </button>
+    </motion.li>
   );
 }

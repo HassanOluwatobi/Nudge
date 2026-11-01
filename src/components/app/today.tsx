@@ -8,7 +8,9 @@ import { type Part, type State, type Task, PARTS, PART_NAME, checkinDue, doneTod
 import type { Actions } from "@/lib/use-tasks";
 import { feel } from "@/lib/feedback";
 import { Credit } from "./settings";
+import { QuickCapture } from "./quick-capture";
 import { TaskRow, Tile, DoneList } from "./task-row";
+import { useHold } from "@/lib/use-hold";
 
 export function Counter({ done, total }: { done: number; total: number }) {
   return (
@@ -96,6 +98,11 @@ export function Today({
   const date = new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
   const step = pick ? nextStep(pick) : undefined;
 
+  const pickHold = useHold(() => {
+    if (!pick) return;
+    feel("open");
+    onMenu(pick);
+  });
   const finishedOne = (t: Task) => {
     toast(`Finished: ${t.title}`, { action: { label: "Undo", onClick: () => actions.restore(t.id) } });
     announce(`Finished: ${t.title}`);
@@ -110,13 +117,15 @@ export function Today({
         <p className="t-body mt-2 text-ink-2">{date}</p>
       </div>
 
+      <QuickCapture state={state} actions={actions} announce={announce} onOpen={onOpen} />
+
       {due && (
         <motion.button
           type="button"
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => onCheckin(due)}
-          className="mt-6 flex min-h-[56px] w-full items-center gap-3 rounded-[18px] bg-white px-3 text-left ring-1 ring-line transition-transform active:scale-[0.99]"
+          className="mt-3 flex min-h-[56px] w-full items-center gap-3 rounded-[18px] bg-white px-3 text-left ring-1 ring-line transition-transform active:scale-[0.99]"
         >
           <span className="grid size-8 shrink-0 place-items-center rounded-[10px] bg-signal-soft text-signal-ink">
             {(() => {
@@ -137,7 +146,7 @@ export function Today({
           <p className="t-label px-4 pt-4 text-signal-ink">{easy ? "Today is easy" : "Start here"}</p>
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.div key={pick.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ type: "spring", bounce: 0, duration: 0.4 }} className="px-4 pb-3 pt-3">
-              <button type="button" onClick={() => onOpen(pick)} className="flex w-full items-start gap-3 text-left">
+              <button type="button" {...pickHold.bind} onClick={() => onOpen(pick)} className="flex w-full items-start gap-3 text-left" aria-label={`${pick.title}. Open details. Hold for options.`}>
                 <Tile task={pick} size={44} />
                 <span className="min-w-0 flex-1">
                   <span className="t-title block text-[26px]">{pick.title}</span>
@@ -271,7 +280,7 @@ export function Today({
           <AnimatePresence initial={false}>
             {showDone && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.36 }} className="overflow-hidden">
-                <DoneList tasks={finished} actions={actions} onOpen={onOpen} />
+                <DoneList tasks={finished} actions={actions} onOpen={onOpen} onMenu={onMenu} />
               </motion.div>
             )}
           </AnimatePresence>

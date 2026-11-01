@@ -108,7 +108,7 @@ export function Todo({
           </button>
           {!collapsed.done && (
             <>
-              {finished.length > 0 && <DoneList tasks={finished} actions={actions} onOpen={onOpen} />}
+              {finished.length > 0 && <DoneList tasks={finished} actions={actions} onOpen={onOpen} onMenu={onMenu} />}
               {earlier.length > 0 && (
                 <>
                   <button type="button" className="btn btn-quiet mt-2 gap-1 px-1 text-[14px]" aria-expanded={older} onClick={() => setOlder((v) => !v)}>
@@ -116,7 +116,7 @@ export function Todo({
                   </button>
                   {older && (
                     <div className="mt-1">
-                      <DoneList tasks={earlier.slice(0, 60)} actions={actions} onOpen={onOpen} />
+                      <DoneList tasks={earlier.slice(0, 60)} actions={actions} onOpen={onOpen} onMenu={onMenu} />
                     </div>
                   )}
                 </>

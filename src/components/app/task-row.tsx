@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { feel, haptic } from "@/lib/feedback";
 import { type Hue, type Task, fmtMins, prettyDue, stepsDone, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
+import { useHold } from "@/lib/use-hold";
 import { burstFrom } from "./petals";
 
 export function Tile({ task, size = 40 }: { task: Pick<Task, "emoji" | "title" | "hue">; size?: number }) {
@@ -158,29 +159,12 @@ export function TaskRow({
   onFinished?: (t: Task) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [pressing, setPressing] = useState(false);
-  const hold = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const held = useRef(false);
+  const { bind: holdBind, pressing, cancel: endHold } = useHold(() => (feel("open"), onMenu(task)));
   const done = task.bucket === "done";
   const n = task.steps.length;
   const k = stepsDone(task);
   const today = ymd();
   const meta = [fmtMins(task.mins), task.due && !done ? prettyDue(task.due, today) : ""].filter(Boolean).join(" · ");
-
-  const startHold = () => {
-    held.current = false;
-    setPressing(true);
-    hold.current = setTimeout(() => {
-      held.current = true;
-      setPressing(false);
-      feel("open", "medium");
-      onMenu(task);
-    }, 460);
-  };
-  const endHold = () => {
-    setPressing(false);
-    if (hold.current) clearTimeout(hold.current);
-  };
 
   return (
     <motion.li
@@ -203,20 +187,8 @@ export function TaskRow({
         <button
           type="button"
           className="flex min-h-[64px] min-w-0 flex-1 items-center gap-3 py-2.5 text-left"
-          onPointerDown={startHold}
-          onPointerUp={endHold}
-          onPointerLeave={endHold}
-          onPointerCancel={endHold}
-          onContextMenu={(e) => {
-            e.preventDefault();
-            endHold();
-            haptic("medium");
-            onMenu(task);
-          }}
-          onClick={() => {
-            if (held.current) return;
-            onOpen(task);
-          }}
+          {...holdBind}
+          onClick={() => onOpen(task)}
           aria-label={`${task.title}. Open details. Hold for quick actions.`}
         >
           <Tile task={task} />
@@ -295,7 +267,7 @@ export function TaskRow({
  * check you can tap to put a task back, the title softened, the time it was
  * finished on the right.
  */
-export function DoneList({ tasks, actions, onOpen }: { tasks: Task[]; actions: Actions; onOpen: (t: Task) => void }) {
+export function DoneList({ tasks, actions, onOpen, onMenu }: { tasks: Task[]; actions: Actions; onOpen: (t: Task) => void; onMenu?: (t: Task) => void }) {
   const time = (t: Task) => (t.doneAt ? new Date(t.doneAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "");
   const day = (t: Task) => {
     if (!t.doneAt) return "";
@@ -319,9 +291,7 @@ export function DoneList({ tasks, actions, onOpen }: { tasks: Task[]; actions: A
               <span className="scale-[0.85]">
                 <CheckButton task={t} onDone={() => actions.restore(t.id)} label={`Put back: ${t.title}`} />
               </span>
-              <button type="button" onClick={() => onOpen(t)} className="min-w-0 flex-1 py-3 pl-0.5 text-left">
-                <span className="block truncate text-[15px] text-ink-3 line-through decoration-ink-3/35 decoration-1">{t.title}</span>
-              </button>
+              <DoneTitle task={t} onOpen={onOpen} onMenu={onMenu} />
               <span className="pl-3 text-[13px] tabular-nums text-ink-3">{day(t)}</span>
             </div>
             </SwipeDelete>
@@ -329,5 +299,14 @@ export function DoneList({ tasks, actions, onOpen }: { tasks: Task[]; actions: A
         ))}
       </AnimatePresence>
     </ul>
+  );
+}
+
+function DoneTitle({ task, onOpen, onMenu }: { task: Task; onOpen: (t: Task) => void; onMenu?: (t: Task) => void }) {
+  const { bind } = useHold(() => (feel("open"), onMenu?.(task)));
+  return (
+    <button type="button" {...(onMenu ? bind : {})} onClick={() => onOpen(task)} className="min-w-0 flex-1 py-3 pl-0.5 text-left" aria-label={`${task.title}. Open details. Hold for options.`}>
+      <span className="block truncate text-[15px] text-ink-3 line-through decoration-ink-3/35 decoration-1">{task.title}</span>
+    </button>
   );
 }
