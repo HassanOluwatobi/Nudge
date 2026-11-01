@@ -1,139 +1,157 @@
 "use client";
 
-import { Feather, LayoutGrid } from "lucide-react";
+import { useEffect, useState } from "react";
+import { motion, useReducedMotion } from "motion/react";
+import { Feather, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { candidates, dayNumber, doneOn, type State, ymd } from "@/lib/nudge";
+import { candidates, isDuplicate, type State, ymd } from "@/lib/nudge";
 import type { Actions } from "@/lib/use-nudge";
 import { CaptureBar } from "@/components/nudge/capture-bar";
-import { Companion } from "./companion";
-import { EmptyCard, OneThingCard, PickCard, WinCard } from "./one-thing";
+import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
+import { useBackClose } from "@/lib/use-back";
+import { EmptyShell, FocusCard, PickShell, RestShell } from "./focus";
 
 const greeting = () => {
   const h = new Date().getHours();
-  return h < 12 ? "Good morning." : h < 17 ? "Good afternoon." : "Good evening.";
+  return h < 5 ? "Still up?" : h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
 };
 
+/** Finished things this week, one dot each. Grows, never resets with guilt. */
+export function Wins({ count, pulse }: { count: number; pulse?: boolean }) {
+  const reduce = useReducedMotion();
+  const shown = Math.min(count, 14);
+  return (
+    <div className="flex items-center gap-2" aria-label={`${count} done this week`}>
+      <div className="flex items-center gap-[5px]">
+        {Array.from({ length: Math.max(shown, 1) }).map((_, i) => (
+          <motion.span
+            key={i}
+            initial={pulse && i === shown - 1 && !reduce ? { scale: 0.3, opacity: 0 } : false}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ type: "spring", bounce: 0.4, duration: 0.5, delay: 0.15 }}
+            className={cn("size-[7px] rounded-full", count ? "bg-[var(--hot)]" : "bg-[var(--hair)]")}
+          />
+        ))}
+      </div>
+      <span className="t-label whitespace-nowrap tabular-nums">{count ? `${count} done this week` : "Fresh week"}</span>
+    </div>
+  );
+}
+
+/** One screen. A quiet header, and the one thing in the middle, like an object in your hand. */
 export function Home({
   state,
   actions,
-  cheer,
   say,
-  onDone,
+  timeUp,
+  onStepDone,
+  onAllDone,
   onOpenTask,
   onMenu,
 }: {
   state: State;
   actions: Actions;
-  cheer: number;
-  /** A line Nudge just said (after a win). Overrides the default. */
+  cheer?: number;
   say?: string;
-  onDone: () => void;
+  timeUp?: boolean;
+  onStepDone: () => void;
+  onAllDone: () => void;
   onOpenTask: (id: string) => void;
   onMenu: () => void;
+  onReminders?: () => void;
 }) {
+  const [adding, setAdding] = useState(false);
+  useBackClose(adding, () => setAdding(false));
   const today = ymd();
   const gentle = state.meta.lowEnergy?.date === today;
   const must = state.tasks.find((t) => t.must && t.bucket === "today");
   const won = !must && state.meta.win?.date === today ? state.meta.win : undefined;
   const options = candidates(state, 3);
-  const grown = state.tasks.filter((t) => t.bucket === "done").length;
   const weekWins = state.tasks.filter((t) => t.bucket === "done" && t.doneAt && Date.now() - Date.parse(t.doneAt) < 7 * 864e5).length;
-  const doneToday = doneOn(state, today).length;
-  const empty = !must && !won && !options.length;
-  const date = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  const openCount = state.tasks.filter((t) => t.bucket !== "done").length;
 
-  const [line1, pre, em, post] = gentle
-    ? ["Gentle day.", "Just ", "one", " small thing."]
-    : won
-      ? ["You did it.", "Look what ", "grew", "."]
-      : empty
-        ? [greeting(), "Let's start ", "small", "."]
-        : [greeting(), "Let's grow ", "one", " thing."];
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [must?.id, won?.title]);
 
-  const bubble =
-    say ??
-    (gentle
-      ? "Small is perfect today. I've got you."
-      : won
-        ? "That was the big one. Rest, or pick another."
-        : empty
-          ? "Hi! Tell me what's on your mind and I'll find the one thing."
-          : state.meta.yesterdayWins?.length && doneToday === 0 && new Date().getHours() < 12
-            ? `Yesterday you finished ${state.meta.yesterdayWins.length}. Nice work.`
-            : weekWins > 0
-              ? `${weekWins} ${weekWins === 1 ? "win" : "wins"} this week. Look, ${grown > 1 ? "a flower!" : "a sprout!"}`
-              : "One small step. I'm right here with you.");
+  const line = say ?? (gentle ? "Small is perfect today." : must ? "One small step. That's all." : won ? "That counts." : "Let's find one thing.");
 
   return (
-    <div className="relative z-10 mx-auto min-h-dvh w-full max-w-md pb-36">
-      <header className="px-6 pt-[max(1.25rem,env(safe-area-inset-top))]">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-[14px] text-muted-foreground">{date}</p>
-          <div className="flex items-center gap-2">
-            <span className="flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-[13px] font-semibold text-[var(--plum)] shadow-[0_8px_20px_-12px_rgb(120_70_90/0.4)]">
-              <span className="size-2 rounded-full bg-[#ff8f8f]" /> Day {dayNumber(state, today)}
-            </span>
-            <button type="button" onClick={onMenu} data-tour="menu" aria-label="Open your list, ideas and settings" className="candy candy-soft grid size-11 place-items-center rounded-full p-0">
-              <LayoutGrid className="size-[18px]" />
-            </button>
-          </div>
+    <div className="relative z-10 mx-auto flex min-h-dvh w-full max-w-md flex-col px-5">
+      <header className="sticky top-0 z-30 -mx-5 flex items-center justify-between gap-3 px-5 pt-[max(0.75rem,env(safe-area-inset-top))] pb-3">
+        <Wins count={weekWins} pulse />
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={onMenu} data-tour="menu" aria-label={`My list, ${openCount} things`} className="btn chrome h-10 gap-2 pr-1.5 pl-3.5 text-[14px] whitespace-nowrap text-[var(--ink)]">
+            My list
+            <span className="grid h-7 min-w-7 place-items-center rounded-full bg-[var(--ink)] px-1.5 text-[12px] text-[var(--bg)] tabular-nums">{openCount}</span>
+          </button>
+          <button type="button" onClick={() => setAdding(true)} data-tour="capture" aria-label="Add something you need to do" className="btn btn-primary size-10 p-0">
+            <Plus className="size-5" strokeWidth={2.4} />
+          </button>
         </div>
-        <h1 className="nm-spring-in mt-2 font-serif text-[34px] leading-[1.06] tracking-tight text-[var(--plum)] min-[400px]:text-[37px]">
-          {line1}
-          <br />
-          {pre}
-          <em className="serif-em">{em}</em>
-          {post}
-        </h1>
       </header>
 
-      <div className="relative -mt-1">
-        <div key={bubble} className="bubble nm-pop absolute top-2 right-5 z-10 max-w-[60%] px-4 py-2.5 text-[14.5px] leading-snug text-[var(--plum)] after:right-auto after:left-8" aria-live="polite">
-          {bubble}
+      <main className="flex flex-1 flex-col justify-center pt-2 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        <div className="mb-5 px-1">
+          <p className="t-label">{greeting()}</p>
+          <motion.p key={line} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }} className="t-title mt-1" aria-live="polite">
+            {line}
+          </motion.p>
         </div>
-        <Companion plants={grown} cheer={cheer} mood={gentle ? "sleepy" : "happy"} className="h-[232px] w-full min-[400px]:h-[260px]" />
-      </div>
 
-      <div className="relative -mt-4 px-4">
         {must ? (
-          <OneThingCard key={must.id} task={must} actions={actions} gentle={gentle} onDone={onDone} onOpen={() => onOpenTask(must.id)} />
+          <FocusCard
+            key={must.id}
+            task={must}
+            actions={actions}
+            gentle={gentle}
+            timer={state.meta.timer}
+            timeUp={timeUp}
+            onStepDone={onStepDone}
+            onAllDone={onAllDone}
+            onOpen={() => onOpenTask(must.id)}
+          />
         ) : won ? (
-          <WinCard title={won.title} canPick={options.length > 0} onPick={() => actions.setMeta({ win: undefined })} />
+          <RestShell title={won.title} canPick={options.length > 0} onPick={() => actions.setMeta({ win: undefined })} />
         ) : options.length ? (
-          <PickCard options={options} onPick={(id) => actions.setMust(id)} onMore={onMenu} />
+          <PickShell options={options} onPick={(id) => actions.setMust(id)} onMore={onMenu} />
         ) : (
-          <EmptyCard />
+          <EmptyShell onAdd={() => setAdding(true)} />
         )}
 
         {(must || gentle) && (
-          <div className="mt-4 flex justify-center">
-            <button
-              type="button"
-              onClick={() => {
-                if (gentle) actions.setMeta({ lowEnergy: undefined });
-                else {
-                  actions.setMeta({ lowEnergy: { date: today, taskId: must?.id } });
-                  if (must) actions.shrink(must.id);
-                }
-              }}
-              aria-pressed={gentle}
-              className={cn(
-                "flex items-center gap-2 rounded-full px-4 py-2 text-[14px] font-semibold transition-colors",
-                gentle ? "bg-[#efe9ff] text-[#6b4fd8]" : "bg-white/70 text-muted-foreground hover:bg-white"
-              )}
-            >
-              <Feather className="size-4" />
-              {gentle ? "Gentle mode is on · tap to turn off" : "Low on energy? Make today gentle"}
+          <button
+            type="button"
+            onClick={() => {
+              if (gentle) actions.setMeta({ lowEnergy: undefined });
+              else {
+                actions.setMeta({ lowEnergy: { date: today, taskId: must?.id } });
+                if (must) actions.shrink(must.id);
+              }
+            }}
+            aria-pressed={gentle}
+            className={cn("btn mx-auto mt-8 h-9 px-3.5 text-[13px]", gentle ? "bg-[#8b7cf6]/15 text-[#6d5ce0]" : "text-[var(--ink-3)]")}
+          >
+            <Feather className="size-3.5" />
+            {gentle ? "Easy mode is on · turn off" : "Low on energy? Make today easy"}
+          </button>
+        )}
+      </main>
+
+      <Drawer open={adding} onOpenChange={setAdding} showSwipeHandle>
+        <DrawerContent className="mx-auto w-full max-w-xl bg-[var(--surface)]">
+          <div className="px-5 pt-3 pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+            <DrawerTitle className="t-display text-[var(--ink)]">What do you need to do?</DrawerTitle>
+            <DrawerDescription className="t-body mt-1 text-left text-[var(--ink-2)]">Type it or say it. Add as many as you like.</DrawerDescription>
+            <div className="mt-5">
+              <CaptureBar actions={actions} exists={(t) => isDuplicate(state, t)} autoFocus />
+            </div>
+            <button type="button" onClick={() => setAdding(false)} className="btn btn-ghost mt-3 h-11 w-full text-[15px]">
+              Done
             </button>
           </div>
-        )}
-      </div>
-
-      <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <div className="mx-auto max-w-md">
-          <CaptureBar actions={actions} />
-        </div>
-      </div>
+        </DrawerContent>
+      </Drawer>
     </div>
   );
 }
