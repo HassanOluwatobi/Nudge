@@ -111,6 +111,9 @@
 
 @layer base {
   html,
+  html {
+    background: var(--paper);
+  }
   body {
     overscroll-behavior-x: none;
     background: var(--paper);
@@ -687,7 +690,18 @@ html[data-theme="dark"] .start-card .glow-b {
 }
 
 /* The bottom of every screen: a frosted strip under the tab bar, like Safari's
-   own toolbar. Content scrolls all the way down and blurs behind it. */
+   own toolbar. Content scrolls all the way down and blurs behind it.
+   Only in the installed app. In Safari, a full-width fixed strip at the bottom
+   makes Safari paint its whole toolbar area in one flat colour, which looks like
+   the page was cut short. Safari's own glass toolbar does the frosting there. */
+.bottom-frost {
+  display: none;
+}
+@media (display-mode: standalone) {
+  .bottom-frost {
+    display: block;
+  }
+}
 .bottom-frost {
   position: absolute;
   inset-inline: 0;
