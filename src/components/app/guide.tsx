@@ -288,7 +288,7 @@ export function Guide({ open, onClose }: { open: boolean; onClose: () => void })
     <AnimatePresence>
       {open && (
         <motion.div key="guide" className="fixed inset-0 z-50 grid place-items-end sm:place-items-center" initial={{ opacity: 1 }} exit={{ opacity: 1 }}>
-          <motion.button type="button" aria-label="Close guide" tabIndex={-1} className="absolute inset-0 cursor-default bg-night/40" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease: "easeOut" }} onClick={close} />
+          <motion.button type="button" aria-label="Close guide" tabIndex={-1} className="guide-scrim absolute inset-0 cursor-default" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease: "easeOut" }} onClick={close} />
           <motion.div
             ref={box}
             role="dialog"

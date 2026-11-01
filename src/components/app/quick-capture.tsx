@@ -155,13 +155,11 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
             <div className="border-t border-line px-3 pb-3 pt-3">
               {parts.length > 1 && (
                 <ul className="mb-3 flex flex-wrap gap-1.5 px-1" aria-label="Tasks it will make">
-                  <AnimatePresence initial={false}>
-                    {parts.map((p, i) => (
-                      <motion.li key={`${i}-${p}`} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ type: "spring", bounce: 0.2, duration: 0.3 }} className="max-w-full truncate rounded-full bg-signal-soft px-2.5 py-1 text-[13px] font-medium text-signal-ink">
-                        {p}
-                      </motion.li>
-                    ))}
-                  </AnimatePresence>
+                  {parts.map((p, i) => (
+                    <li key={i} className="chip-in max-w-full truncate rounded-full bg-signal-soft px-2.5 py-1 text-[13px] font-medium text-signal-ink">
+                      {p}
+                    </li>
+                  ))}
                 </ul>
               )}
               <div className="flex items-center gap-3">

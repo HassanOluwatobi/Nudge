@@ -25,6 +25,7 @@ async function flow(name, seed, fn) {
     ([key, seed]) => {
       if (sessionStorage.getItem("seeded")) return;
       sessionStorage.setItem("seeded", "1");
+      sessionStorage.setItem("nudgeme.splashed", "1");
       localStorage.setItem(key, JSON.stringify({ v: 12, meta: { intro: true, morningDone: new Date().toISOString().slice(0, 10) }, settings: {}, entries: [], tasks: [], ...seed }));
     },
     [KEY, seed],

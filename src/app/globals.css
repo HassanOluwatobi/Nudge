@@ -703,7 +703,8 @@ html[data-theme="dark"] .start-card .glow-b {
   }
 }
 .bottom-frost {
-  position: absolute;
+  position: fixed;
+  z-index: 29;
   inset-inline: 0;
   bottom: 0;
   height: calc(104px + env(safe-area-inset-bottom));
@@ -1083,4 +1084,28 @@ html.splash-done #splash .splash-inner {
     opacity: 1;
     transform: none;
   }
+}
+
+/* The guide's dimmed backdrop matches the sheets in both themes. */
+.guide-scrim {
+  background: rgb(6 11 43 / 0.4);
+}
+html[data-theme="dark"] .guide-scrim {
+  background: rgb(0 0 0 / 0.62);
+}
+html[data-theme="dark"] [aria-label="How NudgeMe works"] {
+  box-shadow: 0 -1px 0 var(--line), 0 -24px 60px -30px rgb(0 0 0 / 0.8) !important;
+}
+/* A new task chip fades in where it lands. Existing chips stay still while you type. */
+.chip-in {
+  animation: chip-in 180ms ease-out;
+}
+@keyframes chip-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.tabbar-float {
+  bottom: max(1rem, env(safe-area-inset-bottom));
 }

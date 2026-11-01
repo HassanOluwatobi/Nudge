@@ -14,11 +14,15 @@ const ITEMS: { id: Tab; label: string; icon: typeof ListChecks }[] = [
 /** A floating tab bar, after Tiimo. Dark on Focus so it stays quiet there. */
 export function TabBar({ tab, onTab, dark, running }: { tab: Tab; onTab: (t: Tab) => void; dark: boolean; running: boolean }) {
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 safe-b">
+    <>
+      {/* Installed app only: a frosted strip at the very bottom. */}
       <div aria-hidden className="bottom-frost" />
+      {/* The bar floats above the bottom edge. In Safari, nothing full-width touches the
+          bottom of the screen, so Safari lets the page run under its own toolbar. */}
+      <div className="tabbar-float pointer-events-none fixed left-1/2 z-30 w-[calc(100%-2rem)] max-w-[19rem] -translate-x-1/2">
       <nav
         aria-label="Main"
-        className={`pointer-events-auto relative mx-auto grid w-[calc(100%-2rem)] max-w-[19rem] grid-cols-3 gap-1 rounded-[26px] p-1.5 backdrop-blur-xl ${
+        className={`pointer-events-auto relative grid w-full grid-cols-3 gap-1 rounded-[26px] p-1.5 backdrop-blur-xl ${
           dark ? "bg-white/[0.08] ring-1 ring-white/10" : "bg-white/75 shadow-[0_1px_0_var(--hi)_inset,0_16px_40px_-18px_rgb(6_11_43/0.35)] ring-1 ring-line/60"
         }`}
       >
@@ -36,6 +40,7 @@ export function TabBar({ tab, onTab, dark, running }: { tab: Tab; onTab: (t: Tab
           );
         })}
       </nav>
-    </div>
+      </div>
+    </>
   );
 }
