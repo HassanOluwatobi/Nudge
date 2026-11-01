@@ -43,6 +43,8 @@ export type Settings = {
   weeklyDay: number; // 0 = Sunday
   ai: "chatgpt" | "claude" | "gemini" | "grok";
   notify: boolean;
+  sound: boolean;
+  haptics: boolean;
   calendarAdded?: string;
 };
 
@@ -70,7 +72,7 @@ export const PART_NAME: Record<Part, string> = { anytime: "Anytime", morning: "M
 export const MIN_CHOICES = [5, 10, 15, 30, 45, 60];
 export const RESURFACE_DAYS = [3, 7, 14, 30];
 
-export const DEFAULT_SETTINGS: Settings = { morning: "08:30", evening: "20:00", weeklyDay: 0, ai: "chatgpt", notify: false };
+export const DEFAULT_SETTINGS: Settings = { morning: "08:30", evening: "20:00", weeklyDay: 0, ai: "chatgpt", notify: false, sound: true, haptics: true };
 
 export const freshState = (): State => ({ v: 12, tasks: [], entries: [], settings: { ...DEFAULT_SETTINGS }, meta: {} });
 
@@ -312,6 +314,8 @@ export function sanitize(raw: unknown): State {
     weeklyDay: Number.isInteger(st.weeklyDay) && st.weeklyDay! >= 0 && st.weeklyDay! <= 6 ? st.weeklyDay! : 0,
     ai: ["chatgpt", "claude", "gemini", "grok"].includes(st.ai as string) ? (st.ai as Settings["ai"]) : "chatgpt",
     notify: !!st.notify,
+    sound: st.sound !== false,
+    haptics: st.haptics !== false,
     calendarAdded: str(st.calendarAdded),
   };
   const m = r.meta && typeof r.meta === "object" && !Array.isArray(r.meta) ? r.meta : {};

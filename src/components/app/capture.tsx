@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { type Bucket, type EntryKind, type Part, type State, type Task, BUCKET_NAME, MAX_TITLE, PARTS, PART_NAME, isDuplicate, suggestStep } from "@/lib/tasks";
 import { type Actions, DRAFT_KEY } from "@/lib/use-tasks";
 import { useSpeech } from "@/lib/use-speech";
+import { feel } from "@/lib/feedback";
 import { RemindPicker } from "./remind";
 import { Sheet } from "./sheet";
 import { Tile } from "./task-row";
@@ -77,6 +78,7 @@ export function Capture({
       if (!t) return;
       writeDraft("");
       setText("");
+      feel("save", "success");
       setSaved(t);
       announce(`Saved: ${t.title}.`);
     } else {
@@ -84,6 +86,7 @@ export function Capture({
       if (!e) return;
       writeDraft("");
       setText("");
+      feel("save", "success");
       toast(kind === "idea" ? "Idea saved. It will come back on Today in a few days." : "Note saved in Ideas.");
       onClose();
     }
@@ -105,7 +108,7 @@ export function Capture({
         >
           <div className="mt-1 inline-grid grid-cols-3 rounded-full bg-[#ece6da] p-1" role="tablist" aria-label="What is it?">
             {(["task", "idea", "note"] as Kind[]).map((k) => (
-              <button key={k} type="button" role="tab" aria-selected={kind === k} onClick={() => setKind(k)} className="relative h-9 rounded-full px-4 text-[14px] font-semibold">
+              <button key={k} type="button" role="tab" aria-selected={kind === k} onClick={() => (setKind(k), feel("tap"))} className="relative h-9 rounded-full px-4 text-[14px] font-semibold">
                 {kind === k && <motion.span layoutId="cap-seg" className="absolute inset-0 rounded-full bg-white shadow-[0_2px_8px_-4px_rgb(6_11_43/0.3)]" transition={{ type: "spring", bounce: 0, duration: 0.3 }} />}
                 <span className={`relative capitalize ${kind === k ? "text-ink" : "text-ink-3"}`}>{k}</span>
               </button>
@@ -132,9 +135,9 @@ export function Capture({
                 save();
               }
             }}
-            className="t-title mt-4 w-full resize-none bg-transparent text-[26px] placeholder:text-ink-3/70 focus:outline-none"
+            className="t-title mt-4 w-full resize-none rounded-[18px] border border-line bg-white px-4 py-3.5 text-[24px] shadow-[0_1px_2px_rgb(6_11_43/0.04)] transition-[border-color,box-shadow] placeholder:text-ink-3/70 focus:border-signal focus:shadow-[0_0_0_4px_rgb(29_77_245/0.12)] focus:outline-none"
           />
-          <p className="t-small min-h-5 text-ink-3">
+          <p className="t-small mt-2 min-h-5 px-1 text-ink-3">
             {speech.listening
               ? "Listening. Your browser turns speech into text, and some browsers use their own online service for this."
               : dup
@@ -147,7 +150,7 @@ export function Capture({
           </p>
           <div className="mt-4 flex gap-2">
             {speech.supported && (
-              <button type="button" onClick={speech.toggle} aria-pressed={speech.listening} aria-label={speech.listening ? "Stop listening" : "Speak instead"} className={`grid size-[52px] shrink-0 place-items-center rounded-full transition-colors ${speech.listening ? "bg-coral text-white" : "bg-[#ece6da] text-ink"}`}>
+              <button type="button" onClick={() => (speech.toggle(), feel("tap", "light"))} aria-pressed={speech.listening} aria-label={speech.listening ? "Stop listening" : "Speak instead"} className={`grid size-[52px] shrink-0 place-items-center rounded-full transition-colors ${speech.listening ? "bg-coral text-white" : "bg-[#ece6da] text-ink"}`}>
                 {speech.listening ? (
                   <motion.span animate={{ scale: [1, 1.18, 1] }} transition={{ repeat: Infinity, duration: 1.1 }}>
                     <Mic className="size-5" />
@@ -189,7 +192,7 @@ function TaskDetails({ task, actions, onDone, onAnother }: { task: Task; actions
       {task.steps.length ? (
         <p className="mt-2 text-[16px]">{task.steps[0].t}</p>
       ) : (
-        <button type="button" className="chip mt-2 gap-1.5 text-left" onClick={() => actions.addStep(task.id, tip)}>
+        <button type="button" className="chip mt-2 gap-1.5 text-left" onClick={() => (actions.addStep(task.id, tip), feel("step", "light"))}>
           <Sparkles className="size-3.5 shrink-0 text-signal" /> Add: {tip}
         </button>
       )}

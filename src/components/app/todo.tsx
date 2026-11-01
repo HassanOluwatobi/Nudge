@@ -6,6 +6,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { type Bucket, type State, type Task, BUCKET_NAME, doneEarlier, doneToday, todayTasks, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
+import { feel } from "@/lib/feedback";
 import { TaskRow } from "./task-row";
 import { TopBar } from "./today";
 
@@ -24,6 +25,7 @@ export function Todo({
   onSettings,
   onOpen,
   onMenu,
+  onHelp,
   announce,
 }: {
   state: State;
@@ -33,6 +35,7 @@ export function Todo({
   onSettings: () => void;
   onOpen: (t: Task) => void;
   onMenu: (t: Task) => void;
+  onHelp: () => void;
   announce: (s: string) => void;
 }) {
   const today = ymd();
@@ -55,14 +58,14 @@ export function Todo({
 
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-36 safe-t">
-      <TopBar done={finished.length} total={totalToday} onSettings={onSettings} onAdd={onAdd} />
+      <TopBar done={finished.length} total={totalToday} onSettings={onSettings} onAdd={onAdd} onHelp={onHelp} />
       <h1 className="mt-4 text-center font-serif text-[44px] leading-none tracking-[-0.025em]">To-do</h1>
       <p className="t-small mt-2 text-center text-ink-3">Hold a task for quick actions.</p>
 
       {groups.map(([b, items]) => (
         <section key={b} className="mt-7" aria-labelledby={`b-${b}`}>
           <div className="mb-2.5 flex items-center justify-between px-1">
-            <button type="button" className="flex items-center gap-1.5" aria-expanded={!collapsed[b]} onClick={() => setCollapsed((c) => ({ ...c, [b]: !c[b] }))}>
+            <button type="button" className="flex items-center gap-1.5" aria-expanded={!collapsed[b]} onClick={() => (setCollapsed((c) => ({ ...c, [b]: !c[b] })), feel("tap"))}>
               <span id={`b-${b}`} className={`pill pill-${b}`}>
                 {BUCKET_NAME[b]} ({items.length})
               </span>

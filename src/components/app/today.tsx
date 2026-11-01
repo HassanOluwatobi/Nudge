@@ -1,32 +1,49 @@
 "use client";
 
-import { ArrowRight, ChevronDown, Feather, Lightbulb, Plus, Settings2, Sparkles, Sun, Moon, CalendarSync } from "lucide-react";
+import { ArrowRight, CalendarSync, ChevronDown, CircleHelp, Feather, Lightbulb, Moon, Plus, Settings2, Sparkles, Sun } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { type Part, type State, type Task, PARTS, PART_NAME, checkinDue, doneToday, dueIdeas, nextStep, partNow, suggestion, todayTasks, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
+import { feel } from "@/lib/feedback";
 import { Art } from "./art";
 import { TaskRow, Tile } from "./task-row";
 
 export function Counter({ done, total }: { done: number; total: number }) {
   return (
-    <span className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white px-3.5 text-[14px] font-semibold tabular-nums shadow-[0_1px_2px_rgb(6_11_43/0.06),0_6px_16px_-10px_rgb(6_11_43/0.3)]" aria-label={`${done} of ${total} done today`}>
-      <span aria-hidden>🎉</span>
-      {done}/{total}
+    <span className="inline-flex h-10 items-center gap-1.5 overflow-hidden rounded-full bg-white px-3.5 text-[14px] font-semibold tabular-nums shadow-[0_1px_2px_rgb(6_11_43/0.06),0_6px_16px_-10px_rgb(6_11_43/0.3)]" aria-label={`${done} of ${total} done today`}>
+      <motion.span key={`e${done}`} aria-hidden initial={{ scale: 1, rotate: 0 }} animate={done ? { scale: [1, 1.35, 1], rotate: [0, -12, 0] } : {}} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}>
+        🎉
+      </motion.span>
+      <span className="inline-flex">
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span key={done} initial={{ y: 12, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -12, opacity: 0 }} transition={{ type: "spring", bounce: 0.3, duration: 0.45 }}>
+            {done}
+          </motion.span>
+        </AnimatePresence>
+        /{total}
+      </span>
     </span>
   );
 }
 
-export function TopBar({ done, total, onSettings, onAdd }: { done: number; total: number; onSettings: () => void; onAdd: () => void }) {
+const round = "grid size-10 place-items-center rounded-full bg-white text-ink-2 shadow-[0_1px_2px_rgb(6_11_43/0.06),0_6px_16px_-10px_rgb(6_11_43/0.3)] transition-transform active:scale-90";
+
+export function TopBar({ done, total, onSettings, onAdd, onHelp }: { done: number; total: number; onSettings: () => void; onAdd: () => void; onHelp?: () => void }) {
   return (
     <header className="flex items-center justify-between py-2">
       <Counter done={done} total={total} />
       <div className="flex items-center gap-2">
-        <button type="button" className="grid size-10 place-items-center rounded-full bg-white text-ink-2 shadow-[0_1px_2px_rgb(6_11_43/0.06),0_6px_16px_-10px_rgb(6_11_43/0.3)]" aria-label="Settings, reminders and privacy" onClick={onSettings}>
+        {onHelp && (
+          <button type="button" className={round} aria-label="How NudgeMe works" onClick={onHelp}>
+            <CircleHelp className="size-[18px]" />
+          </button>
+        )}
+        <button type="button" className={round} aria-label="Settings, reminders and privacy" onClick={onSettings}>
           <Settings2 className="size-[18px]" />
         </button>
-        <button type="button" className="grid size-10 place-items-center rounded-full bg-ink text-white shadow-[0_8px_18px_-8px_rgb(6_11_43/0.6)]" aria-label="Add a thought" onClick={onAdd}>
+        <button type="button" className="grid size-10 place-items-center rounded-full bg-ink text-white shadow-[0_8px_18px_-8px_rgb(6_11_43/0.6)] transition-transform active:scale-90" aria-label="Add a thought" onClick={onAdd}>
           <Plus className="size-5" />
         </button>
       </div>
@@ -50,6 +67,7 @@ export function Today({
   onMenu,
   onFocus,
   onCheckin,
+  onHelp,
   announce,
 }: {
   state: State;
@@ -61,6 +79,7 @@ export function Today({
   onMenu: (t: Task) => void;
   onFocus: (t: Task) => void;
   onCheckin: (k: "morning" | "evening" | "weekly") => void;
+  onHelp: () => void;
   announce: (s: string) => void;
 }) {
   const today = ymd();
@@ -85,7 +104,7 @@ export function Today({
 
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-36 safe-t">
-      <TopBar done={finished.length} total={list.length + finished.length} onSettings={onSettings} onAdd={onAdd} />
+      <TopBar done={finished.length} total={list.length + finished.length} onSettings={onSettings} onAdd={onAdd} onHelp={onHelp} />
 
       <div className="mt-4 text-center">
         <h1 className="font-serif text-[44px] leading-none tracking-[-0.025em]">{day}</h1>
@@ -141,12 +160,12 @@ export function Today({
                   </span>
                 </span>
               </button>
-              <button type="button" className="btn btn-signal mt-4 w-full text-[17px]" onClick={() => onFocus(pick)}>
+              <button type="button" className="btn btn-signal mt-4 w-full text-[17px]" onClick={() => (feel("tap", "light"), onFocus(pick))}>
                 Start <ArrowRight className="size-5" />
               </button>
               <div className="mt-1 flex justify-center gap-1">
                 {!easy && rest.length > 0 && (
-                  <button type="button" className="btn btn-quiet text-[15px]" onClick={() => (actions.pass(pick.id), announce("Showing another task."))}>
+                  <button type="button" className="btn btn-quiet text-[15px]" onClick={() => (actions.pass(pick.id), feel("tap", "light"), announce("Showing another task."))}>
                     Not this one
                   </button>
                 )}
@@ -154,6 +173,7 @@ export function Today({
                   type="button"
                   className="btn btn-quiet gap-1.5 text-[15px]"
                   onClick={() => {
+                    feel(easy ? "tap" : "save", "light");
                     if (easy) {
                       actions.clearEasy();
                       announce("Showing your full day.");
@@ -202,15 +222,16 @@ export function Today({
               className="chip"
               onClick={() => {
                 const t = actions.entryToTask(idea.id);
+                feel("save", "success");
                 if (t) toast("Added to This week.");
               }}
             >
               <Sparkles className="mr-1 size-3.5" /> Make it a task
             </button>
-            <button type="button" className="chip" onClick={() => (actions.snoozeEntry(idea.id), toast("It will come back later."))}>
+            <button type="button" className="chip" onClick={() => (actions.snoozeEntry(idea.id), feel("tap", "light"), toast("It will come back later."))}>
               Not yet
             </button>
-            <button type="button" className="chip" onClick={() => (actions.archiveEntry(idea.id), toast("Archived. You can find it in Ideas."))}>
+            <button type="button" className="chip" onClick={() => (actions.archiveEntry(idea.id), feel("tap", "light"), toast("Archived. You can find it in Ideas."))}>
               Let it go
             </button>
           </div>
@@ -220,7 +241,7 @@ export function Today({
       {!easy &&
         PARTS.map((part) => {
           const items = rest.filter((t) => t.part === part);
-          if (!items.length && part !== now) return null;
+          if (!items.length && (part !== now || rest.length > 0)) return null;
           return (
             <section key={part} className="mt-7" aria-labelledby={`p-${part}`}>
               <div className="mb-2.5 flex items-center justify-between px-1">

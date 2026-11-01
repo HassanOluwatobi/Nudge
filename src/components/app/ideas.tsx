@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { type Entry, type EntryKind, type State, prettyDue, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { useSpeech } from "@/lib/use-speech";
+import { feel } from "@/lib/feedback";
 import { Sheet } from "./sheet";
 import { TopBar } from "./today";
 
@@ -16,7 +17,7 @@ const ago = (iso: string) => {
 };
 
 /** Ideas and notes. Ideas come back on Today after a while. Notes stay here. */
-export function Ideas({ state, actions, onAdd, onSettings, doneCount, totalCount }: { state: State; actions: Actions; onAdd: () => void; onSettings: () => void; doneCount: number; totalCount: number }) {
+export function Ideas({ state, actions, onAdd, onSettings, onHelp, doneCount, totalCount }: { state: State; actions: Actions; onAdd: () => void; onSettings: () => void; onHelp: () => void; doneCount: number; totalCount: number }) {
   const [kind, setKind] = useState<EntryKind>("idea");
   const [text, setText] = useState("");
   const [open, setOpen] = useState<Entry | null>(null);
@@ -31,18 +32,19 @@ export function Ideas({ state, actions, onAdd, onSettings, doneCount, totalCount
     const e = actions.addEntry(text, kind);
     if (!e) return;
     setText("");
+    feel("save", "success");
     toast(kind === "idea" ? "Idea saved. It will come back in a few days." : "Note saved.");
   };
 
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-36 safe-t">
-      <TopBar done={doneCount} total={totalCount} onSettings={onSettings} onAdd={onAdd} />
+      <TopBar done={doneCount} total={totalCount} onSettings={onSettings} onAdd={onAdd} onHelp={onHelp} />
       <h1 className="mt-4 text-center font-serif text-[44px] leading-none tracking-[-0.025em]">Ideas</h1>
       <p className="t-small mt-2 text-center text-ink-3">Ideas come back on Today later. Notes stay here.</p>
 
       <div className="mx-auto mt-6 grid w-full max-w-[260px] grid-cols-2 rounded-full bg-[#e8e2d6] p-1" role="tablist" aria-label="Ideas or notes">
         {(["idea", "note"] as EntryKind[]).map((k) => (
-          <button key={k} type="button" role="tab" aria-selected={kind === k} onClick={() => setKind(k)} className="relative h-10 rounded-full text-[15px] font-semibold">
+          <button key={k} type="button" role="tab" aria-selected={kind === k} onClick={() => (setKind(k), feel("tap"))} className="relative h-10 rounded-full text-[15px] font-semibold">
             {kind === k && <motion.span layoutId="seg" className="absolute inset-0 rounded-full bg-white shadow-[0_2px_8px_-4px_rgb(6_11_43/0.3)]" transition={{ type: "spring", bounce: 0, duration: 0.35 }} />}
             <span className={`relative ${kind === k ? "text-ink" : "text-ink-3"}`}>{k === "idea" ? "Ideas" : "Notes"}</span>
           </button>

@@ -32,7 +32,7 @@ void main(){
   vec2 uv = gl_FragCoord.xy / R;
   float asp = R.x / R.y;
   vec2 p = vec2(uv.x*asp, uv.y) * (M > .5 && M < 1.5 ? 1.3 : 2.0);
-  float t = T * .03;
+  float t = T * .05;
   vec2 q = vec2(fbm(p + t), fbm(p + vec2(5.2,1.3) - t));
   vec2 r = vec2(fbm(p + 3.*q + vec2(1.7,9.2) + t*1.3), fbm(p + 3.*q + vec2(8.3,2.8) - t));
   float f = fbm(p + 2.6*r);
@@ -56,20 +56,22 @@ void main(){
 
   float x = uv.x;
   float yc = M < .5
-    ? .50 + .22*sin(x*3.1 + .5 + T*.11) + .05*sin(x*7. - T*.08) + (q.x-.5)*.08
+    ? .50 + .22*sin(x*3.1 + .5 + T*.2) + .05*sin(x*7. - T*.15) + (q.x-.5)*.08
     : M < 1.5
-      ? .74 + .12*sin(x*2.4 + 1.2 + T*.1) + .04*sin(x*6.3 - T*.07) + (q.x-.5)*.05
-      : .5 + .18*sin(x*3.4 + T*.16) + (q.x-.5)*.08;
-  float tw = abs(cos(x*2.3 + .4 + T*.07));
-  float wid = (M < .5 ? .13 : M < 1.5 ? .085 : .12) * (.3 + .7*tw);
+      ? .74 + .12*sin(x*2.4 + 1.2 + T*.18) + .04*sin(x*6.3 - T*.13) + (q.x-.5)*.05
+      : .5 + .18*sin(x*3.4 + T*.26) + (q.x-.5)*.08;
+  float tw = abs(cos(x*2.3 + .4 + T*.12));
+  float pulse = .5 + .5*sin(T*1.15);
+  float wid = (M < .5 ? .13 : M < 1.5 ? .085 : .12) * (.3 + .7*tw) * (.86 + .28*pulse);
   float d = (uv.y - yc) / wid;
-  float band = 1. - smoothstep(.82, 1., abs(d));
-  vec3 bc = ramp(x*.9 + .05 + S + .06*sin(T*.05));
+  // Soft edges, so the ribbon reads as light rather than a cut-out.
+  float band = 1. - smoothstep(.4, 1.18, abs(d));
+  vec3 bc = ramp(x*.9 + .05 + S + .08*sin(T*.09));
   float shade = .6 + .4*(1. - d*d);
   float sheen = exp(-pow((d + .42)*3., 2.)) * .6 * tw;
-  vec3 rib = bc*shade + sheen;
+  vec3 rib = (bc*shade + sheen) * (.94 + .12*pulse);
   rib = mix(rib*.62 + deep*.15, rib, tw);
-  col += bc * exp(-abs(d)*1.5) * .16 * (1. - band);
+  col += bc * exp(-abs(d)*1.2) * (.16 + .12*pulse) * (1. - band);
   col = mix(col, rib, band);
 
   float px = 3.0;
@@ -79,7 +81,7 @@ void main(){
   vec2 cp = fract(gl_FragCoord.xy / px) - .5 - jit * .45;
   float rad = .17 + .14 * h21(cell + 7.7);
   float dotm = 1. - smoothstep(rad, rad + .12, length(cp));
-  float edge = pow(smoothstep(3.0, 1., abs(d)), 1.6) * (1. - band) * smoothstep(.3, .8, fbm(p*3.5 + t*3.));
+  float edge = pow(smoothstep(3.2, 1., abs(d)), 1.6) * (1. - band*.8) * smoothstep(.3, .8, fbm(p*3.5 + t*3.));
   col = mix(col, bc*1.05 + .06, dotm * step(hsh, edge * .85));
   col = mix(col, vec3(1.), dotm * step(hsh, sheen * band * .45) * .7);
   col += dotm * smoothstep(.62, .9, f) * .05;
