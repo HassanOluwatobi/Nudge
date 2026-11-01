@@ -4,7 +4,7 @@ import { ChevronDown, Plus } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { type Bucket, type State, type Task, BUCKET_NAME, doneEarlier, doneToday, todayTasks, ymd } from "@/lib/tasks";
+import { type Bucket, type State, type Task, BUCKET_NAME, doneEarlier, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { feel } from "@/lib/feedback";
 import { TaskRow, DoneList } from "./task-row";
@@ -40,16 +40,12 @@ export function Todo({
 }) {
   const today = ymd();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ done: true });
-  const [older, setOlder] = useState(false);
   const byDue = (a: Task, b: Task) => (a.due ?? "9999").localeCompare(b.due ?? "9999") || a.createdAt.localeCompare(b.createdAt);
   const groups: [Exclude<Bucket, "done">, Task[]][] = [
-    ["today", state.tasks.filter((t) => t.bucket === "today").sort(byDue)],
     ["week", state.tasks.filter((t) => t.bucket === "week").sort(byDue)],
     ["later", state.tasks.filter((t) => t.bucket === "later").sort(byDue)],
   ];
-  const finished = doneToday(state, today);
   const earlier = doneEarlier(state, today);
-  const totalToday = todayTasks(state, today).length + finished.length;
 
   const finishedOne = (t: Task) => {
     toast(`Finished: ${t.title}`, { action: { label: "Undo", onClick: () => actions.restore(t.id) } });
@@ -58,9 +54,9 @@ export function Todo({
 
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-36 safe-t">
-      <TopBar done={finished.length} total={totalToday} onSettings={onSettings} onAdd={onAdd} onHelp={onHelp} />
+      <TopBar onSettings={onSettings} onAdd={onAdd} onHelp={onHelp} />
       <h1 className="mt-4 text-center font-serif text-[44px] leading-none tracking-[-0.025em]">Plan</h1>
-      <p className="t-small mt-2 text-center text-ink-3">Everything you have, sorted by when. Hold a task for options.</p>
+      <p className="t-small mt-2 text-center text-ink-3">What is coming up. Today lives on Home.</p>
 
       {groups.map(([b, items]) => (
         <section key={b} className="mt-7" aria-labelledby={`b-${b}`}>
@@ -98,31 +94,16 @@ export function Todo({
         </section>
       ))}
 
-      {(finished.length > 0 || earlier.length > 0) && (
+      {/* Today's tasks and today's done list live on Home. Plan keeps the history. */}
+      {earlier.length > 0 && (
         <section className="mt-7" aria-labelledby="b-done">
           <button type="button" className="mb-2.5 flex items-center gap-1.5 px-1" aria-expanded={!collapsed.done} onClick={() => setCollapsed((c) => ({ ...c, done: !c.done }))}>
             <span id="b-done" className="pill pill-done">
-              Done today ({finished.length})
+              Done before today ({earlier.length})
             </span>
             <ChevronDown className={`size-4 text-ink-3 transition-transform ${collapsed.done ? "-rotate-90" : ""}`} />
           </button>
-          {!collapsed.done && (
-            <>
-              {finished.length > 0 && <DoneList tasks={finished} actions={actions} onOpen={onOpen} onMenu={onMenu} />}
-              {earlier.length > 0 && (
-                <>
-                  <button type="button" className="btn btn-quiet mt-2 gap-1 px-1 text-[14px]" aria-expanded={older} onClick={() => setOlder((v) => !v)}>
-                    <ChevronDown className={`size-4 transition-transform ${older ? "rotate-180" : ""}`} /> Finished before today ({earlier.length})
-                  </button>
-                  {older && (
-                    <div className="mt-1">
-                      <DoneList tasks={earlier.slice(0, 60)} actions={actions} onOpen={onOpen} onMenu={onMenu} />
-                    </div>
-                  )}
-                </>
-              )}
-            </>
-          )}
+          {!collapsed.done && <DoneList tasks={earlier.slice(0, 60)} actions={actions} onOpen={onOpen} onMenu={onMenu} />}
         </section>
       )}
     </div>

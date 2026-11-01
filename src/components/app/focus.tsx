@@ -1,16 +1,15 @@
 "use client";
 
-import { Check, ChevronDown, Pause, Play, Plus, Scissors, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Pause, Play, Scissors } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import { feel } from "@/lib/feedback";
 import { notify } from "@/lib/reminders";
 import { type State, type Task, MAX_STEP, nextStep, smallerStep, suggestStep, todayTasks, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { Art } from "./art";
 import { Sheet } from "./sheet";
-import { keepFocus } from "./steps";
+import { AddSubtask } from "./steps";
 import { StepCheck, Tile } from "./task-row";
 
 const R = 118;
@@ -262,14 +261,13 @@ export function Focus({
 
 /** The task's steps under the timer. Ticking a step never finishes the task. */
 function Steps({ task, actions, onFinished, announce }: { task: Task; actions: Actions; onFinished: (t: Task) => void; announce: (s: string) => void }) {
-  const [draft, setDraft] = useState("");
   const [smaller, setSmaller] = useState<string | null>(null);
   const current = nextStep(task);
 
   return (
-    <section className="mt-10" aria-label="Steps">
+    <section className="mt-10" aria-label="Subtasks">
       <div className="mb-3 flex items-baseline justify-between">
-        <h2 className="text-[15px] font-semibold">{task.steps.length ? "Steps" : "Add a first step"}</h2>
+        <h2 className="text-[15px] font-semibold">{task.steps.length ? "Subtasks" : "Add a first subtask"}</h2>
         {task.steps.length > 0 && (
           <span className="t-small tabular-nums text-ink-3">
             {task.steps.filter((s) => s.d).length}/{task.steps.length}
@@ -286,7 +284,7 @@ function Steps({ task, actions, onFinished, announce }: { task: Task; actions: A
                 onClick={() => {
                   actions.toggleStep(task.id, s.id);
                   feel(s.d ? "unstep" : "step", "light");
-                  if (!s.d) announce("Step done. The task is still open.");
+                  if (!s.d) announce("Subtask done. The task is still open.");
                 }}
                 className="flex min-h-[54px] w-full items-center gap-3 px-4 py-2.5 text-left"
               >
@@ -300,7 +298,7 @@ function Steps({ task, actions, onFinished, announce }: { task: Task; actions: A
 
       {current && smaller === null && (
         <button type="button" className="btn btn-quiet mt-2 gap-1.5 px-2 text-[14px]" onClick={() => setSmaller(smallerStep(current.t))}>
-          <Scissors className="size-4" /> Make the current step smaller
+          <Scissors className="size-4" /> Make this subtask smaller
         </button>
       )}
       {current && smaller !== null && (
@@ -311,7 +309,7 @@ function Steps({ task, actions, onFinished, announce }: { task: Task; actions: A
             if (!smaller.trim()) return;
             actions.replaceStep(task.id, current.id, smaller);
             setSmaller(null);
-            announce("Step made smaller.");
+            announce("Subtask made smaller.");
           }}
         >
           <label className="t-small font-medium text-ink-2" htmlFor="smaller">
@@ -329,26 +327,11 @@ function Steps({ task, actions, onFinished, announce }: { task: Task; actions: A
         </form>
       )}
 
-      <form
-        className="mt-3 flex gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          if (!draft.trim()) return;
-          actions.addStep(task.id, draft);
-          feel("save", "light");
-          setDraft("");
-        }}
-      >
-        <label htmlFor="focus-add" className="sr-only">
-          Add a step
-        </label>
-        <input id="focus-add" value={draft} maxLength={MAX_STEP} onChange={(e) => setDraft(e.target.value)} placeholder={task.steps.length ? "Add another step" : `Try: ${suggestStep(task.title)}`} className="field min-w-0 flex-1" />
-        <button type="submit" {...keepFocus} className="btn btn-ink btn-icon size-[50px] shrink-0 rounded-[14px]" aria-label="Add step">
-          <Plus className="size-5" />
-        </button>
-      </form>
+      <div className="task-row mt-2">
+        <AddSubtask onAdd={(t) => actions.addStep(task.id, t)} placeholder={task.steps.length ? "Add another subtask" : `Try: ${suggestStep(task.title)}`} />
+      </div>
       {!task.steps.length && (
-        <button type="button" className="mt-2 text-[14px] text-ink-2 underline underline-offset-2" onClick={() => actions.addStep(task.id, suggestStep(task.title))}>
+        <button type="button" className="chip mt-2" onClick={() => actions.addStep(task.id, suggestStep(task.title))}>
           Use “{suggestStep(task.title)}”
         </button>
       )}
@@ -364,17 +347,7 @@ function Steps({ task, actions, onFinished, announce }: { task: Task; actions: A
         <Check className="size-5" /> Finish this task
       </button>
       <p className="t-small mt-2 text-center text-ink-3">Only when the whole task is done.</p>
-      <button
-        type="button"
-        className="btn btn-quiet mx-auto mt-4 flex gap-1.5 text-[14px] text-danger"
-        onClick={() => {
-          const gone = actions.remove(task.id);
-          feel("undo", "warning");
-          if (gone) toast("Task deleted.", { action: { label: "Undo", onClick: () => actions.put(gone) } });
-        }}
-      >
-        <Trash2 className="size-4" /> Delete this task
-      </button>
+
     </section>
   );
 }

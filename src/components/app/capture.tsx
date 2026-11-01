@@ -1,10 +1,10 @@
 "use client";
 
 import { Check, Mic } from "lucide-react";
-import { AnimatePresence, motion } from "motion/react";
+import { motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { type Bucket, type EntryKind, type Part, type State, type Task, BUCKET_NAME, MAX_TITLE, PARTS, PART_NAME, isDuplicate } from "@/lib/tasks";
+import { type Bucket, type EntryKind, type Part, type State, type Task, BUCKET_NAME, MAX_TITLE, isDuplicate, splitLines } from "@/lib/tasks";
 import { type Actions, DRAFT_KEY } from "@/lib/use-tasks";
 import { useSpeech } from "@/lib/use-speech";
 import { feel } from "@/lib/feedback";
@@ -75,7 +75,20 @@ export function Capture({
   const save = () => {
     if (speech.listening) speech.toggle();
     if (kind === "task") {
-      const t = actions.capture(text, { ...(preset?.bucket ? { bucket: preset.bucket } : {}), ...(preset?.part ? { part: preset.part } : {}) });
+      const extra = { ...(preset?.bucket ? { bucket: preset.bucket } : {}), ...(preset?.part ? { part: preset.part } : {}) };
+      // Brain dump: several lines become several tasks.
+      const lines = splitLines(text);
+      if (lines.length > 1) {
+        const made = actions.captureMany(lines, extra);
+        writeDraft("");
+        setText("");
+        feel("save", "success");
+        toast(`Added ${made.length} tasks.`);
+        announce(`Added ${made.length} tasks.`);
+        onClose();
+        return;
+      }
+      const t = actions.capture(text, extra);
       if (!t) return;
       writeDraft("");
       setText("");
@@ -99,7 +112,7 @@ export function Capture({
   };
 
   return (
-    <Sheet open={open} onClose={onClose} title={live ? "Saved" : "Add a thought"} initialFocus={input}>
+    <Sheet open={open} onClose={onClose} title={live ? "Saved" : "Add a task"} initialFocus={input}>
       {!live ? (
         <form
           onSubmit={(e) => {
@@ -107,19 +120,7 @@ export function Capture({
             save();
           }}
         >
-          <div className="seg mt-1 inline-grid grid-cols-3 p-1" role="tablist" aria-label="What is it?">
-            {(["task", "idea", "note"] as Kind[]).map((k) => (
-              <button key={k} type="button" role="tab" aria-selected={kind === k} onClick={() => (setKind(k), feel("tap"))} className="relative h-9 rounded-full px-4 text-[14px] font-semibold">
-                {kind === k && <motion.span layoutId="cap-seg" className="seg-knob absolute inset-0" transition={{ type: "spring", bounce: 0, duration: 0.3 }} />}
-                <span className={`relative capitalize ${kind === k ? "text-ink" : "text-ink-3"}`}>{k}</span>
-              </button>
-            ))}
-          </div>
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.p key={kind} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.16 }} className="t-small mt-2 text-ink-3">
-              {KIND_HINT[kind]}
-            </motion.p>
-          </AnimatePresence>
+          {preset?.bucket && <p className="t-small text-ink-3">Goes to {BUCKET_NAME[preset.bucket]}. Type several lines to add several tasks.</p>}
           <label htmlFor="thought" className="sr-only">
             What is on your mind?
           </label>
@@ -179,11 +180,6 @@ export function Capture({
 }
 
 /** The optional details after a task is saved. Every choice is one tap. */
-const KIND_HINT: Record<Kind, string> = {
-  task: "Something to do. It goes on your list, and you can add steps and a time.",
-  idea: "A spark for later. It comes back on Home in a few days.",
-  note: "Something to keep. It waits under Notes until you need it.",
-};
 
 function TaskDetails({ task, actions, onDone, onAnother }: { task: Task; actions: Actions; onDone: () => void; onAnother: () => void }) {
   return (
@@ -199,7 +195,7 @@ function TaskDetails({ task, actions, onDone, onAnother }: { task: Task; actions
         </span>
       </div>
 
-      <p className="t-label mt-6">Steps <span className="font-medium normal-case tracking-normal">(optional)</span></p>
+      <p className="t-label mt-6">Subtasks <span className="font-medium normal-case tracking-normal">(optional)</span></p>
       <StepEditor task={task} actions={actions} />
 
       <p className="t-label mt-6">When</p>
@@ -207,15 +203,6 @@ function TaskDetails({ task, actions, onDone, onAnother }: { task: Task; actions
         {(["today", "week", "later"] as Exclude<Bucket, "done">[]).map((b) => (
           <button key={b} type="button" className="chip" aria-pressed={task.bucket === b} onClick={() => actions.move(task.id, b)}>
             {BUCKET_NAME[b]}
-          </button>
-        ))}
-      </div>
-
-      <p className="t-label mt-5">Time of day</p>
-      <div className="mt-2 flex flex-wrap gap-2">
-        {PARTS.map((p) => (
-          <button key={p} type="button" className="chip" aria-pressed={task.part === p} onClick={() => actions.patch(task.id, { part: p })}>
-            {PART_NAME[p]}
           </button>
         ))}
       </div>

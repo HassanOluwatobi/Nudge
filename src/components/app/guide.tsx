@@ -1,12 +1,11 @@
 "use client";
 
-import { ArrowRight, Bell, Lightbulb, Moon, Sun, Wand2 } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { feel } from "@/lib/feedback";
 import { Art } from "./art";
 import { burstFrom } from "./petals";
-import { AppleMark, CalendlyMark, GoogleMark, LogoTile } from "./brands";
 
 /*
   The user guide. Five short pages, each with a small live illustration.
@@ -143,112 +142,10 @@ function Timer() {
   );
 }
 
-function Checkins() {
-  const items = [
-    { icon: Sun, t: "Morning kickoff", s: "8:30 am", hue: "hue-peach" },
-    { icon: Moon, t: "Evening wrap-up", s: "8:00 pm", hue: "hue-lilac" },
-    { icon: Bell, t: "Reminder", s: "Call mum, 6 pm", hue: "hue-blue" },
-  ];
-  return (
-    <div className="flex h-full flex-col justify-center gap-2 px-6">
-      {items.map(({ icon: I, t, s }, i) => (
-        <motion.div key={t} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.14, type: "spring", bounce: 0.2, duration: 0.6 }} className="flex items-center gap-3 rounded-[16px] bg-white px-3 py-2.5 ring-1 ring-line">
-          <motion.span className="grid size-8 place-items-center rounded-[10px] bg-signal-soft text-signal-ink" animate={i === 2 ? { rotate: [0, -14, 12, -8, 0] } : {}} transition={{ delay: 1, duration: 0.7, repeat: Infinity, repeatDelay: 2.2 }}>
-            <I className="size-[18px]" />
-          </motion.span>
-          <span className="flex-1 text-[15px] font-semibold text-ink">{t}</span>
-          <span className="text-[14px] font-medium tabular-nums text-ink-2">{s}</span>
-        </motion.div>
-      ))}
-    </div>
-  );
-}
-
-function IdeasBack() {
-  return (
-    <div className="flex h-full flex-col items-center justify-center px-6">
-      <motion.div initial={{ opacity: 0, y: 30, rotate: -4 }} animate={{ opacity: 1, y: [30, -6, 0], rotate: [-4, 2, 0] }} transition={{ duration: 0.9, ease }} className="w-full rounded-[16px] bg-white p-3 ring-1 ring-line">
-        <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-signal-ink">
-          <Lightbulb className="size-3" /> An idea came back
-        </p>
-        <p className="mt-1 text-[15px] leading-snug">A newsletter about design in African fintech</p>
-        <div className="mt-2 flex gap-1.5">
-          {["Make it a task", "Not yet", "Let it go"].map((c) => (
-            <span key={c} className="rounded-full bg-white px-2.5 py-1 text-[12px] font-medium ring-1 ring-line">
-              {c}
-            </span>
-          ))}
-        </div>
-      </motion.div>
-      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.7 }} className="mt-3 text-center text-[13px] text-ink-3">
-        3 days · 7 days · 14 days · 30 days
-      </motion.p>
-    </div>
-  );
-}
-
-function Calendars() {
-  const marks = [
-    { el: <GoogleMark className="size-7" />, bleed: false, name: "Google" },
-    { el: <AppleMark className="size-full" />, bleed: true, name: "Apple" },
-    { el: <CalendlyMark className="size-8" />, bleed: false, name: "Calendly" },
-  ];
-  return (
-    <div className="flex h-full flex-col items-center justify-center gap-4 px-6">
-      <div className="flex gap-3">
-        {marks.map((m, i) => (
-          <motion.div key={m.name} initial={{ opacity: 0, y: 14, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: 0.1 + i * 0.1, type: "spring", bounce: 0.4, duration: 0.6 }} className="flex flex-col items-center gap-1.5">
-            <span className="rounded-[14px]">
-              <LogoTile bleed={m.bleed} size={52}>{m.el}</LogoTile>
-            </span>
-            <span className="text-[12px] font-medium text-ink-2">{m.name}</span>
-          </motion.div>
-        ))}
-      </div>
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6, type: "spring", bounce: 0.2, duration: 0.6 }} className="flex w-full items-center gap-3 rounded-[16px] bg-white px-3.5 py-3 shadow-sm ring-1 ring-line">
-        <motion.span animate={{ rotate: [0, -14, 12, -8, 0] }} transition={{ delay: 1.1, duration: 0.7, repeat: Infinity, repeatDelay: 2 }}>
-          <Bell className="size-5 text-signal-ink" />
-        </motion.span>
-        <span className="flex-1">
-          <span className="block text-[15px] font-semibold">Morning kickoff</span>
-          <span className="block text-[13px] text-ink-2">Every day at 8:30 am</span>
-        </span>
-      </motion.div>
-    </div>
-  );
-}
-
-function AiSteps() {
-  const steps = ["Open the email from Tunde", "Note his two questions", "Write a short answer", "Hit send"];
-  return (
-    <div className="flex h-full flex-col justify-center px-6">
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2">
-        <span className="grid size-9 place-items-center rounded-[11px] bg-white text-[17px] ring-1 ring-line">✉️</span>
-        <span className="text-[16px] font-semibold">Reply to Tunde</span>
-      </motion.div>
-      <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, type: "spring", bounce: 0.3, duration: 0.5 }} className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[13px] font-semibold ring-1 ring-line">
-        <Wand2 className="size-4 text-signal" /> Break it down with ChatGPT
-      </motion.div>
-      <div className="mt-3 space-y-1.5">
-        {steps.map((t, i) => (
-          <motion.div key={t} initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 + i * 0.18, type: "spring", bounce: 0, duration: 0.4 }} className="flex items-center gap-2 text-[14px]">
-            <span className="grid size-5 place-items-center rounded-full bg-signal-soft text-[11px] font-semibold text-signal-ink">{i + 1}</span>
-            {t}
-          </motion.div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 const PAGES = [
   { art: Capture, title: "Put it all down", body: "Pick Tasks, Ideas or Notes at the top of Home, then type or speak. It lands right in that list. Messy is fine. Press and hold anything for more options." },
   { art: OneThing, title: "Start with one thing", body: "Under Tasks, Home picks one thing and shows its next small step. Not feeling it? Tap Not this one, or Make today easy." },
-  { art: Timer, title: "Focus, one step at a time", body: "Drag the ring to set a timer if you want one. Tick steps as you go, then finish the task when it is all done." },
-  { art: Checkins, title: "Gentle check-ins", body: "A two-minute morning kickoff, an evening wrap-up and a weekly reset on the day you choose. Change the times in Settings." },
-  { art: Calendars, title: "Your calendars, both ways", body: "Put check-ins and reminders in Google, Apple or Outlook so your phone rings. Connect Google, Apple or Calendly and upcoming events become tasks, each with a reminder." },
-  { art: AiSteps, title: "Break it down with your AI", body: "In any task, tap Break it down. NudgeMe opens ChatGPT, Claude, Gemini or Grok with the question ready. Paste the steps back and check them. Free." },
-  { art: IdeasBack, title: "Ideas come back", body: "Tap Ideas at the top of Home and type it in. It comes back later, so it stops circling in your head. Everything stays on your phone." },
+  { art: Timer, title: "Focus, one step at a time", body: "Drag the ring to set a timer if you want one. Tick subtasks as you go, then finish the task when it is all done. Check-ins and calendars live in Settings." },
 ];
 
 export function Guide({ open, onClose }: { open: boolean; onClose: () => void }) {

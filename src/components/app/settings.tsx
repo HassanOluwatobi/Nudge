@@ -82,6 +82,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
     a.click();
     setTimeout(() => URL.revokeObjectURL(a.href), 2000);
     feel("save", "medium");
+    actions.setSettings({ lastBackup: new Date().toISOString() });
     toast("Backup downloaded. Keep the file somewhere safe.");
   };
   const importData = async (f: File) => {
@@ -234,7 +235,12 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
         <button type="button" aria-expanded={dataOpen} onClick={() => (setDataOpen((v) => !v), feel("tap", "light"))} className="flex min-h-[72px] w-full items-center justify-between px-4 py-3 text-left">
           <span>
             <span className="block font-medium">Your data</span>
-            <span className="t-small text-ink-2">Stays on this device. Backup, restore, clear.</span>
+            <span className="t-small text-ink-2">
+              Stays on this device.{" "}
+              <span className={!s.lastBackup || Date.now() - Date.parse(s.lastBackup) > 14 * 864e5 ? "font-semibold text-danger" : ""}>
+                {s.lastBackup ? `Last backup ${new Date(s.lastBackup).toLocaleDateString(undefined, { day: "numeric", month: "short" })}.` : "No backup yet."}
+              </span>
+            </span>
           </span>
           <motion.span animate={{ rotate: dataOpen ? 180 : 0 }} transition={{ type: "spring", bounce: 0, duration: 0.3 }}>
             <ChevronDown className="size-5 text-ink-3" />

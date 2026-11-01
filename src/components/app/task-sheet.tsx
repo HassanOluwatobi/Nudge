@@ -1,17 +1,17 @@
 "use client";
 
-import { ArrowRight, Check, Copy, ExternalLink, Plus, RotateCcw, Sparkles, SunMedium, Trash2, Wand2, X, Copy as Dup } from "lucide-react";
+import { ArrowRight, Check, Copy, ExternalLink, RotateCcw, Sparkles, SunMedium, Trash2, Wand2, Copy as Dup } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AI_NAME, aiLink, breakdownPrompt, copy } from "@/lib/ai";
-import { type Bucket, type Settings, type Task, BUCKET_NAME, HUES, MAX_STEP, MAX_TITLE, MIN_CHOICES, PARTS, PART_NAME, addDays, fmtMins, parseSteps, suggestStep, ymd } from "@/lib/tasks";
+import { type Bucket, type Settings, type Task, BUCKET_NAME, HUES, MAX_TITLE, parseSteps } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { feel } from "@/lib/feedback";
 import { RemindPicker } from "./remind";
 import { Sheet } from "./sheet";
-import { keepFocus } from "./steps";
-import { StepCheck, Tile } from "./task-row";
+import { SubtaskList } from "./steps";
+import { Tile } from "./task-row";
 
 const EMOJIS = ["✨", "📞", "✉️", "🛒", "💳", "🧺", "🏃", "📚", "✍️", "🎨", "🍳", "🩺", "🗓️", "💻", "🌱", "🧘", "🧹", "🎧", "🚗", "💡"];
 
@@ -35,13 +35,10 @@ export function TaskSheet({
   const [title, setTitle] = useState("");
   const [last, setLast] = useState<Task | null>(task);
   const [look, setLook] = useState(false);
-  const [draft, setDraft] = useState("");
   const [confirm, setConfirm] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [pasted, setPasted] = useState("");
   const aiRef = useRef<HTMLDivElement>(null);
-  const [dueOpen, setDueOpen] = useState(false);
-  const [dueDraft, setDueDraft] = useState("");
 
   useEffect(() => {
     if (task) {
@@ -51,7 +48,6 @@ export function TaskSheet({
       setLook(false);
       setAiOpen(false);
       setPasted("");
-      setDraft("");
     }
   }, [task?.id]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
@@ -61,7 +57,6 @@ export function TaskSheet({
   const t = task ?? last;
   if (!t) return null;
   const done = t.bucket === "done";
-  const today = ymd();
   const commit = () => {
     if (task && title.trim() && title.trim() !== task.title) actions.patch(task.id, { title });
   };
@@ -72,17 +67,35 @@ export function TaskSheet({
   const parsed = parseSteps(pasted);
   const link = aiLink(ai, breakdownPrompt(t.title));
 
+  const doneCount = t.steps.filter((s) => s.d).length;
+
   return (
     <Sheet open={!!task} onClose={close} title="Task details" hideTitle>
+      {/* 1. What it is. Tap the title to edit it, tap the tile to change its look. */}
       <div className="flex items-start gap-3">
-        <button type="button" onClick={() => setLook((v) => !v)} aria-expanded={look} aria-label="Change colour and icon" className="mt-1 rounded-[14px] ring-offset-2 transition-shadow hover:ring-2 hover:ring-line">
-          <Tile task={t} size={48} />
+        <button type="button" onClick={() => setLook((v) => !v)} aria-expanded={look} aria-label="Change colour and icon" className="mt-0.5 shrink-0 rounded-[14px]">
+          <Tile task={t} size={44} />
         </button>
         <div className="min-w-0 flex-1">
           <label htmlFor="t-title" className="sr-only">
             Task
           </label>
-          <textarea id="t-title" value={title} rows={2} maxLength={MAX_TITLE} onChange={(e) => setTitle(e.target.value)} onBlur={commit} className="t-title w-full resize-none rounded-[16px] border border-line bg-white px-3.5 py-2.5 text-[23px] transition-[border-color,box-shadow] focus:border-signal focus:shadow-[0_0_0_4px_rgb(29_77_245/0.12)] focus:outline-none" />
+          <textarea
+            id="t-title"
+            value={title}
+            rows={1}
+            maxLength={MAX_TITLE}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              e.target.style.height = "auto";
+              e.target.style.height = `${e.target.scrollHeight}px`;
+            }}
+            onBlur={commit}
+            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), (e.target as HTMLTextAreaElement).blur())}
+            enterKeyHint="done"
+            className="t-title -mx-2 w-[calc(100%+1rem)] resize-none rounded-[12px] bg-transparent px-2 py-1 text-[24px] leading-tight transition-colors [field-sizing:content] focus:bg-[var(--sheet)] focus:outline-none focus:ring-1 focus:ring-line"
+          />
+          {!done && <p className="t-small mt-0.5 text-ink-3">{BUCKET_NAME[t.bucket]}{t.steps.length > 0 && ` · ${doneCount} of ${t.steps.length} subtasks done`}</p>}
         </div>
       </div>
 
@@ -98,11 +111,11 @@ export function TaskSheet({
             </div>
             <div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label="Icon">
               {EMOJIS.map((e) => (
-                <button key={e} type="button" aria-pressed={t.emoji === e} onClick={() => actions.patch(t.id, { emoji: e })} className={`grid size-10 place-items-center rounded-xl text-[20px] ${t.emoji === e ? "bg-white ring-2 ring-signal" : "bg-white/60"}`}>
+                <button key={e} type="button" aria-pressed={t.emoji === e} onClick={() => actions.patch(t.id, { emoji: e })} className={`grid size-10 place-items-center rounded-xl bg-white text-[20px] ${t.emoji === e ? "ring-2 ring-signal" : "ring-1 ring-line"}`}>
                   {e}
                 </button>
               ))}
-              <button type="button" onClick={() => actions.patch(t.id, { emoji: undefined })} className="h-10 rounded-xl bg-white/60 px-3 text-[14px] text-ink-2">
+              <button type="button" onClick={() => actions.patch(t.id, { emoji: undefined })} className="h-10 rounded-xl bg-white px-3 text-[14px] text-ink-2 ring-1 ring-line">
                 Letter
               </button>
             </div>
@@ -110,67 +123,39 @@ export function TaskSheet({
         )}
       </AnimatePresence>
 
-      {!done && (
+      {done ? (
+        <button type="button" className="btn btn-line mt-6 w-full" onClick={() => (actions.restore(t.id), announce("Task is back on your list."), onClose())}>
+          <RotateCcw className="size-4" /> Put it back on my list
+        </button>
+      ) : (
         <>
-          {/* Steps */}
-          <div className="mt-6 flex items-baseline justify-between">
-            <p className="t-label">Steps</p>
-            {t.steps.length > 0 && <span className="t-small text-ink-3">{t.steps.filter((s) => s.d).length}/{t.steps.length} done</span>}
+          {/* 2. What to do next. The two main actions sit right under the title. */}
+          <div className="mt-5 grid grid-cols-[1fr_auto] gap-2">
+            <button type="button" className="btn btn-signal" onClick={() => (commit(), onFocus(t))}>
+              Start <ArrowRight className="size-5" />
+            </button>
+            <button type="button" className="btn btn-line gap-1.5 px-4" onClick={() => (commit(), actions.finish(t.id), onFinished(t))}>
+              <Check className="size-4" /> Done
+            </button>
           </div>
-          <ul className="mt-2 space-y-1.5">
-            {t.steps.map((s) => (
-              <li key={s.id} className="flex items-center gap-2 rounded-[14px] bg-white pl-2 pr-1 ring-1 ring-line transition-shadow focus-within:ring-2 focus-within:ring-signal/50">
-                <button type="button" aria-pressed={s.d} aria-label={s.d ? "Mark step not done" : "Mark step done"} onClick={() => (actions.toggleStep(t.id, s.id), feel(s.d ? "unstep" : "step", "light"))} className="grid size-9 shrink-0 place-items-center">
-                  <StepCheck done={s.d} hue={t.hue} size={20} />
-                </button>
-                <input
-                  defaultValue={s.t}
-                  maxLength={MAX_STEP}
-                  aria-label="Step"
-                  onBlur={(e) => e.target.value !== s.t && actions.editStep(t.id, s.id, e.target.value)}
-                  className={`min-w-0 flex-1 bg-transparent py-2.5 text-[15px] focus:outline-none ${s.d ? "text-ink-3 line-through" : ""}`}
-                />
-                <button type="button" className="icon-btn size-9 text-ink-3" aria-label="Remove step" onClick={() => (actions.removeStep(t.id, s.id), feel("tap"))}>
-                  <X className="size-4" />
-                </button>
-              </li>
-            ))}
-          </ul>
-          <form
-            className="mt-2 flex gap-2"
-            onSubmit={(e) => {
-              e.preventDefault();
-              if (!draft.trim()) return;
-              actions.addStep(t.id, draft);
-              feel("save", "light");
-              setDraft("");
+
+          {/* 3. Subtasks. Type and press Return. No extra button. */}
+          <p className="t-label mt-7">Subtasks</p>
+          <div className="mt-2">
+            <SubtaskList task={t} actions={actions} />
+          </div>
+          <button
+            type="button"
+            className="chip mt-2 gap-1.5"
+            aria-expanded={aiOpen}
+            onClick={() => {
+              setAiOpen((v) => !v);
+              feel("tap", "light");
+              if (!aiOpen) setTimeout(() => aiRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 360);
             }}
           >
-            <input value={draft} maxLength={MAX_STEP} onChange={(e) => setDraft(e.target.value)} placeholder={t.steps.length ? "Add a step" : "The smallest thing you could do first"} aria-label="New step" className="field min-w-0 flex-1" />
-            <button type="submit" {...keepFocus} className="btn btn-ink btn-icon size-[50px] shrink-0 rounded-[14px]" aria-label="Add step">
-              <Plus className="size-5" />
-            </button>
-          </form>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {!t.steps.length && (
-              <button type="button" className="chip gap-1.5 text-left" onClick={() => actions.addStep(t.id, suggestStep(t.title))}>
-                <Sparkles className="size-3.5 shrink-0 text-signal" /> {suggestStep(t.title)}
-              </button>
-            )}
-            <button
-              type="button"
-              className="chip gap-1.5"
-              aria-expanded={aiOpen}
-              onClick={() => {
-                setAiOpen((v) => !v);
-                feel("tap", "light");
-                // Bring the panel into view so the tap visibly leads somewhere.
-                if (!aiOpen) setTimeout(() => aiRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 360);
-              }}
-            >
-              <Wand2 className="size-3.5 text-signal" /> Break it down with {AI_NAME[ai]}
-            </button>
-          </div>
+            <Wand2 className="size-3.5 text-signal" /> Break it down with {AI_NAME[ai]}
+          </button>
 
           <AnimatePresence initial={false}>
             {aiOpen && (
@@ -187,7 +172,7 @@ export function TaskSheet({
                         rel="noopener noreferrer"
                         onClick={async () => {
                           const ok = await copy(breakdownPrompt(t.title));
-                          if (!link.prefilled) toast(ok ? `Question copied. Paste it into ${AI_NAME[ai]}.` : `Open ${AI_NAME[ai]} and ask it to break this task into tiny steps.`);
+                          if (!link.prefilled) toast(ok ? `Question copied. Paste it into ${AI_NAME[ai]}.` : `Open ${AI_NAME[ai]} and ask it to break this task into tiny subtasks.`);
                         }}
                         className="btn btn-line mt-1.5 min-h-11 w-full gap-2 text-[15px]"
                       >
@@ -201,7 +186,7 @@ export function TaskSheet({
                       <label htmlFor="ai-paste" className="t-small font-semibold text-ink-2">
                         2. Paste the answer here
                       </label>
-                      <textarea id="ai-paste" rows={4} value={pasted} onChange={(e) => setPasted(e.target.value)} placeholder="Paste the list of steps" className="field mt-1.5 resize-none text-[15px]" />
+                      <textarea id="ai-paste" rows={4} value={pasted} onChange={(e) => setPasted(e.target.value)} placeholder="Paste the list" className="field mt-1.5 resize-none text-[15px]" />
                     </li>
                   </ol>
                   {parsed.length > 0 && (
@@ -222,11 +207,11 @@ export function TaskSheet({
                           feel("done", "success");
                           setPasted("");
                           setAiOpen(false);
-                          announce(`${parsed.length} steps added.`);
-                          toast(`${parsed.length} steps added.`);
+                          announce(`${parsed.length} subtasks added.`);
+                          toast(`${parsed.length} subtasks added.`);
                         }}
                       >
-                        Add {parsed.length} steps
+                        Add {parsed.length} subtasks
                       </button>
                     </div>
                   )}
@@ -235,108 +220,52 @@ export function TaskSheet({
             )}
           </AnimatePresence>
 
-          <p className="t-label mt-6">When</p>
+          {/* 4. When, and a nudge. That is all the planning a task needs. */}
+          <p className="t-label mt-7">When</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {(["today", "week", "later"] as Exclude<Bucket, "done">[]).map((b) => (
-              <button key={b} type="button" className="chip" aria-pressed={t.bucket === b} onClick={() => (actions.move(t.id, b), announce(`Moved to ${BUCKET_NAME[b]}.`))}>
+              <button key={b} type="button" className="chip" aria-pressed={t.bucket === b} onClick={() => (actions.move(t.id, b), feel("tick", "light"), announce(`Moved to ${BUCKET_NAME[b]}.`))}>
                 {BUCKET_NAME[b]}
               </button>
             ))}
           </div>
 
-          <p className="t-label mt-5">Time of day</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {PARTS.map((p) => (
-              <button key={p} type="button" className="chip" aria-pressed={t.part === p} onClick={() => actions.patch(t.id, { part: p })}>
-                {PART_NAME[p]}
-              </button>
-            ))}
-          </div>
-
-          <p className="t-label mt-5">How long</p>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {MIN_CHOICES.map((m) => (
-              <button key={m} type="button" className="chip" aria-pressed={t.mins === m} onClick={() => actions.patch(t.id, { mins: t.mins === m ? undefined : m })}>
-                {fmtMins(m)}
-              </button>
-            ))}
-          </div>
-
-          <p className="t-label mt-5">Due</p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
-            <button type="button" className="chip" aria-pressed={t.due === today} onClick={() => actions.patch(t.id, { due: t.due === today ? undefined : today })}>
-              Today
-            </button>
-            <button type="button" className="chip" aria-pressed={t.due === addDays(today, 1)} onClick={() => actions.patch(t.id, { due: t.due === addDays(today, 1) ? undefined : addDays(today, 1) })}>
-              Tomorrow
-            </button>
-            <button type="button" className="chip" aria-expanded={dueOpen} aria-pressed={!!t.due && t.due !== today && t.due !== addDays(today, 1)} onClick={() => (setDueOpen((v) => !v), setDueDraft(t.due ?? ""), feel("tap"))}>
-              {t.due && t.due !== today && t.due !== addDays(today, 1) ? new Date(t.due + "T00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "Pick a date"}
-            </button>
-          </div>
-          <AnimatePresence initial={false}>
-            {dueOpen && (
-              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }} className="overflow-hidden">
-                <div className="mt-3 flex gap-2 rounded-2xl bg-white p-3 ring-1 ring-line">
-                  <input type="date" aria-label="Due date" min={today} value={dueDraft} onChange={(e) => setDueDraft(e.target.value)} className="field min-w-0 flex-1" />
-                  <button type="button" disabled={!dueDraft} className="btn btn-signal min-h-[50px] px-4" onClick={() => (actions.patch(t.id, { due: dueDraft }), feel("save", "light"), setDueOpen(false))}>
-                    Set
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          <p className="t-label mt-5">Remind me</p>
+          <p className="t-label mt-6">Remind me</p>
           <RemindPicker task={t} actions={actions} />
         </>
       )}
 
-      <div className="mt-7 flex flex-col gap-2">
-        {done ? (
-          <button type="button" className="btn btn-line w-full" onClick={() => (actions.restore(t.id), announce("Task is back on your list."), onClose())}>
-            <RotateCcw className="size-4" /> Put it back on my list
-          </button>
-        ) : (
+      {/* 5. The rest, kept quiet at the bottom. */}
+      <div className="mt-8 flex items-center justify-center gap-1 border-t border-line pt-3">
+        {!done && (
           <>
-            <button type="button" className="btn btn-signal w-full" onClick={() => (commit(), onFocus(t))}>
-              Start focus <ArrowRight className="size-5" />
+            <button type="button" className="btn btn-quiet min-h-10 gap-1.5 px-3 text-[14px]" onClick={() => (actions.tomorrow(t.id), toast("Moved to tomorrow."), onClose())}>
+              <SunMedium className="size-4" /> Tomorrow
             </button>
-            <button type="button" className="btn btn-line w-full" onClick={() => (commit(), actions.finish(t.id), onFinished(t))}>
-              <Check className="size-4" /> Finish this task
+            <button type="button" className="btn btn-quiet min-h-10 gap-1.5 px-3 text-[14px]" onClick={() => (actions.duplicate(t.id), toast("Copy made."))}>
+              <Dup className="size-4" /> Copy
             </button>
-            <div className="grid grid-cols-2 gap-2">
-              <button type="button" className="btn btn-quiet gap-1.5 text-[15px]" onClick={() => (actions.tomorrow(t.id), toast("Moved to tomorrow."), onClose())}>
-                <SunMedium className="size-4" /> Tomorrow
-              </button>
-              <button type="button" className="btn btn-quiet gap-1.5 text-[15px]" onClick={() => (actions.duplicate(t.id), toast("Copy made."))}>
-                <Dup className="size-4" /> Make a copy
-              </button>
-            </div>
           </>
         )}
         {confirm ? (
-          <div className="flex items-center justify-between gap-2 rounded-2xl bg-danger-soft p-2 pl-4" role="group" aria-label="Confirm delete">
-            <span className="text-[15px]">Delete this task?</span>
-            <div className="flex gap-1">
-              <button type="button" className="btn btn-quiet min-h-11" onClick={() => setConfirm(false)}>
-                Keep
-              </button>
-              <button
-                type="button"
-                className="btn btn-danger min-h-11 px-4"
-                onClick={() => {
-                  const gone = actions.remove(t.id);
-                  onClose();
-                  if (gone) toast("Task deleted.", { action: { label: "Undo", onClick: () => actions.put(gone) } });
-                }}
-              >
-                Delete
-              </button>
-            </div>
-          </div>
+          <span className="flex items-center gap-1" role="group" aria-label="Confirm delete">
+            <button type="button" className="btn btn-quiet min-h-10 px-3 text-[14px]" onClick={() => setConfirm(false)}>
+              Keep
+            </button>
+            <button
+              type="button"
+              className="btn btn-danger min-h-10 px-4 text-[14px]"
+              onClick={() => {
+                const gone = actions.remove(t.id);
+                onClose();
+                if (gone) toast("Task deleted.", { action: { label: "Undo", onClick: () => actions.put(gone) } });
+              }}
+            >
+              Delete
+            </button>
+          </span>
         ) : (
-          <button type="button" className="btn btn-quiet w-full gap-1.5 text-[15px] text-danger" onClick={() => setConfirm(true)}>
+          <button type="button" className="btn btn-quiet min-h-10 gap-1.5 px-3 text-[14px] text-danger" onClick={() => setConfirm(true)}>
             <Trash2 className="size-4" /> Delete
           </button>
         )}
@@ -344,6 +273,7 @@ export function TaskSheet({
     </Sheet>
   );
 }
+
 
 /** Quick actions on a held task, after Tiimo's menu. */
 export function TaskMenu({ task, onClose, actions, onOpen, onFocus }: { task: Task | null; onClose: () => void; actions: Actions; onOpen: (t: Task) => void; onFocus: (t: Task) => void }) {

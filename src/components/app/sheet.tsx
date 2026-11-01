@@ -122,7 +122,7 @@ export function Sheet({
         <div className="grabber" aria-hidden />
         <div className="flex items-center justify-between px-5 pt-2">
           <h2 className={hideTitle ? "sr-only" : "text-[17px] font-semibold"}>{title}</h2>
-          <button type="button" className="icon-btn -mr-2 text-ink-2" aria-label="Close" onClick={() => closeRef.current()}>
+          <button type="button" className="icon-btn -mr-2 ml-auto text-ink-2" aria-label="Close" onClick={() => closeRef.current()}>
             <X className="size-5" />
           </button>
         </div>

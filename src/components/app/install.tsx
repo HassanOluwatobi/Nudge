@@ -17,7 +17,7 @@ const standalone = () =>
   typeof window !== "undefined" && (matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true);
 
 /** Add to Home Screen. Installed, NudgeMe opens full screen with no address bar. */
-export function InstallButton() {
+export function InstallButton({ compact = false }: { compact?: boolean }) {
   const [installed, setInstalled] = useState(false);
   const [help, setHelp] = useState(false);
   const [ready, setReady] = useState(false);
@@ -61,7 +61,7 @@ export function InstallButton() {
       >
         <SquarePlus className="size-[18px]" /> Add NudgeMe to Home Screen
       </button>
-      <p className="t-small mt-2 text-center text-ink-3">{ready ? "One tap. Opens full screen, like an app." : plat === "ios" ? "iPhone asks for two taps in Safari. We show you where." : "Opens full screen, like an app. Works offline."}</p>
+      {!compact && <p className="t-small mt-2 text-center text-ink-3">{ready ? "One tap. Opens full screen, like an app." : plat === "ios" ? "iPhone asks for two taps in Safari. We show you where." : "Opens full screen, like an app. Works offline."}</p>}
       <Sheet open={help} onClose={() => setHelp(false)} title="Add to Home Screen">
         <ol className="mt-2 space-y-3">
           {(plat === "ios"
@@ -92,5 +92,49 @@ export function InstallButton() {
         </button>
       </Sheet>
     </>
+  );
+}
+
+/**
+ * A gentle card on Home from the second day of use, until NudgeMe is on the
+ * Home Screen. On iPhone, Safari can clear a website's saved data after about
+ * a week without a visit. Installed apps keep it.
+ */
+export function InstallCard() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    if (standalone()) return;
+    try {
+      const today = new Date().toISOString().slice(0, 10);
+      const days: string[] = JSON.parse(localStorage.getItem("nudgeme.days") || "[]");
+      if (!days.includes(today)) days.push(today);
+      localStorage.setItem("nudgeme.days", JSON.stringify(days.slice(-10)));
+      const snoozed = localStorage.getItem("nudgeme.installLater");
+      if (days.length >= 2 && (!snoozed || Date.now() - Number(snoozed) > 7 * 864e5)) setShow(true);
+    } catch {
+      /* private mode: skip the card */
+    }
+  }, []);
+  if (!show) return null;
+  return (
+    <section className="mt-6 rounded-[20px] bg-white p-4 ring-1 ring-line" aria-label="Keep your tasks safe">
+      <p className="text-[15px] font-semibold">Keep your tasks safe</p>
+      <p className="t-small mt-1 text-ink-2">Add NudgeMe to your Home Screen. Phones can clear websites you have not opened for a week. Apps on the Home Screen keep everything.</p>
+      <div className="mt-3">
+        <InstallButton compact />
+      </div>
+      <button
+        type="button"
+        className="btn btn-quiet mt-1 min-h-10 w-full text-[14px]"
+        onClick={() => {
+          try {
+            localStorage.setItem("nudgeme.installLater", String(Date.now()));
+          } catch {}
+          setShow(false);
+        }}
+      >
+        Not now
+      </button>
+    </section>
   );
 }

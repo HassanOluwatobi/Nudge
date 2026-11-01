@@ -1,11 +1,11 @@
 "use client";
 
-import { Bell, ChevronDown, Trash2 } from "lucide-react";
+import { Bell, ChevronDown, SunMedium, Trash2 } from "lucide-react";
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion } from "motion/react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { feel, haptic } from "@/lib/feedback";
-import { type Hue, type Task, fmtMins, prettyDue, stepsDone, ymd } from "@/lib/tasks";
+import { type Hue, type Task, prettyDue, stepsDone, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { useHold } from "@/lib/use-hold";
 import { burstFrom } from "./petals";
@@ -96,10 +96,10 @@ export function CheckButton({ task, onDone, label }: { task: Task; onDone: () =>
 }
 
 /**
- * Swipe a row left to show Delete, like iOS lists. A long swipe deletes at
- * once. Every delete can be undone from the toast.
+ * Swipe a row left to show Delete, like iOS lists. Swipe right (when offered)
+ * to push it to tomorrow. A long swipe acts at once. Both can be undone.
  */
-export function SwipeDelete({ children, onDelete, label, onDragStart }: { children: React.ReactNode; onDelete: () => void; label: string; onDragStart?: () => void }) {
+export function SwipeDelete({ children, onDelete, onTomorrow, label, onDragStart }: { children: React.ReactNode; onDelete: () => void; onTomorrow?: () => void; label: string; onDragStart?: () => void }) {
   const x = useMotionValue(0);
   const moved = useRef(false);
   const [open, setOpen] = useState(false);
@@ -107,6 +107,11 @@ export function SwipeDelete({ children, onDelete, label, onDragStart }: { childr
   const close = () => (animate(x, 0, spring), setOpen(false));
   return (
     <div className="relative overflow-hidden">
+      {onTomorrow && (
+        <button type="button" tabIndex={open ? 0 : -1} aria-label={`Move ${label} to tomorrow`} onClick={() => (feel("save", "light"), onTomorrow())} className="absolute inset-y-0 left-0 flex w-[92px] flex-col items-center justify-center gap-0.5 bg-signal text-[12px] font-semibold text-white">
+          <SunMedium className="size-[18px]" /> Tomorrow
+        </button>
+      )}
       <button type="button" tabIndex={open ? 0 : -1} aria-label={`Delete ${label}`} onClick={() => (feel("undo", "warning"), onDelete())} className="absolute inset-y-0 right-0 flex w-[92px] flex-col items-center justify-center gap-0.5 bg-danger text-[12px] font-semibold text-white">
         <Trash2 className="size-[18px]" /> Delete
       </button>
@@ -114,18 +119,23 @@ export function SwipeDelete({ children, onDelete, label, onDragStart }: { childr
         style={{ x }}
         drag="x"
         dragDirectionLock
-        dragConstraints={{ left: -92, right: 0 }}
-        dragElastic={{ left: 0.5, right: 0 }}
+        dragConstraints={{ left: -92, right: onTomorrow ? 92 : 0 }}
+        dragElastic={{ left: 0.5, right: onTomorrow ? 0.5 : 0 }}
         onDragStart={() => ((moved.current = true), onDragStart?.())}
         onDragEnd={(_, i) => {
           if (i.offset.x < -200) {
             feel("undo", "warning");
             return onDelete();
           }
-          const go = i.offset.x < -46 || i.velocity.x < -320;
-          animate(x, go ? -92 : 0, spring);
-          setOpen(go);
-          if (go) haptic("light");
+          if (onTomorrow && i.offset.x > 200) {
+            feel("save", "light");
+            return onTomorrow();
+          }
+          const left = i.offset.x < -46 || i.velocity.x < -320;
+          const right = !!onTomorrow && (i.offset.x > 46 || i.velocity.x > 320);
+          animate(x, left ? -92 : right ? 92 : 0, spring);
+          setOpen(left || right);
+          if (left || right) haptic("light");
         }}
         onClickCapture={(e) => {
           if (moved.current || open) {
@@ -164,7 +174,9 @@ export function TaskRow({
   const n = task.steps.length;
   const k = stepsDone(task);
   const today = ymd();
-  const meta = [fmtMins(task.mins), task.due && !done ? prettyDue(task.due, today) : ""].filter(Boolean).join(" · ");
+  // How long is no longer asked, so only the day and the reminder time show.
+  const remindTime = task.remindAt ? new Date(task.remindAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "";
+  const meta = [task.due && !done && task.due !== today ? prettyDue(task.due, today) : ""].filter(Boolean).join(" · ");
 
   return (
     <motion.li
@@ -178,6 +190,15 @@ export function TaskRow({
       <SwipeDelete
         label={task.title}
         onDragStart={endHold}
+        onTomorrow={
+          done
+            ? undefined
+            : () => {
+                const before = { bucket: task.bucket, due: task.due };
+                actions.tomorrow(task.id);
+                toast("Moved to tomorrow.", { action: { label: "Undo", onClick: () => actions.patch(task.id, before) } });
+              }
+        }
         onDelete={() => {
           const gone = actions.remove(task.id);
           if (gone) toast("Task deleted.", { action: { label: "Undo", onClick: () => actions.put(gone) } });
@@ -201,8 +222,8 @@ export function TaskRow({
               <span className="t-small mt-0.5 flex items-center gap-1.5 text-ink-3">
                 {meta}
                 {task.remindAt && (
-                  <span className="inline-flex items-center gap-0.5">
-                    {meta && "·"} <Bell className="size-3" aria-label="Reminder set" />
+                  <span className="inline-flex items-center gap-1">
+                    {meta && "·"} <Bell className="size-3" aria-hidden /> <span aria-label={`Reminder at ${remindTime}`}>{remindTime}</span>
                   </span>
                 )}
               </span>
@@ -223,7 +244,7 @@ export function TaskRow({
       </SwipeDelete>
       {n > 0 && !done && (
         <>
-          <button type="button" onClick={() => (setOpen((v) => !v), feel("tap"))} aria-expanded={open} aria-label={`${k} of ${n} steps done. ${open ? "Hide" : "Show"} steps`} className="flex h-9 w-full items-center gap-3 border-t border-line/70 bg-[#fbf9f4] px-3.5">
+          <button type="button" onClick={() => (setOpen((v) => !v), feel("tap"))} aria-expanded={open} aria-label={`${k} of ${n} subtasks done. ${open ? "Hide" : "Show"} steps`} className="flex h-9 w-full items-center gap-3 border-t border-line/70 bg-[#fbf9f4] px-3.5">
             <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-[#ebe6db]">
               <motion.span className="block h-full rounded-full" style={{ background: "var(--signal)" }} initial={false} animate={{ width: `${(k / n) * 100}%` }} transition={{ type: "spring", bounce: 0.15, duration: 0.6 }} />
             </span>

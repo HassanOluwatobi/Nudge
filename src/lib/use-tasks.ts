@@ -102,6 +102,14 @@ export function useTasks() {
       update((s) => ({ ...s, tasks: [...s.tasks, task] }));
       return task;
     },
+    captureMany(lines: string[], extra: Partial<Task> = {}): Task[] {
+      const made = lines.map((l) => {
+        const r = readThought(l);
+        return makeTask(r.title, r.bucket, { due: r.due, part: r.part, ...extra });
+      });
+      if (made.length) update((s) => ({ ...s, tasks: [...s.tasks, ...made] }));
+      return made;
+    },
     patch(id: string, p: Partial<Task>) {
       const clean: Partial<Task> = { ...p };
       if (p.title !== undefined) {

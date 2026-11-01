@@ -48,6 +48,7 @@ export type Settings = {
   sound: boolean;
   haptics: boolean;
   calendarAdded?: string;
+  lastBackup?: string;
   /** Connected calendars. Tokens for Notion and Calendly stay on this device. */
   sync: { google?: boolean; outlook?: boolean; notion?: string; calendly?: string; ics?: string; last?: string; skipped?: string[] };
   theme?: "light" | "dark" | "auto";
@@ -72,12 +73,21 @@ export const MAX_STEP = 160;
 export const BUCKETS: Bucket[] = ["today", "week", "later", "done"];
 export const PARTS: Part[] = ["anytime", "morning", "afternoon", "evening"];
 export const HUES: Hue[] = ["blue", "cyan", "aqua", "lime", "peach", "coral", "pink", "lilac"];
+/** Brain dump: one task per line. Bullets, numbers and empty lines are ignored. */
+export function splitLines(text: string): string[] {
+  return text
+    .split(/\r?\n/)
+    .map((l) => l.replace(/^\s*(?:[-*•–]|\d+[.)])\s*/, "").trim())
+    .filter(Boolean)
+    .slice(0, 50);
+}
+
 export const BUCKET_NAME: Record<Bucket, string> = { today: "Today", week: "This week", later: "Later", done: "Done" };
 export const PART_NAME: Record<Part, string> = { anytime: "Anytime", morning: "Morning", afternoon: "Afternoon", evening: "Evening" };
 export const MIN_CHOICES = [5, 10, 15, 30, 45, 60];
 export const RESURFACE_DAYS = [3, 7, 14, 30];
 
-export const DEFAULT_SETTINGS: Settings = { morning: "08:30", evening: "20:00", weeklyDay: 0, ai: "chatgpt", notify: false, sound: true, haptics: true, sync: {} };
+export const DEFAULT_SETTINGS: Settings = { morning: "08:30", evening: "20:00", weeklyDay: -1, ai: "chatgpt", notify: false, sound: true, haptics: true, sync: {} };
 
 export const freshState = (): State => ({ v: 12, tasks: [], entries: [], settings: { ...DEFAULT_SETTINGS }, meta: {} });
 
@@ -317,12 +327,13 @@ export function sanitize(raw: unknown): State {
   const settings: Settings = {
     morning: hhmm(st.morning, DEFAULT_SETTINGS.morning),
     evening: hhmm(st.evening, DEFAULT_SETTINGS.evening),
-    weeklyDay: Number.isInteger(st.weeklyDay) && st.weeklyDay! >= -1 && st.weeklyDay! <= 6 ? st.weeklyDay! : 0,
+    weeklyDay: Number.isInteger(st.weeklyDay) && st.weeklyDay! >= -1 && st.weeklyDay! <= 6 ? st.weeklyDay! : -1,
     ai: ["chatgpt", "claude", "gemini", "grok"].includes(st.ai as string) ? (st.ai as Settings["ai"]) : "chatgpt",
     notify: !!st.notify,
     sound: st.sound !== false,
     haptics: st.haptics !== false,
     calendarAdded: str(st.calendarAdded),
+    lastBackup: str(st.lastBackup),
     // Light unless someone chose otherwise. Older saves said "system" by default, so those start light too.
     theme: st.theme === "dark" || st.theme === "auto" ? st.theme : "light",
     sync: (() => {

@@ -108,6 +108,10 @@ export function NudgeApp() {
   }, [tab, over]);
 
   useEffect(() => installTapHaptics(), []);
+  // Ask the browser to keep NudgeMe's data instead of clearing it to save space.
+  useEffect(() => {
+    navigator.storage?.persist?.().catch(() => {});
+  }, []);
   useEffect(() => {
     if ("serviceWorker" in navigator && !["localhost", "127.0.0.1"].includes(location.hostname)) navigator.serviceWorker.register("/sw.js").catch(() => {});
     // Opened from a calendar reminder: go straight to the check-in.
@@ -250,7 +254,7 @@ export function NudgeApp() {
             {tab === "today" && (
               <Today {...common} view={homeView} onView={setHomeView} onAddTo={(part) => setCapture({ part, bucket: "today" })} onFocus={startFocus} onCheckin={setCheckin} />
             )}
-            {tab === "todo" && <Todo {...common} onAddTo={(bucket) => setCapture({ bucket })} />}
+            {tab === "todo" && <Todo {...common} onAdd={() => setCapture({ bucket: "week" })} onAddTo={(bucket) => setCapture({ bucket })} />}
             {tab === "focus" && <Focus state={state} actions={actions} announce={announce} taskId={focusId === null ? undefined : (focusId ?? suggestion(state)?.id)} onPickTask={(id) => (setFocusId(id ?? null), state.meta.timer && actions.stopTimer())} onFinished={finished} />}
           </motion.div>
         )}

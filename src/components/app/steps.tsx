@@ -15,56 +15,88 @@ import { StepCheck } from "./task-row";
  */
 export const keepFocus = { onPointerDown: (e: React.PointerEvent) => e.preventDefault(), onMouseDown: (e: React.MouseEvent) => e.preventDefault() };
 
-/** A task's steps with a field to add more. Used right after saving a task. */
-export function StepEditor({ task, actions }: { task: Task; actions: Actions }) {
+/**
+ * The "Add a subtask" row. Type and press Return to add, and the field stays
+ * ready for the next one. Tapping away with text in it adds it too, so there
+ * is never a second button to press.
+ */
+export function AddSubtask({ onAdd, placeholder = "Add a subtask", className = "" }: { onAdd: (text: string) => void; placeholder?: string; className?: string }) {
   const [draft, setDraft] = useState("");
-  const field = useRef<HTMLInputElement>(null);
-  const tip = suggestStep(task.title);
-  const add = (text: string) => {
-    if (!text.trim()) return;
-    actions.addStep(task.id, text);
+  const ref = useRef<HTMLInputElement>(null);
+  const add = (keep: boolean) => {
+    const t = draft.trim();
+    if (!t) return;
+    onAdd(t);
     feel("save", "light");
     setDraft("");
-    field.current?.focus();
+    if (keep) ref.current?.focus();
   };
   return (
-    <div>
-      {task.steps.length > 0 && (
-        <ul className="mt-2 space-y-1.5">
-          <AnimatePresence initial={false}>
-            {task.steps.map((s) => (
-              <motion.li key={s.id} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.3 }}>
-                <div className="flex min-h-[48px] items-center gap-2 rounded-[14px] bg-white pl-2 pr-1 ring-1 ring-line">
-                  <button type="button" className="grid size-9 shrink-0 place-items-center" aria-label={s.d ? "Mark step not done" : "Mark step done"} onClick={() => (actions.toggleStep(task.id, s.id), feel(s.d ? "unstep" : "step", "light"))}>
-                    <StepCheck done={s.d} hue={task.hue} size={20} />
-                  </button>
-                  <span className={`min-w-0 flex-1 text-[15px] ${s.d ? "text-ink-3 line-through" : ""}`}>{s.t}</span>
-                  <button type="button" className="icon-btn size-9 text-ink-3" aria-label="Remove step" onClick={() => (actions.removeStep(task.id, s.id), feel("tap"))}>
-                    <X className="size-4" />
-                  </button>
-                </div>
-              </motion.li>
-            ))}
-          </AnimatePresence>
-        </ul>
-      )}
-      <form
-        className="mt-2 flex gap-2"
-        onSubmit={(e) => {
-          e.preventDefault();
-          add(draft);
+    <label className={`flex min-h-[50px] cursor-text items-center gap-2 pl-2 pr-3 ${className}`}>
+      <span className="grid size-9 shrink-0 place-items-center text-ink-3" aria-hidden>
+        <Plus className="size-[18px]" />
+      </span>
+      <input
+        ref={ref}
+        value={draft}
+        maxLength={MAX_STEP}
+        onChange={(e) => setDraft(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            add(true);
+          }
         }}
-      >
-        <input ref={field} value={draft} maxLength={MAX_STEP} onChange={(e) => setDraft(e.target.value)} placeholder={task.steps.length ? "Add another step" : "The smallest thing you could do first"} aria-label="New step" enterKeyHint="done" className="field min-w-0 flex-1" />
-        <button type="submit" {...keepFocus} className="btn btn-ink btn-icon size-[50px] shrink-0 rounded-[14px]" aria-label="Add step">
-          <Plus className="size-5" />
-        </button>
-      </form>
-      {!task.steps.length && (
-        <button type="button" className="chip mt-2 gap-1.5 text-left" onClick={() => add(tip)}>
+        onBlur={() => add(false)}
+        enterKeyHint="next"
+        placeholder={placeholder}
+        aria-label="Add a subtask"
+        className="min-w-0 flex-1 bg-transparent py-3 text-[15px] placeholder:text-ink-3 focus:outline-none"
+      />
+      {draft.trim() && <span className="shrink-0 text-[12px] font-medium text-ink-3">Return to add</span>}
+    </label>
+  );
+}
+
+/** A task's subtasks as one grouped list, with the add row at the bottom. */
+export function SubtaskList({ task, actions, suggest = true }: { task: Task; actions: Actions; suggest?: boolean }) {
+  const tip = suggestStep(task.title);
+  return (
+    <div>
+      <ul className="overflow-hidden rounded-[18px] bg-white ring-1 ring-line">
+        <AnimatePresence initial={false}>
+          {task.steps.map((s) => (
+            <motion.li key={s.id} initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.28 }} className="border-b border-line/70">
+              <div className="flex min-h-[50px] items-center gap-2 pl-2 pr-1">
+                <button type="button" className="grid size-9 shrink-0 place-items-center" aria-pressed={s.d} aria-label={s.d ? "Mark subtask not done" : "Mark subtask done"} onClick={() => (actions.toggleStep(task.id, s.id), feel(s.d ? "unstep" : "step", "light"))}>
+                  <StepCheck done={s.d} hue={task.hue} size={20} />
+                </button>
+                <input
+                  defaultValue={s.t}
+                  maxLength={MAX_STEP}
+                  aria-label="Subtask"
+                  onBlur={(e) => e.target.value.trim() && e.target.value !== s.t && actions.editStep(task.id, s.id, e.target.value)}
+                  className={`min-w-0 flex-1 bg-transparent py-3 text-[15px] focus:outline-none ${s.d ? "text-ink-3 line-through" : ""}`}
+                />
+                <button type="button" className="icon-btn size-9 text-ink-3" aria-label="Remove subtask" onClick={() => (actions.removeStep(task.id, s.id), feel("tap"))}>
+                  <X className="size-4" />
+                </button>
+              </div>
+            </motion.li>
+          ))}
+        </AnimatePresence>
+        <li>
+          <AddSubtask onAdd={(t) => actions.addStep(task.id, t)} placeholder={task.steps.length ? "Add a subtask" : "The smallest first thing"} />
+        </li>
+      </ul>
+      {suggest && !task.steps.length && (
+        <button type="button" className="chip mt-2 gap-1.5 text-left" onClick={() => (actions.addStep(task.id, tip), feel("step", "light"))}>
           <Sparkles className="size-3.5 shrink-0 text-signal" /> {tip}
         </button>
       )}
     </div>
   );
 }
+
+/** Kept for the capture flow: the same list under a different name. */
+export const StepEditor = SubtaskList;

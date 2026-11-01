@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { feel } from "@/lib/feedback";
-import { BUCKET_NAME, type EntryKind, MAX_TITLE, type State, type Task, isDuplicate } from "@/lib/tasks";
+import { BUCKET_NAME, type EntryKind, MAX_TITLE, type State, type Task, isDuplicate, splitLines } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { useSpeech } from "@/lib/use-speech";
 import { keepFocus } from "./steps";
@@ -13,7 +13,7 @@ import { keepFocus } from "./steps";
 export type Kind = "task" | EntryKind;
 
 const HINT: Record<Kind, string> = {
-  task: "Something to do. It goes on your list below.",
+  task: "One task, or paste a list and each line becomes a task.",
   idea: "A spark for later. It comes back in a few days.",
   note: "Something to keep, like a number or an address.",
 };
@@ -53,6 +53,18 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
     if (speech.listening) speech.toggle();
     if (!text.trim()) return;
     if (kind === "task") {
+      const lines = splitLines(text);
+      if (lines.length > 1) {
+        const made = actions.captureMany(lines);
+        feel("save", "success");
+        announce(`Added ${made.length} tasks.`);
+        toast(`Added ${made.length} tasks.`);
+        reset();
+        inside.current = false;
+        setFocused(false);
+        field.current?.blur();
+        return;
+      }
       const t = actions.capture(text);
       if (!t) return;
       feel("save", "success");
