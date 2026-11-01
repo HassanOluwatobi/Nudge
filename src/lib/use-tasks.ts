@@ -2,7 +2,27 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { type Bucket, type State, type Task, MAX_STEP, MAX_TITLE, freshState, makeTask, readThought, sanitize, todayTasks, ymd } from "./tasks";
+import {
+  type Bucket,
+  type Entry,
+  type EntryKind,
+  type Settings,
+  type State,
+  type Task,
+  MAX_STEP,
+  MAX_TITLE,
+  RESURFACE_DAYS,
+  addDays,
+  freshState,
+  makeTask,
+  readThought,
+  sanitize,
+  step,
+  todayTasks,
+  uid,
+  weekStart,
+  ymd,
+} from "./tasks";
 
 export const KEY = "nudgeme.v11";
 export const DRAFT_KEY = "nudgeme.v11.draft";
@@ -18,7 +38,6 @@ function load(): State {
   try {
     return sanitize(JSON.parse(raw));
   } catch {
-    // Keep the broken copy so nothing is lost, then start clean.
     try {
       localStorage.setItem(`${KEY}.broken.${Date.now()}`, raw);
     } catch {}
@@ -48,7 +67,6 @@ export function useTasks() {
     const s = load();
     ref.current = s;
     setState(s);
-    // Another tab changed the list: follow it.
     const onStorage = (e: StorageEvent) => {
       if (e.key !== KEY || !e.newValue) return;
       try {
@@ -62,74 +80,80 @@ export function useTasks() {
   }, []);
 
   const update = useCallback((fn: (s: State) => State) => {
-    const cur = ref.current ?? freshState();
-    const next = fn(cur);
+    const next = fn(ref.current ?? freshState());
     ref.current = next;
     save(next);
     setState(next);
   }, []);
 
-  const patch = useCallback(
-    (id: string, p: Partial<Task>) =>
-      update((s) => ({
-        ...s,
-        tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...p, updatedAt: new Date().toISOString() } : t)),
-      })),
+  const mapTask = useCallback(
+    (id: string, fn: (t: Task) => Task) =>
+      update((s) => ({ ...s, tasks: s.tasks.map((t) => (t.id === id ? { ...fn(t), updatedAt: new Date().toISOString() } : t)) })),
     [update]
   );
 
   const actions = {
-    /** Save the raw thought first. Returns the new task. */
-    capture(raw: string): Task | null {
+    // ---------- tasks ----------
+    capture(raw: string, extra: Partial<Task> = {}): Task | null {
       const text = raw.trim();
       if (!text) return null;
       const r = readThought(text);
-      const task = makeTask(r.title, r.bucket, r.due);
+      const task = makeTask(r.title, r.bucket, { due: r.due, part: r.part, ...extra });
       update((s) => ({ ...s, tasks: [...s.tasks, task] }));
       return task;
     },
-    edit(id: string, p: { title?: string; step?: string; due?: string | null }) {
-      const next: Partial<Task> = {};
-      if (p.title !== undefined && p.title.trim()) next.title = p.title.trim().slice(0, MAX_TITLE);
-      if (p.step !== undefined) next.step = p.step.trim().slice(0, MAX_STEP);
-      if (p.due !== undefined) next.due = p.due || undefined;
-      patch(id, next);
+    patch(id: string, p: Partial<Task>) {
+      const clean: Partial<Task> = { ...p };
+      if (p.title !== undefined) {
+        if (!p.title.trim()) delete clean.title;
+        else clean.title = p.title.trim().slice(0, MAX_TITLE);
+      }
+      mapTask(id, (t) => ({ ...t, ...clean }));
     },
     move(id: string, bucket: Exclude<Bucket, "done">) {
-      patch(id, { bucket, doneAt: undefined, prevBucket: undefined });
+      mapTask(id, (t) => ({ ...t, bucket, doneAt: undefined, prevBucket: undefined }));
     },
-    /** Finish one step. The task stays open. */
-    stepDone(id: string, nextStep = "") {
-      update((s) => ({
-        ...s,
-        tasks: s.tasks.map((t) =>
-          t.id === id ? { ...t, steps: t.steps + 1, step: nextStep.trim().slice(0, MAX_STEP), updatedAt: new Date().toISOString() } : t
-        ),
-      }));
+    tomorrow(id: string) {
+      mapTask(id, (t) => ({ ...t, bucket: "week", due: addDays(ymd(), 1) }));
     },
-    undoStep(id: string, step: string) {
-      update((s) => ({
-        ...s,
-        tasks: s.tasks.map((t) => (t.id === id ? { ...t, steps: Math.max(0, t.steps - 1), step } : t)),
-      }));
+    duplicate(id: string) {
+      const t = ref.current?.tasks.find((x) => x.id === id);
+      if (!t) return;
+      const now = new Date().toISOString();
+      update((s) => ({ ...s, tasks: [...s.tasks, { ...t, id: uid(), steps: t.steps.map((x) => ({ ...x, id: uid(), d: false })), createdAt: now, updatedAt: now, doneAt: undefined, bucket: t.bucket === "done" ? "today" : t.bucket }] }));
     },
-    /** Finish the whole task. Always its own, separate action. */
+    addStep(id: string, text: string) {
+      if (!text.trim()) return;
+      mapTask(id, (t) => ({ ...t, steps: [...t.steps, step(text)] }));
+    },
+    addSteps(id: string, texts: string[]) {
+      mapTask(id, (t) => ({ ...t, steps: [...t.steps, ...texts.filter((x) => x.trim()).map(step)] }));
+    },
+    editStep(id: string, stepId: string, text: string) {
+      mapTask(id, (t) => ({ ...t, steps: t.steps.map((s) => (s.id === stepId ? { ...s, t: text.slice(0, MAX_STEP) } : s)).filter((s) => s.t.trim()) }));
+    },
+    removeStep(id: string, stepId: string) {
+      mapTask(id, (t) => ({ ...t, steps: t.steps.filter((s) => s.id !== stepId) }));
+    },
+    /** Tick a step. Never finishes the task. */
+    toggleStep(id: string, stepId: string) {
+      mapTask(id, (t) => ({ ...t, steps: t.steps.map((s) => (s.id === stepId ? { ...s, d: !s.d } : s)) }));
+    },
+    replaceStep(id: string, stepId: string, text: string) {
+      mapTask(id, (t) => ({ ...t, steps: t.steps.map((s) => (s.id === stepId ? { ...s, t: text.trim().slice(0, MAX_STEP) } : s)) }));
+    },
+    /** Finish the whole task. Always its own action. */
     finish(id: string) {
       update((s) => ({
         ...s,
         meta: { ...s.meta, timer: s.meta.timer?.taskId === id ? undefined : s.meta.timer },
         tasks: s.tasks.map((t) =>
-          t.id === id && t.bucket !== "done"
-            ? { ...t, prevBucket: t.bucket as Exclude<Bucket, "done">, bucket: "done", doneAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
-            : t
+          t.id === id && t.bucket !== "done" ? { ...t, prevBucket: t.bucket as Task["prevBucket"], bucket: "done", doneAt: new Date().toISOString(), remindAt: undefined } : t
         ),
       }));
     },
     restore(id: string) {
-      update((s) => ({
-        ...s,
-        tasks: s.tasks.map((t) => (t.id === id ? { ...t, bucket: t.prevBucket ?? "today", doneAt: undefined, prevBucket: undefined } : t)),
-      }));
+      mapTask(id, (t) => ({ ...t, bucket: t.prevBucket ?? "today", doneAt: undefined, prevBucket: undefined }));
     },
     remove(id: string): Task | undefined {
       const t = ref.current?.tasks.find((x) => x.id === id);
@@ -139,35 +163,46 @@ export function useTasks() {
     put(task: Task) {
       update((s) => ({ ...s, tasks: s.tasks.some((t) => t.id === task.id) ? s.tasks : [...s.tasks, task] }));
     },
-    /** "Not this one": move the suggestion on, for today only. */
+
+    // ---------- choosing ----------
     pass(id: string) {
       const today = ymd();
       update((s) => {
         const ids = s.meta.passed?.date === today ? s.meta.passed.ids : [];
-        const pinned = s.meta.pinned?.id === id ? undefined : s.meta.pinned;
         let next = [...ids.filter((x) => x !== id), id];
-        // Went round the whole list: start the loop again after this one.
         if (todayTasks(s, today).every((t) => next.includes(t.id))) next = [id];
-        return { ...s, meta: { ...s.meta, pinned, passed: { date: today, ids: next } } };
+        return { ...s, meta: { ...s.meta, pinned: s.meta.pinned?.id === id ? undefined : s.meta.pinned, passed: { date: today, ids: next } } };
       });
     },
     choose(id: string) {
-      // The chosen task becomes today's place to start.
       const today = ymd();
-      update((s) => {
-        const ids = s.meta.passed?.date === today ? s.meta.passed.ids.filter((x) => x !== id) : [];
-        const easy = s.meta.easy?.date === today ? { date: today, taskId: id } : s.meta.easy;
-        return { ...s, meta: { ...s.meta, easy, pinned: { date: today, id }, passed: { date: today, ids } } };
-      });
+      update((s) => ({
+        ...s,
+        meta: {
+          ...s.meta,
+          easy: s.meta.easy?.date === today ? { date: today, taskId: id } : s.meta.easy,
+          pinned: { date: today, id },
+          passed: { date: today, ids: s.meta.passed?.date === today ? s.meta.passed.ids.filter((x) => x !== id) : [] },
+        },
+      }));
     },
-    makeEasy(taskId: string) {
+    makeEasy(taskId?: string) {
       update((s) => ({ ...s, meta: { ...s.meta, easy: { date: ymd(), taskId } } }));
     },
     clearEasy() {
       update((s) => ({ ...s, meta: { ...s.meta, easy: undefined } }));
     },
-    startTimer(taskId: string, mins: number) {
+
+    // ---------- timer ----------
+    startTimer(mins: number, taskId?: string) {
       update((s) => ({ ...s, meta: { ...s.meta, timer: { taskId, mins, end: Date.now() + mins * 60_000 } } }));
+    },
+    addMinute() {
+      update((s) => {
+        const t = s.meta.timer;
+        if (!t) return s;
+        return { ...s, meta: { ...s.meta, timer: t.pausedLeft !== undefined ? { ...t, mins: t.mins + 1, pausedLeft: t.pausedLeft + 60_000 } : { ...t, mins: t.mins + 1, end: Math.max(t.end, Date.now()) + 60_000 } } };
+      });
     },
     pauseTimer() {
       update((s) => {
@@ -185,6 +220,77 @@ export function useTasks() {
     },
     stopTimer() {
       update((s) => ({ ...s, meta: { ...s.meta, timer: undefined } }));
+    },
+
+    // ---------- ideas and notes ----------
+    addEntry(text: string, kind: EntryKind): Entry | null {
+      if (!text.trim()) return null;
+      const e: Entry = { id: uid(), text: text.trim().slice(0, 2000), kind, seen: 0, status: "open", createdAt: new Date().toISOString(), resurfaceAt: kind === "idea" ? addDays(ymd(), RESURFACE_DAYS[0]) : undefined };
+      update((s) => ({ ...s, entries: [e, ...s.entries] }));
+      return e;
+    },
+    editEntry(id: string, text: string) {
+      if (!text.trim()) return;
+      update((s) => ({ ...s, entries: s.entries.map((e) => (e.id === id ? { ...e, text: text.trim().slice(0, 2000) } : e)) }));
+    },
+    /** "Not yet": the idea comes back later, a little further out each time. */
+    snoozeEntry(id: string) {
+      update((s) => ({
+        ...s,
+        entries: s.entries.map((e) => {
+          if (e.id !== id) return e;
+          const seen = e.seen + 1;
+          return { ...e, seen, resurfaceAt: addDays(ymd(), RESURFACE_DAYS[Math.min(seen, RESURFACE_DAYS.length - 1)]) };
+        }),
+      }));
+    },
+    archiveEntry(id: string) {
+      update((s) => ({ ...s, entries: s.entries.map((e) => (e.id === id ? { ...e, status: "archived" as const } : e)) }));
+    },
+    reopenEntry(id: string) {
+      update((s) => ({ ...s, entries: s.entries.map((e) => (e.id === id ? { ...e, status: "open" as const } : e)) }));
+    },
+    removeEntry(id: string): Entry | undefined {
+      const e = ref.current?.entries.find((x) => x.id === id);
+      update((s) => ({ ...s, entries: s.entries.filter((x) => x.id !== id) }));
+      return e;
+    },
+    putEntry(e: Entry) {
+      update((s) => ({ ...s, entries: s.entries.some((x) => x.id === e.id) ? s.entries : [e, ...s.entries] }));
+    },
+    entryToTask(id: string): Task | null {
+      const e = ref.current?.entries.find((x) => x.id === id);
+      if (!e) return null;
+      const r = readThought(e.text.split("\n")[0]);
+      const task = makeTask(r.title, "week");
+      update((s) => ({ ...s, tasks: [...s.tasks, task], entries: s.entries.map((x) => (x.id === id ? { ...x, status: "task" as const } : x)) }));
+      return task;
+    },
+
+    // ---------- check-ins ----------
+    finishCheckin(kind: "morning" | "evening" | "weekly") {
+      const today = ymd();
+      update((s) => ({
+        ...s,
+        meta: {
+          ...s.meta,
+          ...(kind === "morning" ? { morningDone: today } : kind === "evening" ? { eveningDone: today } : { weeklyDone: weekStart(today, s.settings.weeklyDay) }),
+        },
+      }));
+    },
+    setEnergy(level: "low" | "ok") {
+      update((s) => ({ ...s, meta: { ...s.meta, energy: { date: ymd(), level } } }));
+    },
+    planToday(ids: string[]) {
+      update((s) => ({ ...s, tasks: s.tasks.map((t) => (ids.includes(t.id) && t.bucket !== "done" ? { ...t, bucket: "today" } : t)) }));
+    },
+
+    // ---------- settings and data ----------
+    setSettings(p: Partial<Settings>) {
+      update((s) => ({ ...s, settings: { ...s.settings, ...p } }));
+    },
+    seenIntro() {
+      update((s) => ({ ...s, meta: { ...s.meta, intro: true } }));
     },
     replaceAll(next: State) {
       update(() => next);

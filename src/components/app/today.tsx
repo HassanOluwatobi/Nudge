@@ -1,244 +1,273 @@
 "use client";
 
-import { ArrowRight, ChevronRight, Feather, ListTodo, Pencil, Plus, Settings2 } from "lucide-react";
+import { ArrowRight, ChevronDown, Feather, Lightbulb, Plus, Settings2, Sparkles, Sun, Moon, CalendarSync } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { type State, type Task, doneToday, prettyDue, suggestion, todayTasks, ymd } from "@/lib/tasks";
+import { useState } from "react";
+import { toast } from "sonner";
+import { type Part, type State, type Task, PARTS, PART_NAME, checkinDue, doneToday, dueIdeas, nextStep, partNow, suggestion, todayTasks, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
-import { Contours, Dot, Field, Ribbon, useDaypart } from "./motifs";
-import { Mark, Thread, pullFor } from "./thread";
+import { Art } from "./art";
+import { TaskRow, Tile } from "./task-row";
 
-const hello = () => {
-  const h = new Date().getHours();
-  return h < 5 ? "Hello, night owl." : h < 12 ? "Good morning." : h < 17 ? "Good afternoon." : "Good evening.";
-};
+export function Counter({ done, total }: { done: number; total: number }) {
+  return (
+    <span className="inline-flex h-10 items-center gap-1.5 rounded-full bg-white px-3.5 text-[14px] font-semibold tabular-nums shadow-[0_1px_2px_rgb(6_11_43/0.06),0_6px_16px_-10px_rgb(6_11_43/0.3)]" aria-label={`${done} of ${total} done today`}>
+      <span aria-hidden>🎉</span>
+      {done}/{total}
+    </span>
+  );
+}
+
+export function TopBar({ done, total, onSettings, onAdd }: { done: number; total: number; onSettings: () => void; onAdd: () => void }) {
+  return (
+    <header className="flex items-center justify-between py-2">
+      <Counter done={done} total={total} />
+      <div className="flex items-center gap-2">
+        <button type="button" className="grid size-10 place-items-center rounded-full bg-white text-ink-2 shadow-[0_1px_2px_rgb(6_11_43/0.06),0_6px_16px_-10px_rgb(6_11_43/0.3)]" aria-label="Settings, reminders and privacy" onClick={onSettings}>
+          <Settings2 className="size-[18px]" />
+        </button>
+        <button type="button" className="grid size-10 place-items-center rounded-full bg-ink text-white shadow-[0_8px_18px_-8px_rgb(6_11_43/0.6)]" aria-label="Add a thought" onClick={onAdd}>
+          <Plus className="size-5" />
+        </button>
+      </div>
+    </header>
+  );
+}
+
+const CHECKIN = {
+  morning: { icon: Sun, title: "Morning kickoff", body: "Two minutes to pick what matters today.", hue: "hue-peach" },
+  evening: { icon: Moon, title: "Evening wrap-up", body: "See what you did and let the rest wait.", hue: "hue-lilac" },
+  weekly: { icon: CalendarSync, title: "Weekly reset", body: "Clear the week and set up the next one.", hue: "hue-blue" },
+} as const;
 
 export function Today({
   state,
   actions,
-  onCapture,
-  onList,
+  onAdd,
+  onAddTo,
   onSettings,
   onOpen,
+  onMenu,
   onFocus,
+  onCheckin,
   announce,
 }: {
   state: State;
   actions: Actions;
-  onCapture: () => void;
-  onList: () => void;
+  onAdd: () => void;
+  onAddTo: (part: Part) => void;
   onSettings: () => void;
   onOpen: (t: Task) => void;
+  onMenu: (t: Task) => void;
   onFocus: (t: Task) => void;
+  onCheckin: (k: "morning" | "evening" | "weekly") => void;
   announce: (s: string) => void;
 }) {
   const today = ymd();
-  const part = useDaypart();
+  const [showDone, setShowDone] = useState(false);
   const pick = suggestion(state, today);
-  const easy = state.meta.easy?.date === today && !!pick && pick.id === state.meta.easy.taskId;
-  const others = easy ? [] : todayTasks(state, today).filter((t) => t.id !== pick?.id);
+  const list = todayTasks(state, today);
   const finished = doneToday(state, today);
-  const fromWeek = pick && pick.bucket === "week" && !(pick.due && pick.due <= today);
-  const open = state.tasks.filter((t) => t.bucket !== "done").length;
-  const dateLine = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
+  const easy = state.meta.easy?.date === today;
+  const due = checkinDue(state);
+  const idea = dueIdeas(state, today)[0];
+  const rest = easy ? [] : list.filter((t) => t.id !== pick?.id);
+  const now = partNow();
+  const day = new Date().toLocaleDateString(undefined, { weekday: "long" });
+  const date = new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+  const shift = { morning: 0, afternoon: 0.25, evening: 0.55 }[now as "morning" | "afternoon" | "evening"] ?? 0;
+  const step = pick ? nextStep(pick) : undefined;
+
+  const finishedOne = (t: Task) => {
+    toast(`Finished: ${t.title}`, { action: { label: "Undo", onClick: () => actions.restore(t.id) } });
+    announce(`Finished: ${t.title}`);
+  };
 
   return (
-    <div className="flex min-h-dvh flex-col">
-      {/* Brand moment: the field, one ribbon, one set of contours. Text sits on the calm top-left. */}
-      <Field tone={part} className="on-color text-white">
-        <Contours className="pointer-events-none absolute inset-0 -z-10 h-full w-full" count={6} />
-        <Ribbon tone={part} className="pointer-events-none absolute -left-[6%] bottom-[2%] -z-10 h-[50%] w-[118%]" />
-        <div className="mx-auto w-full max-w-md px-6 pb-48 safe-t">
-          <header className="flex items-center justify-between py-2">
-            <div className="flex items-center gap-2">
-              <Mark light className="h-5 w-auto" />
-              <span className="text-[15px] font-semibold tracking-tight">NudgeMe</span>
-            </div>
-            <button type="button" className="icon-btn -mr-2 text-white/90" aria-label="Settings and privacy" onClick={onSettings}>
-              <Settings2 className="size-5" />
-            </button>
-          </header>
-          <p className="t-small mt-10 font-medium text-white/75">{dateLine}</p>
-          <h1 className="t-display mt-2">{hello()}</h1>
-          <p className="t-body mt-3 max-w-[26ch] text-white/85">
-            {!pick
-              ? "Clear your head first. Then pick one small step."
-              : easy
-                ? "Today is set to easy. This one thing is enough."
-                : fromWeek
-                  ? "Nothing is set for today. Here is one from this week."
-                  : "Here is a good place to start."}
-          </p>
-        </div>
-      </Field>
+    <div className="mx-auto w-full max-w-md px-4 pb-36 safe-t">
+      <TopBar done={finished.length} total={list.length + finished.length} onSettings={onSettings} onAdd={onAdd} />
 
-      <main className="relative z-10 mx-auto -mt-20 w-full max-w-md flex-1 px-5 pb-40">
-        {!pick ? (
-          <Empty onCapture={onCapture} hasOthers={open > 0} onList={onList} finished={finished.length} />
-        ) : (
-          <>
-            <AnimatePresence mode="popLayout" initial={false}>
-              <motion.section
-                key={pick.id}
-                aria-label="Start here"
-                initial={{ opacity: 0, y: 14, scale: 0.985 }}
-                animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: -10, scale: 0.985 }}
-                transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-                className="float-card p-6"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="t-label">Start here</span>
-                  {pick.due && <span className="t-small text-ink-3">Due {prettyDue(pick.due, today).toLowerCase()}</span>}
-                </div>
-                <button type="button" onClick={() => onOpen(pick)} className="mt-2 block w-full text-left">
-                  <h2 className="t-title">{pick.title}</h2>
-                </button>
+      <div className="mt-4 text-center">
+        <h1 className="font-serif text-[44px] leading-none tracking-[-0.025em]">{day}</h1>
+        <p className="t-body mt-2 text-ink-2">{date}</p>
+      </div>
 
-                <Thread pull={pullFor(pick.steps)} className="mt-3 h-7 w-full max-w-[200px]" />
+      {due && (
+        <motion.button
+          type="button"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={() => onCheckin(due)}
+          className={`${CHECKIN[due].hue} tile mt-6 flex w-full items-center gap-3 rounded-[20px] p-3.5 text-left`}
+        >
+          <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/70">
+            {(() => {
+              const I = CHECKIN[due].icon;
+              return <I className="size-5" />;
+            })()}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-[16px] font-semibold text-ink">{CHECKIN[due].title}</span>
+            <span className="t-small block text-ink-2">{CHECKIN[due].body}</span>
+          </span>
+          <ArrowRight className="size-5 shrink-0" />
+        </motion.button>
+      )}
 
-                <div className="mt-4 border-t border-line pt-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="t-label text-signal-ink">{pick.steps ? `Step ${pick.steps + 1}` : "First step"}</span>
-                    <button type="button" className="-my-2 -mr-2 inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-[14px] font-medium text-signal-ink" onClick={() => onOpen(pick)}>
-                      <Pencil className="size-3.5" /> {pick.step ? "Edit" : "Add"}
-                    </button>
-                  </div>
-                  <p className={`mt-1 text-[18px] leading-snug [overflow-wrap:anywhere] ${pick.step ? "text-ink" : "text-ink-3"}`}>
-                    {pick.step || "No step yet. You can choose one when you start."}
-                  </p>
-                </div>
-
-                <button type="button" className="btn btn-signal mt-6 w-full text-[17px]" onClick={() => onFocus(pick)}>
-                  Start <ArrowRight className="size-5" />
-                </button>
-              </motion.section>
-            </AnimatePresence>
-
-            {/* Secondary actions live on the page, not in another card. */}
-            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-1">
-              {!easy && others.length > 0 && (
-                <button
-                  type="button"
-                  className="btn btn-quiet text-[15px]"
-                  onClick={() => {
-                    actions.pass(pick.id);
-                    announce("Showing another task.");
-                  }}
-                >
-                  Not this one
-                </button>
-              )}
-              {easy ? (
-                <button
-                  type="button"
-                  className="btn btn-quiet text-[15px]"
-                  onClick={() => {
-                    actions.clearEasy();
-                    announce("Showing your full day.");
-                  }}
-                >
-                  Show my full day
-                </button>
-              ) : (
+      {/* The one painted moment, with the suggested task under it. */}
+      {pick ? (
+        <section aria-label="Start here" className="mt-6">
+          <div className="relative h-[150px] overflow-hidden rounded-[26px]">
+            <Art mode={0} shift={shift} />
+            <span className="absolute left-3.5 top-3.5 rounded-full bg-white/90 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink backdrop-blur-sm">
+              {easy ? "Today is easy" : "Start here"}
+            </span>
+          </div>
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.div key={pick.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ type: "spring", bounce: 0, duration: 0.4 }} className="px-1 pt-4">
+              <button type="button" onClick={() => onOpen(pick)} className="flex w-full items-start gap-3 text-left">
+                <Tile task={pick} size={44} />
+                <span className="min-w-0 flex-1">
+                  <span className="t-title block text-[26px]">{pick.title}</span>
+                  <span className="t-small mt-1 block text-ink-2">
+                    {step ? (
+                      <>
+                        <span className="font-semibold text-signal-ink">Next: </span>
+                        {step.t}
+                      </>
+                    ) : (
+                      "No steps yet. You can add one when you start."
+                    )}
+                  </span>
+                </span>
+              </button>
+              <button type="button" className="btn btn-signal mt-4 w-full text-[17px]" onClick={() => onFocus(pick)}>
+                Start <ArrowRight className="size-5" />
+              </button>
+              <div className="mt-1 flex justify-center gap-1">
+                {!easy && rest.length > 0 && (
+                  <button type="button" className="btn btn-quiet text-[15px]" onClick={() => (actions.pass(pick.id), announce("Showing another task."))}>
+                    Not this one
+                  </button>
+                )}
                 <button
                   type="button"
                   className="btn btn-quiet gap-1.5 text-[15px]"
                   onClick={() => {
-                    actions.makeEasy(pick.id);
-                    announce("Today is set to easy. One thing is enough.");
+                    if (easy) {
+                      actions.clearEasy();
+                      announce("Showing your full day.");
+                    } else {
+                      actions.makeEasy(pick.id);
+                      announce("Today is set to easy. One thing is enough.");
+                    }
                   }}
                 >
-                  <Feather className="size-4" /> Make today easy
+                  {easy ? "Show my full day" : (
+                    <>
+                      <Feather className="size-4" /> Make today easy
+                    </>
+                  )}
                 </button>
-              )}
-            </div>
-
-            {others.length > 0 && (
-              <section className="mt-10" aria-labelledby="also">
-                <div className="flex items-baseline justify-between border-b border-ink/80 pb-2">
-                  <h3 id="also" className="t-heading">
-                    Also today
-                  </h3>
-                  <span className="t-small text-ink-3">{others.length}</span>
-                </div>
-                <ul>
-                  {others.slice(0, 3).map((t) => (
-                    <li key={t.id}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          actions.choose(t.id);
-                          announce(`${t.title} is now your place to start.`);
-                        }}
-                        className="row"
-                      >
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[16px]">{t.title}</span>
-                          {t.step && <span className="t-small block truncate text-ink-3">{t.step}</span>}
-                        </span>
-                        <span className="t-small shrink-0 font-medium text-signal-ink">Start here</span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-                {others.length > 3 && (
-                  <button type="button" onClick={onList} className="btn btn-quiet mt-1 w-full gap-1 text-[15px]">
-                    {others.length - 3} more in My list <ChevronRight className="size-4" />
-                  </button>
-                )}
-              </section>
-            )}
-
-            {finished.length > 0 && (
-              <p className="t-small mt-8 flex items-center gap-2 text-ink-3">
-                <Dot /> Finished today: <span className="text-ink-2">{finished.length === 1 ? finished[0].title : `${finished.length} tasks`}</span>
-              </p>
-            )}
-          </>
-        )}
-      </main>
-
-      {pick && (
-        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 bg-gradient-to-t from-paper via-paper/90 to-paper/0 pt-12 safe-b">
-          <nav aria-label="Main" className="dock pointer-events-auto mx-auto flex w-[calc(100%-2.5rem)] max-w-[24rem] items-center gap-1 rounded-full p-1.5">
-            <button type="button" onClick={onCapture} className="btn btn-white min-h-[50px] flex-1 text-[16px]">
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </section>
+      ) : (
+        <section className="mt-6 overflow-hidden rounded-[26px] bg-white shadow-[0_24px_50px_-34px_rgb(6_11_43/0.5)]">
+          <div className="relative h-[150px]">
+            <Art mode={0} shift={shift} />
+          </div>
+          <div className="p-5">
+            <h2 className="t-title">{finished.length ? "Today is clear." : "What is on your mind?"}</h2>
+            <p className="t-body mt-2 text-ink-2">
+              {finished.length ? `You finished ${finished.length === 1 ? "one task" : `${finished.length} tasks`}. You can stop here, or add something.` : "Put it here. NudgeMe holds it, then helps you start with one small step."}
+            </p>
+            <button type="button" className={`btn mt-5 w-full ${finished.length ? "btn-line" : "btn-signal"}`} onClick={onAdd}>
               <Plus className="size-5" /> Add a thought
             </button>
-            <button type="button" onClick={onList} className="btn min-h-[50px] gap-1.5 px-4 text-[15px] text-white/90">
-              <ListTodo className="size-[18px]" /> My list
+          </div>
+        </section>
+      )}
+
+      {idea && (
+        <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="hue-lime mt-8 rounded-[20px] border border-[#dfe9c8] bg-[#f6fbe9] p-4" aria-label="An idea came back">
+          <p className="flex items-center gap-1.5 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#4d7a12]">
+            <Lightbulb className="size-3.5" /> An idea came back
+          </p>
+          <p className="mt-2 text-[16px] leading-snug [overflow-wrap:anywhere]">{idea.text}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="chip"
+              onClick={() => {
+                const t = actions.entryToTask(idea.id);
+                if (t) toast("Added to This week.");
+              }}
+            >
+              <Sparkles className="mr-1 size-3.5" /> Make it a task
             </button>
-          </nav>
-        </div>
+            <button type="button" className="chip" onClick={() => (actions.snoozeEntry(idea.id), toast("It will come back later."))}>
+              Not yet
+            </button>
+            <button type="button" className="chip" onClick={() => (actions.archiveEntry(idea.id), toast("Archived. You can find it in Ideas."))}>
+              Let it go
+            </button>
+          </div>
+        </motion.section>
+      )}
+
+      {!easy &&
+        PARTS.map((part) => {
+          const items = rest.filter((t) => t.part === part);
+          if (!items.length && part !== now) return null;
+          return (
+            <section key={part} className="mt-7" aria-labelledby={`p-${part}`}>
+              <div className="mb-2.5 flex items-center justify-between px-1">
+                <h2 id={`p-${part}`} className={`pill pill-${part}`}>
+                  {PART_NAME[part]} ({items.length})
+                </h2>
+                <button type="button" className="icon-btn size-9" aria-label={`Add to ${PART_NAME[part]}`} onClick={() => onAddTo(part)}>
+                  <Plus className="size-4" />
+                </button>
+              </div>
+              {items.length ? (
+                <ul className="space-y-2">
+                  <AnimatePresence initial={false}>
+                    {items.map((t) => (
+                      <TaskRow key={t.id} task={t} actions={actions} onOpen={onOpen} onMenu={onMenu} onFinished={finishedOne} />
+                    ))}
+                  </AnimatePresence>
+                </ul>
+              ) : (
+                <button type="button" onClick={() => onAddTo(part)} className="add-row flex h-14 w-full items-center justify-between px-4 text-[15px]">
+                  {part === "anytime" ? "Anytime today works" : `Add something for this ${part}`}
+                  <Plus className="size-4" />
+                </button>
+              )}
+            </section>
+          );
+        })}
+
+      {finished.length > 0 && (
+        <section className="mt-7" aria-labelledby="done-h">
+          <button type="button" className="mb-2.5 flex items-center gap-2 px-1" aria-expanded={showDone} onClick={() => setShowDone((v) => !v)}>
+            <span id="done-h" className="pill pill-done">
+              Done ({finished.length})
+            </span>
+            <ChevronDown className={`size-4 text-ink-3 transition-transform ${showDone ? "rotate-180" : ""}`} />
+          </button>
+          <AnimatePresence initial={false}>
+            {showDone && (
+              <motion.ul initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-2 overflow-hidden">
+                {finished.map((t) => (
+                  <TaskRow key={t.id} task={t} actions={actions} onOpen={onOpen} onMenu={onMenu} />
+                ))}
+              </motion.ul>
+            )}
+          </AnimatePresence>
+        </section>
       )}
     </div>
-  );
-}
-
-function Empty({ onCapture, hasOthers, onList, finished }: { onCapture: () => void; hasOthers: boolean; onList: () => void; finished: number }) {
-  return (
-    <section className="float-card p-6">
-      <Thread pull={finished ? 1 : 0} done={finished > 0} className="h-9 w-full max-w-[200px]" />
-      {finished ? (
-        <>
-          <h2 className="t-title mt-4">Today is clear.</h2>
-          <p className="t-body mt-2 text-ink-2">You finished {finished === 1 ? "one task" : `${finished} tasks`}. You can stop here.</p>
-        </>
-      ) : (
-        <>
-          <h2 className="t-title mt-4">Put what is on your mind here.</h2>
-          <p className="t-body mt-2 text-ink-2">NudgeMe holds it, then helps you start with one small step.</p>
-        </>
-      )}
-      <div className="mt-6 flex flex-col gap-2">
-        <button type="button" className={`btn w-full ${finished ? "btn-line" : "btn-signal"}`} onClick={onCapture}>
-          <Plus className="size-5" /> {finished || hasOthers ? "Add a thought" : "Add your first thought"}
-        </button>
-        {hasOthers && (
-          <button type="button" className="btn btn-quiet w-full" onClick={onList}>
-            Choose from My list
-          </button>
-        )}
-      </div>
-    </section>
   );
 }
