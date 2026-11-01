@@ -23,7 +23,7 @@ export function TabBar({ tab, onTab, dark, running }: { tab: Tab; onTab: (t: Tab
         <div className="flex items-center gap-2.5 px-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.svg" alt="" width={28} height={28} className="size-7" />
-          <span className="font-serif text-[20px] tracking-[-0.01em]">Shrink my day</span>
+          <span className="wordmark font-serif text-[20px] tracking-[-0.01em]">Shrink my day</span>
         </div>
         <nav className="mt-8 grid gap-1">
           {ITEMS.map(({ id, label, icon: Icon }) => {

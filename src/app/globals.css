@@ -1187,3 +1187,7 @@ html[data-theme="dark"] [aria-label="How Shrink my day works"] {
 @media (prefers-reduced-motion: reduce) {
   .lp-float, .lp-hint::after, .sky-drift, .sky-drift-b, .sky-drift-c { animation: none; }
 }
+/* The serif has one weight. A hairline in its own colour gives the wordmark a touch more body. */
+.wordmark {
+  -webkit-text-stroke: 0.45px currentColor;
+}

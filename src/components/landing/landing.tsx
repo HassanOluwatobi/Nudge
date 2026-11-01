@@ -17,6 +17,8 @@ import { Petals } from "@/components/app/petals";
 const X_URL = "https://x.com/Art_sassin";
 
 // Flat buttons, like the best product sites: solid fill, medium weight, colour shifts on hover. No shadows.
+const EYEBROW = "text-[13px] font-semibold uppercase tracking-[0.12em] text-signal-ink";
+const H2 = "font-serif text-[40px] leading-[1.04] tracking-[-0.025em] text-ink sm:text-[56px]";
 const BTN = "group inline-flex h-12 items-center gap-2 rounded-full bg-ink px-6 text-[16px] font-medium text-white transition-colors duration-200 hover:bg-[#1c2552] active:bg-[#0f1638]";
 const BTN_SM = "inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-[14px] font-medium text-white transition-colors duration-200 hover:bg-[#1c2552]";
 const SUPPORT_URL = "https://selar.com/showlove/hassanx";
@@ -74,9 +76,9 @@ function Logo({ className = "size-7" }: { className?: string }) {
 }
 
 const SHOTS = [
-  { key: "plan", tab: "Put it all down", alt: "The Plan screen in Shrink my day, with this week's tasks and someday ideas" },
+  { key: "plan", tab: "Empty your head", alt: "The Plan screen in Shrink my day, with this week's tasks and someday ideas" },
   { key: "home", tab: "Pick one thing", alt: "The Home screen in Shrink my day, showing one task and its next step" },
-  { key: "focus", tab: "Do one step", alt: "The Focus screen in Shrink my day, with one step and a timer" },
+  { key: "focus", tab: "Take one tiny step", alt: "The Focus screen in Shrink my day, with one step and a timer" },
 ] as const;
 
 function Phone({ src, alt }: { src: string; alt: string }) {
@@ -112,9 +114,6 @@ function Hero() {
   const [on, setOn] = useState(1);
   const [held, setHeld] = useState(false);
   const reduce = useReducedMotion();
-  const stage = useRef<HTMLDivElement>(null);
-  const { scrollYProgress: p } = useScroll({ target: stage, offset: ["start end", "start 0.35"] });
-  const lift = useTransform(p, [0, 1], [0.94, 1]);
   useEffect(() => {
     if (held || reduce) return;
     const t = setTimeout(() => setOn((v) => (v + 1) % SHOTS.length), 5200);
@@ -160,7 +159,7 @@ function Hero() {
               role="tab"
               aria-selected={on === i}
               onClick={() => pick(i)}
-              className={`relative h-9 rounded-full px-3.5 text-[13px] font-medium transition-colors sm:h-10 sm:px-5 sm:text-[14px] ${on === i ? "text-white" : "text-ink-2 hover:text-ink"}`}
+              className={`relative h-9 whitespace-nowrap rounded-full px-3 text-[12.5px] font-medium transition-colors sm:h-10 sm:px-5 sm:text-[14px] ${on === i ? "text-white" : "text-ink-2 hover:text-ink"}`}
             >
               {on === i && <motion.span layoutId="hero-tab" className="absolute inset-0 rounded-full bg-ink" transition={{ type: "spring", bounce: 0.15, duration: 0.5 }} />}
               <span className="relative">{t.tab}</span>
@@ -170,7 +169,7 @@ function Hero() {
       </div>
 
       {/* The product, on its own patch of sky */}
-      <motion.div ref={stage} style={reduce ? {} : { scale: lift }} className="relative mx-auto mt-6 max-w-[1240px] origin-top overflow-hidden rounded-[24px] sm:rounded-[32px]">
+      <div className="relative mx-auto mt-6 max-w-[1240px] overflow-hidden rounded-[24px] sm:rounded-[32px]">
         <Sky name="blue" />
         {/* Desktop: the full app in a window, with the phone beside it */}
         <div className="relative hidden pl-[5%] pr-[17%] pt-[5%] md:block">
@@ -218,7 +217,7 @@ function Hero() {
             ))}
           </div>
         </div>
-      </motion.div>
+      </div>
     </section>
   );
 }
@@ -236,7 +235,7 @@ function Nav() {
       <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-5 sm:grid sm:h-[72px] sm:grid-cols-[1fr_auto_1fr] sm:px-6">
         <a href="#" onClick={(e) => (e.preventDefault(), window.scrollTo({ top: 0, behavior: "smooth" }))} className="flex items-center gap-2 justify-self-start">
           <Logo className="size-6 sm:size-7" />
-          <span className="whitespace-nowrap font-serif text-[18px] tracking-[-0.01em] text-ink sm:text-[21px]">Shrink my day</span>
+          <span className="wordmark whitespace-nowrap font-serif text-[18px] tracking-[-0.01em] text-ink sm:text-[21px]">Shrink my day</span>
         </a>
         <div className="hidden items-center gap-1 sm:flex">
           {[
@@ -293,9 +292,9 @@ function Statement() {
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start 0.85", "end 0.45"] });
   return (
-    <section className="mx-auto max-w-5xl px-6 py-28 sm:py-40">
-      <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-signal-ink">Made for ADHD brains</p>
-      <div ref={ref} className="mt-6 font-serif text-[34px] leading-[1.15] tracking-[-0.02em] sm:text-[56px]">
+    <section className="mx-auto max-w-6xl px-5 pb-12 pt-24 sm:px-6 sm:pb-16 sm:pt-32">
+      <p className={EYEBROW}>Made for ADHD brains</p>
+      <div ref={ref} className="mt-6 max-w-5xl font-serif text-[34px] leading-[1.15] tracking-[-0.02em] sm:text-[56px]">
         {SAY.map((x, i) => (
           <Word key={i} p={p} at={i / SAY.length} bold={!!x.b}>
             {x.tile ? <InlineTile kind={x.tile} /> : x.w}
@@ -318,7 +317,7 @@ const HOW = [
   { title: "Empty your head", body: "Type it or say it in one go. Every pause becomes its own task, so nothing gets lost.", art: Capture, sky: "blue" as SkyName },
   { title: "Make big tasks small", body: "Ask the AI you already use to break a scary task into tiny steps. Paste them back in.", art: AiSteps, sky: "pink" as SkyName },
   { title: "Pick one thing", body: "Home shows one task and its next step. Not feeling it? Pick another.", art: OneThing, sky: "peach" as SkyName },
-  { title: "Start with one tiny step", body: "Focus hides everything else. Tick a step and the next one shows up. Add a timer if it helps.", art: Timer, sky: "violet" as SkyName },
+  { title: "Take one tiny step", body: "Focus hides everything else. Tick a step and the next one shows up. Add a timer if it helps.", art: Timer, sky: "violet" as SkyName },
 ];
 
 function How() {
@@ -334,22 +333,22 @@ function How() {
     return () => clearTimeout(t);
   }, [on, seen, paused]);
   return (
-    <section id="how" ref={ref} className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-24 sm:px-6 sm:pb-32">
-      <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.15fr] lg:gap-16">
+    <section id="how" ref={ref} className="mx-auto max-w-6xl scroll-mt-24 px-5 py-12 sm:px-6 sm:py-16">
+      <p className={EYEBROW}>How it works</p>
+      <h2 className={`mt-4 max-w-[18ch] ${H2}`}>From a full head to a first step</h2>
+      <div className="mt-10 grid gap-4 lg:grid-cols-[1fr_1.25fr]">
         <div>
-          <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-signal-ink">How it works</p>
-          <h2 className="mt-4 font-serif text-[40px] leading-[1.02] tracking-[-0.02em] sm:text-[56px]">From a full head to a first step</h2>
-          <div className="mt-8 rounded-[24px] bg-white px-5 ring-1 ring-line">
+          <div className="h-full rounded-[24px] bg-white px-5 py-1 ring-1 ring-line lg:flex lg:flex-col lg:justify-center">
             {HOW.map((h, i) => (
               <button key={h.title} type="button" onClick={() => (setOn(i), setPaused(true))} className={`block w-full py-5 text-left ${i ? "border-t border-line" : ""}`}>
                 <span className="flex items-baseline gap-3">
                   <span className={`text-[13px] font-semibold tabular-nums transition-colors ${i === on ? "text-signal-ink" : "text-ink-3"}`}>0{i + 1}</span>
-                  <span className={`text-[20px] font-semibold tracking-[-0.01em] transition-colors ${i === on ? "text-ink" : "text-ink-3"}`}>{h.title}</span>
+                  <span className={`text-[18px] font-medium tracking-[-0.01em] transition-colors ${i === on ? "text-ink" : "text-ink-3"}`}>{h.title}</span>
                 </span>
                 <AnimatePresence initial={false}>
                   {i === on && (
                     <motion.span initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.4 }} className="block overflow-hidden">
-                      <span className="block pl-8 pt-2 text-[16px] leading-snug text-ink-2">{h.body}</span>
+                      <span className="block pl-8 pt-1.5 text-[15px] leading-snug text-ink-2">{h.body}</span>
                       {!paused && seen && (
                         <span className="ml-8 mt-4 block h-[2px] overflow-hidden rounded-full bg-line">
                           <motion.span key={on} className="block h-full bg-signal" initial={{ width: "0%" }} animate={{ width: "100%" }} transition={{ duration: 6.5, ease: "linear" }} />
@@ -362,13 +361,13 @@ function How() {
             ))}
           </div>
         </div>
-        <div className="relative aspect-[5/4] overflow-hidden rounded-[24px] sm:rounded-[32px]">
+        <div className="relative min-h-[360px] overflow-hidden rounded-[24px] px-5 py-10 sm:min-h-[420px] sm:p-0">
           <AnimatePresence initial={false}>
             <motion.div key={HOW[on].sky} className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7 }}>
               <Sky name={HOW[on].sky} />
             </motion.div>
           </AnimatePresence>
-          <div className="absolute inset-[7%] flex items-center justify-center">
+          <div className="relative flex items-center justify-center sm:absolute sm:inset-[8%]">
             <AnimatePresence mode="wait">
               <motion.div key={on} initial={{ opacity: 0, y: 18, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, transition: { duration: 0.15 } }} transition={{ type: "spring", bounce: 0.15, duration: 0.6 }} className="w-full max-w-[420px]">
                 <Window>
@@ -393,7 +392,7 @@ function Tile({ title, body, children, sky, className = "" }: { title: string; b
         <div className="relative h-full">{seen && children}</div>
       </div>
       <div className="px-5 pb-5 pt-4">
-        <h3 className="text-[19px] font-semibold tracking-[-0.01em]">{title}</h3>
+        <h3 className="text-[18px] font-medium tracking-[-0.01em] text-ink">{title}</h3>
         <p className="mt-1.5 text-[15px] leading-snug text-ink-2">{body}</p>
       </div>
     </div>
@@ -402,10 +401,9 @@ function Tile({ title, body, children, sky, className = "" }: { title: string; b
 
 function Helpers() {
   return (
-    <section id="helpers" className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-24 sm:px-6 sm:pb-32">
-      <h2 className="max-w-[18ch] font-serif text-[40px] leading-[1.02] tracking-[-0.02em] sm:text-[56px]">
-        Small helpers <span className="text-ink-3">that stay out of your way</span>
-      </h2>
+    <section id="helpers" className="mx-auto max-w-6xl scroll-mt-24 px-5 py-12 sm:px-6 sm:py-16">
+      <p className={EYEBROW}>Features</p>
+      <h2 className={`mt-4 max-w-[18ch] ${H2}`}>Small helpers that stay out of your way</h2>
       <div className="mt-10 grid gap-4 md:grid-cols-3">
         <Tile sky="blue" title="Sync multiple devices" body="Tick a task on your phone and it's done on your laptop too. Link them with a code. No sign up." className="md:col-span-2">
           <Devices />
@@ -439,7 +437,7 @@ function Helpers() {
 
 function Private() {
   return (
-    <section id="private" className="scroll-mt-24 px-3 sm:px-4">
+    <section id="private" className="scroll-mt-24 px-3 py-12 sm:px-4 sm:py-16">
       <div className="relative mx-auto max-w-[1240px] overflow-hidden rounded-[24px] px-6 py-24 text-white sm:rounded-[32px] sm:py-32">
         <Sky name="night" />
         <div className="lp-grid pointer-events-none absolute inset-0" />
@@ -464,7 +462,7 @@ function Private() {
 
 function Final() {
   return (
-    <section className="px-6 pb-8 pt-32 sm:pb-12 sm:pt-44">
+    <section className="px-5 pb-8 pt-16 sm:px-6 sm:pb-12 sm:pt-24">
       <div className="mx-auto flex max-w-3xl flex-col items-center text-center">
         <Logo className="size-12" />
         <h2 className="mt-8 font-serif text-[48px] leading-[1] tracking-[-0.03em] text-ink sm:text-[72px]">Shrink your day.</h2>
@@ -483,10 +481,10 @@ function Footer() {
       <div className="flex flex-col gap-6 border-t border-line pt-8 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
           <Logo className="size-6" />
-          <span className="font-serif text-[18px] tracking-[-0.01em]">Shrink my day</span>
+          <span className="wordmark font-serif text-[18px] tracking-[-0.01em]">Shrink my day</span>
           <span className="ml-2 text-[14px] text-ink-3">Made by Hassan</span>
         </div>
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-[14px] text-ink-2">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-[14px] text-ink-2 sm:flex sm:items-center">
           <a href="/app" className="transition-colors hover:text-ink">
             Open the app
           </a>
