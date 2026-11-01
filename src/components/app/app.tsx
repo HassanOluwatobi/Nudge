@@ -12,8 +12,8 @@ import { Focus } from "./focus";
 import { MyList } from "./my-list";
 import { Settings } from "./settings";
 import { TaskSheet } from "./task-sheet";
-import { Aurora, useDaypart } from "./aurora";
-import { Mark, Thread } from "./thread";
+import { Contours, Field, Ribbon, useDaypart } from "./motifs";
+import { Mark } from "./thread";
 import { Today } from "./today";
 
 type View = { name: "today" } | { name: "list"; choosing?: boolean } | { name: "focus"; id: string } | { name: "finish"; task: Task } | { name: "rest" };
@@ -42,7 +42,7 @@ export function NudgeApp() {
   // Status bar matches the colour at the top of each screen.
   useEffect(() => {
     const h = new Date().getHours();
-    const top = view.name === "focus" ? "#000b2e" : view.name === "finish" ? "#1a4fe0" : view.name === "today" ? (h < 5 || h >= 21 ? "#000b2e" : h < 11 ? "#1a5fd9" : h < 17 ? "#1a4fe0" : "#0033a8") : "#f1ece3";
+    const top = view.name === "focus" ? "#060b2b" : view.name === "finish" ? "#1d4df5" : view.name === "today" ? (h < 5 || h >= 21 ? "#060b2b" : h < 17 ? "#0d2a8c" : "#101a4d") : "#f3eee4";
     let m = document.querySelector('meta[name="theme-color"]');
     if (!m) {
       m = document.createElement("meta");
@@ -170,11 +170,12 @@ export function NudgeApp() {
 
         {view.name === "rest" && (
           <motion.div key="rest" {...fade} className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-6 safe-t safe-b">
-            <Aurora field={part} className="grid h-44 place-items-center rounded-[32px]">
-              <Thread pull={1} done tone="night" className="h-10 w-[70%]" label="The thread is straight." />
-            </Aurora>
-            <h1 className="mt-6 font-serif text-[34px] leading-tight tracking-[-0.02em]">You can stop here.</h1>
-            <p className="mt-2 text-[17px] leading-relaxed text-ink-2">Your list is saved on this device. Close NudgeMe whenever you like.</p>
+            <Field tone={part} className="h-48 rounded-[28px]">
+              <Contours className="absolute inset-0 -z-10 h-full w-full" count={5} />
+              <Ribbon tone={part} dot className="absolute inset-0 h-full w-full" />
+            </Field>
+            <h1 className="t-display mt-8 text-[40px]">You can stop here.</h1>
+            <p className="t-body mt-3 text-ink-2">Your list is saved on this device. Close NudgeMe whenever you like.</p>
             <button type="button" className="btn btn-line mt-8 self-start" onClick={() => setView({ name: "today" })}>
               Back to today
             </button>

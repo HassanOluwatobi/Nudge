@@ -1,10 +1,9 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import type { Task } from "@/lib/tasks";
-import { Aurora } from "./aurora";
-import { Thread, pullFor } from "./thread";
+import { Contours, Field, Ribbon } from "./motifs";
 
 /** A brief, warm acknowledgment. Then the person decides what happens next. */
 export function Finish({
@@ -21,14 +20,11 @@ export function Finish({
   onUndo: () => void;
 }) {
   const reduce = useReducedMotion();
-  const [pulled, setPulled] = useState(false);
   const heading = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     heading.current?.focus();
-    const t = setTimeout(() => setPulled(true), reduce ? 0 : 120);
-    return () => clearTimeout(t);
-  }, [reduce]);
+  }, []);
 
   const rise = (i: number) =>
     reduce
@@ -36,22 +32,23 @@ export function Finish({
       : {
           initial: { opacity: 0, y: 14 },
           animate: { opacity: 1, y: 0 },
-          transition: { delay: 0.35 + i * 0.07, type: "spring" as const, stiffness: 300, damping: 30 },
+          transition: { delay: 0.9 + i * 0.07, type: "spring" as const, stiffness: 300, damping: 30 },
         };
 
   return (
-    <Aurora field="finish" className="on-night min-h-dvh text-white">
+    <Field tone="finish" className="on-night min-h-dvh text-white">
+      <Contours className="pointer-events-none absolute inset-0 -z-10 h-full w-full" count={6} opacity={0.26} />
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 safe-t safe-b">
-        <main className="flex flex-1 flex-col justify-center py-10">
-          <Thread pull={pulled ? 1 : pullFor(task.steps)} done={pulled} tone="night" className="h-12 w-full max-w-[260px]" label="The thread is straight. Task finished." />
-          <motion.p {...rise(0)} className="mt-8 text-[13px] font-semibold uppercase tracking-[0.08em] text-white/80">
+        <main className="flex flex-1 flex-col justify-center pb-8 pt-4">
+          <Ribbon tone="finish" draw dot className="-mx-5 h-56 w-[calc(100%+2.5rem)]" />
+          <motion.p {...rise(0)} className="mt-4 text-[13px] font-semibold uppercase tracking-[0.08em] text-white/80">
             Finished
           </motion.p>
           <motion.h1
             {...rise(1)}
             ref={heading}
             tabIndex={-1}
-            className="mt-2 text-[40px] font-medium leading-[1.05] tracking-[-0.035em] focus:outline-none [overflow-wrap:anywhere]"
+            className="t-display mt-2 text-[40px] leading-[1.05] focus:outline-none [overflow-wrap:anywhere]"
           >
             {task.title}
           </motion.h1>
@@ -77,6 +74,6 @@ export function Finish({
           </button>
         </motion.div>
       </div>
-    </Aurora>
+    </Field>
   );
 }
