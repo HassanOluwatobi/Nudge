@@ -57,7 +57,6 @@ export function NudgeApp() {
   const [said, setSaid] = useState("");
   const [guide, setGuide] = useState(false);
   const [importer, setImporter] = useState<{ source?: Source | null; preload?: ExtEvent[] | null } | null>(null);
-  const [incoming, setIncoming] = useState<ExtEvent[]>([]);
   const [dir, setDir] = useState(0);
   const goTab = (t: Tab) => {
     if (t === tab) return;
@@ -167,7 +166,13 @@ export function NudgeApp() {
     if (y.notion) jobs.push(notionEvents(y.notion).catch(() => []));
     if (y.calendly) jobs.push(calendlyEvents(y.calendly).catch(() => []));
     if (!jobs.length) return;
-    Promise.all(jobs).then((lists) => setIncoming(lists.flat()));
+    Promise.all(jobs).then((lists) => {
+      const known = new Set([...state.tasks.map((t) => t.ext).filter(Boolean), ...(y.skipped ?? [])] as string[]);
+      const fresh = lists.flat().filter((e) => !known.has(extKey(e)));
+      if (!fresh.length) return;
+      actions.importEvents(fresh.map((e) => ({ key: extKey(e), title: e.title, start: e.start, end: e.end, allDay: e.allDay })));
+      toast(`Added ${fresh.length} ${fresh.length === 1 ? "event" : "events"} from your calendar.`);
+    });
   }, [state]);
 
   if (!state) {
@@ -193,10 +198,6 @@ export function NudgeApp() {
     setOver({ name: "finish", task: t });
     announce(`Finished: ${t.title}.`);
   };
-  const known = new Set([...state.tasks.map((t) => t.ext).filter(Boolean), ...(state.settings.sync.skipped ?? [])] as string[]);
-  const newEvents = incoming.filter((e) => !known.has(extKey(e)));
-  const googleDue = state.settings.sync.google && (!state.settings.sync.last || state.settings.sync.last.slice(0, 10) !== ymd());
-  const calendarCard = newEvents.length ? { count: newEvents.length, onReview: () => setImporter({ preload: newEvents }) } : googleDue ? { count: 0, onReview: () => setImporter({ source: "google" }) } : null;
   const common = { state, actions, announce, onHelp: () => setGuide(true), onSettings: () => setSettings(true), onAdd: () => setCapture({}), onOpen: (t: Task) => setOpenId(t.id), onMenu: (t: Task) => setMenuId(t.id) };
 
   return (
@@ -236,7 +237,7 @@ export function NudgeApp() {
         ) : (
           <motion.div key={tab} custom={dir} variants={tabMotion} initial="enter" animate="center" exit="exit" transition={{ type: "spring", bounce: 0, duration: 0.34 }}>
             {tab === "today" && (
-              <Today {...common} onAddTo={(part) => setCapture({ part, bucket: "today" })} onFocus={startFocus} onCheckin={setCheckin} calendarCard={calendarCard} />
+              <Today {...common} onAddTo={(part) => setCapture({ part, bucket: "today" })} onFocus={startFocus} onCheckin={setCheckin} />
             )}
             {tab === "todo" && <Todo {...common} onAddTo={(bucket) => setCapture({ bucket })} />}
             {tab === "focus" && <Focus state={state} actions={actions} announce={announce} taskId={focusId === null ? undefined : (focusId ?? suggestion(state)?.id)} onPickTask={(id) => (setFocusId(id ?? null), state.meta.timer && actions.stopTimer())} onFinished={finished} />}
@@ -251,7 +252,7 @@ export function NudgeApp() {
       <TaskSheet task={openTask} ai={state.settings.ai} onClose={() => setOpenId(null)} actions={actions} onFocus={startFocus} onFinished={finished} announce={announce} />
       <TaskMenu task={menuTask} onClose={() => setMenuId(null)} actions={actions} onOpen={(t) => (setMenuId(null), setTimeout(() => setOpenId(t.id), 220))} onFocus={startFocus} />
       <Settings open={settings} onClose={() => setSettings(false)} state={state} actions={actions} onCheckin={(k) => setTimeout(() => setCheckin(k), 320)} onGuide={() => setTimeout(() => setGuide(true), 320)} onImport={(src) => setTimeout(() => setImporter({ source: src }), 320)} />
-      <ImportSheet open={!!importer} source={importer?.source} preload={importer?.preload} onClose={() => (setImporter(null), setIncoming([]))} state={state} actions={actions} />
+      <ImportSheet open={!!importer} source={importer?.source} preload={importer?.preload} onClose={() => setImporter(null)} state={state} actions={actions} />
       <Checkin kind={checkin} onClose={() => setCheckin(null)} state={state} actions={actions} onStart={(t) => setTimeout(() => startFocus(t), 220)} />
       <Guide
         open={guide}

@@ -69,7 +69,6 @@ export function Today({
   onFocus,
   onCheckin,
   onHelp,
-  calendarCard,
   announce,
 }: {
   state: State;
@@ -82,7 +81,6 @@ export function Today({
   onFocus: (t: Task) => void;
   onCheckin: (k: "morning" | "evening" | "weekly") => void;
   onHelp: () => void;
-  calendarCard: { count: number; onReview: () => void } | null;
   announce: (s: string) => void;
 }) {
   const today = ymd();
@@ -122,7 +120,7 @@ export function Today({
           onClick={() => onCheckin(due)}
           className={`${CHECKIN[due].hue} tile mt-6 flex w-full items-center gap-3 rounded-[20px] p-3.5 text-left`}
         >
-          <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white shadow-[0_1px_2px_rgb(6_11_43/0.06),0_4px_10px_-6px_rgb(6_11_43/0.25)]">
+          <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white/70 shadow-[0_1px_2px_rgb(6_11_43/0.06),0_4px_10px_-6px_rgb(6_11_43/0.25)]">
             {(() => {
               const I = CHECKIN[due].icon;
               return <I className="size-5" />;
@@ -136,16 +134,6 @@ export function Today({
         </motion.button>
       )}
 
-      {calendarCard && (
-        <motion.button type="button" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} onClick={calendarCard.onReview} className="hue-blue tile mt-3 flex w-full items-center gap-3 rounded-[20px] p-3.5 text-left">
-          <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-white text-[20px] shadow-[0_1px_2px_rgb(6_11_43/0.06),0_4px_10px_-6px_rgb(6_11_43/0.25)]">🗓️</span>
-          <span className="min-w-0 flex-1">
-            <span className="block text-[16px] font-semibold text-ink">{calendarCard.count ? `${calendarCard.count} new ${calendarCard.count === 1 ? "event" : "events"} from your calendar` : "Check Google Calendar"}</span>
-            <span className="t-small block text-ink-2">{calendarCard.count ? "Choose which ones become tasks." : "See what is coming up and add it here."}</span>
-          </span>
-          <ArrowRight className="size-5 shrink-0" />
-        </motion.button>
-      )}
 
       {/* The one painted moment, with the suggested task under it. */}
       {pick ? (
