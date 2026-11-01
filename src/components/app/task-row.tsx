@@ -81,7 +81,7 @@ export function CheckButton({ task, onDone, label }: { task: Task; onDone: () =>
         initial={false}
         animate={{
           backgroundColor: done ? "var(--h)" : "rgba(255,255,255,0)",
-          borderColor: done ? "var(--h)" : "#1b2044",
+          borderColor: done ? "var(--h)" : "var(--ink)",
           scale: ticked ? [1, 0.78, 1.12, 1] : 1,
         }}
         whileTap={{ scale: 0.86 }}
@@ -228,5 +228,39 @@ export function TaskRow({
         </>
       )}
     </motion.li>
+  );
+}
+
+/**
+ * Finished tasks, after Apple Reminders: one quiet grouped list. A filled
+ * check you can tap to put a task back, the title softened, the time it was
+ * finished on the right.
+ */
+export function DoneList({ tasks, actions, onOpen }: { tasks: Task[]; actions: Actions; onOpen: (t: Task) => void }) {
+  const time = (t: Task) => (t.doneAt ? new Date(t.doneAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "");
+  const day = (t: Task) => {
+    if (!t.doneAt) return "";
+    const d = new Date(t.doneAt);
+    return ymd(d) === ymd() ? time(t) : d.toLocaleDateString([], { day: "numeric", month: "short" });
+  };
+  return (
+    <ul className="overflow-hidden rounded-[20px] bg-white ring-1 ring-line">
+      <AnimatePresence initial={false}>
+        {tasks.map((t, i) => (
+          <motion.li key={t.id} layout="position" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }} className="relative">
+            {i > 0 && <span aria-hidden className="absolute left-[52px] right-0 top-0 h-px bg-line/80" />}
+            <div className="flex min-h-[52px] items-center pl-1 pr-4">
+              <span className="scale-[0.85]">
+                <CheckButton task={t} onDone={() => actions.restore(t.id)} label={`Put back: ${t.title}`} />
+              </span>
+              <button type="button" onClick={() => onOpen(t)} className="min-w-0 flex-1 py-3 pl-0.5 text-left">
+                <span className="block truncate text-[15px] text-ink-3 line-through decoration-ink-3/35 decoration-1">{t.title}</span>
+              </button>
+              <span className="pl-3 text-[13px] tabular-nums text-ink-3">{day(t)}</span>
+            </div>
+          </motion.li>
+        ))}
+      </AnimatePresence>
+    </ul>
   );
 }

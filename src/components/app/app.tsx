@@ -7,7 +7,7 @@ import { feel, installTapHaptics, setFeedback } from "@/lib/feedback";
 import { notify, setBadge } from "@/lib/reminders";
 import { type Bucket, type Part, type Task, doneToday, hhmmToday, suggestion, todayTasks, ymd } from "@/lib/tasks";
 import { useBackClose } from "@/lib/use-back";
-import { type ExtEvent, type Source, calendlyEvents, extKey, notionEvents, outlookEvents } from "@/lib/sync";
+import { type ExtEvent, type Source, calendlyEvents, linkEvents, extKey, notionEvents, outlookEvents } from "@/lib/sync";
 import { useKeyboardInset } from "@/lib/use-keyboard";
 import { useTasks } from "@/lib/use-tasks";
 import { Art } from "./art";
@@ -70,7 +70,6 @@ export function NudgeApp() {
     requestAnimationFrame(() => setSaid(s));
   }, []);
 
-  const dark = over?.name === "finish";
   useEffect(() => {
     if (state) setFeedback({ sound: state.settings.sound, haptics: state.settings.haptics });
   }, [state?.settings.sound, state?.settings.haptics]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -82,16 +81,26 @@ export function NudgeApp() {
       setTimeout(() => setGuide(true), 500);
     }
   }, [state]);
+  // Light, dark, or follow the phone. The status bar colour follows too.
+  const theme = state?.settings.theme ?? "system";
   useEffect(() => {
-    document.documentElement.dataset.view = over?.name === "finish" ? "finish" : dark ? "focus" : "page";
-    let m = document.querySelector('meta[name="theme-color"]');
-    if (!m) {
-      m = document.createElement("meta");
-      m.setAttribute("name", "theme-color");
-      document.head.appendChild(m);
-    }
-    m.setAttribute("content", over?.name === "rest" ? "#f3eee4" : dark ? "#060b2b" : "#f3eee4");
-  }, [dark, over]);
+    document.documentElement.dataset.view = over?.name === "finish" ? "finish" : "page";
+    const mq = matchMedia("(prefers-color-scheme: dark)");
+    const apply = () => {
+      const resolved = theme === "system" ? (mq.matches ? "dark" : "light") : theme;
+      document.documentElement.dataset.theme = resolved;
+      let m = document.querySelector('meta[name="theme-color"]');
+      if (!m) {
+        m = document.createElement("meta");
+        m.setAttribute("name", "theme-color");
+        document.head.appendChild(m);
+      }
+      m.setAttribute("content", resolved === "dark" ? "#070b22" : "#f3eee4");
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, [over, theme]);
   useEffect(() => {
     window.scrollTo({ top: 0 });
   }, [tab, over]);
@@ -165,6 +174,7 @@ export function NudgeApp() {
     if (y.outlook) jobs.push(outlookEvents(false).catch(() => []));
     if (y.notion) jobs.push(notionEvents(y.notion).catch(() => []));
     if (y.calendly) jobs.push(calendlyEvents(y.calendly).catch(() => []));
+    if (y.ics) jobs.push(linkEvents(y.ics).catch(() => []));
     if (!jobs.length) return;
     Promise.all(jobs).then((lists) => {
       const known = new Set([...state.tasks.map((t) => t.ext).filter(Boolean), ...(y.skipped ?? [])] as string[]);

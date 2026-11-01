@@ -1,7 +1,7 @@
 "use client";
 
 import { Check, Mic, Sparkles } from "lucide-react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { type Bucket, type EntryKind, type Part, type State, type Task, BUCKET_NAME, MAX_TITLE, PARTS, PART_NAME, isDuplicate, suggestStep } from "@/lib/tasks";
@@ -106,14 +106,19 @@ export function Capture({
             save();
           }}
         >
-          <div className="mt-1 inline-grid grid-cols-3 rounded-full bg-[#ece6da] p-1" role="tablist" aria-label="What is it?">
+          <div className="seg mt-1 inline-grid grid-cols-3 p-1" role="tablist" aria-label="What is it?">
             {(["task", "idea", "note"] as Kind[]).map((k) => (
               <button key={k} type="button" role="tab" aria-selected={kind === k} onClick={() => (setKind(k), feel("tap"))} className="relative h-9 rounded-full px-4 text-[14px] font-semibold">
-                {kind === k && <motion.span layoutId="cap-seg" className="absolute inset-0 rounded-full bg-white shadow-[0_2px_8px_-4px_rgb(6_11_43/0.3)]" transition={{ type: "spring", bounce: 0, duration: 0.3 }} />}
+                {kind === k && <motion.span layoutId="cap-seg" className="seg-knob absolute inset-0" transition={{ type: "spring", bounce: 0, duration: 0.3 }} />}
                 <span className={`relative capitalize ${kind === k ? "text-ink" : "text-ink-3"}`}>{k}</span>
               </button>
             ))}
           </div>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.p key={kind} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.16 }} className="t-small mt-2 text-ink-3">
+              {KIND_HINT[kind]}
+            </motion.p>
+          </AnimatePresence>
           <label htmlFor="thought" className="sr-only">
             What is on your mind?
           </label>
@@ -173,6 +178,12 @@ export function Capture({
 }
 
 /** The optional details after a task is saved. Every choice is one tap. */
+const KIND_HINT: Record<Kind, string> = {
+  task: "Something to do. It goes on your list, and you can add steps and a time.",
+  idea: "A spark for later. It comes back on Today in a few days.",
+  note: "Something to keep. It waits in Ideas until you need it.",
+};
+
 function TaskDetails({ task, actions, onDone, onAnother }: { task: Task; actions: Actions; onDone: () => void; onAnother: () => void }) {
   const tip = suggestStep(task.title);
   return (

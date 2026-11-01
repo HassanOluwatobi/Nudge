@@ -1,11 +1,11 @@
 "use client";
 
-import { ArrowLeft, Check, FileUp, Loader2 } from "lucide-react";
+import { ArrowLeft, Check, Loader2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { feel } from "@/lib/feedback";
-import { type ExtEvent, type Source, GOOGLE_CLIENT_ID, MS_CLIENT_ID, SOURCE_NAME, calendlyEvents, extKey, googleEvents, notionEvents, outlookEvents, outlookSignOut, parseIcs } from "@/lib/sync";
+import { type ExtEvent, type Source, GOOGLE_CLIENT_ID, MS_CLIENT_ID, SOURCE_NAME, calendlyEvents, extKey, linkEvents, googleEvents, notionEvents, outlookEvents, outlookSignOut, parseIcs } from "@/lib/sync";
 import type { State } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { AppleMark, CalendlyMark, GoogleMark, LogoTile, NotionMark, OutlookMark } from "./brands";
@@ -20,13 +20,13 @@ export const SOURCES: Source[] = (["google", "outlook", "ics", "notion", "calend
 const SUB: Record<Source, string> = {
   google: "Next two weeks of events",
   outlook: "Next two weeks of events",
-  ics: MS_CLIENT_ID ? "From a calendar file" : "Or Outlook, from a file",
+  ics: "Paste your calendar link once",
   notion: "Pages that have a date",
   calendly: "Meetings booked with you",
 };
 const NAME: Record<Source, string> = { google: "Google Calendar", outlook: "Outlook", ics: "Apple Calendar", notion: "Notion", calendly: "Calendly" };
 const TILE: Record<Source, { el: React.ReactNode; bleed: boolean }> = {
-  google: { el: <GoogleMark className="size-[49px] max-w-none" />, bleed: true },
+  google: { el: <GoogleMark className="size-6" />, bleed: false },
   ics: { el: <AppleMark className="size-full" />, bleed: true },
   outlook: { el: <OutlookMark className="size-7" />, bleed: false },
   notion: { el: <NotionMark className="size-7" />, bleed: false },
@@ -35,12 +35,12 @@ const TILE: Record<Source, { el: React.ReactNode; bleed: boolean }> = {
 
 /** A grouped list of sources, used in Settings and the import sheet. */
 export function SourceButtons({ state, onPick }: { state: State; onPick: (s: Source) => void }) {
-  const on = (s: Source) => (s === "google" ? state.settings.sync.google : s === "outlook" ? state.settings.sync.outlook : s === "notion" ? !!state.settings.sync.notion : s === "calendly" ? !!state.settings.sync.calendly : false);
+  const on = (s: Source) => (s === "google" ? state.settings.sync.google : s === "outlook" ? state.settings.sync.outlook : s === "notion" ? !!state.settings.sync.notion : s === "calendly" ? !!state.settings.sync.calendly : !!state.settings.sync.ics);
   return (
     <ul className="overflow-hidden rounded-[20px] bg-white ring-1 ring-line">
       {SOURCES.map((s, i) => (
         <motion.li key={s} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04, type: "spring", bounce: 0, duration: 0.45 }} className={i ? "border-t border-line/70" : ""}>
-          <button type="button" onClick={() => onPick(s)} aria-label={`Bring in from ${SOURCE_NAME[s]}`} className="flex min-h-[64px] w-full items-center gap-3 px-3.5 py-2.5 text-left transition-colors active:bg-[rgb(6_11_43/0.04)]">
+          <button type="button" onClick={() => onPick(s)} aria-label={`Bring in from ${SOURCE_NAME[s]}`} className="flex min-h-[72px] w-full items-center gap-3 px-4 py-3 text-left transition-colors active:bg-[rgb(6_11_43/0.04)]">
             <LogoTile bleed={TILE[s].bleed}>{TILE[s].el}</LogoTile>
             <span className="min-w-0 flex-1">
               <span className="block text-[15px] font-semibold leading-tight text-ink">{NAME[s]}</span>
@@ -50,8 +50,6 @@ export function SourceButtons({ state, onPick }: { state: State; onPick: (s: Sou
               <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-success">
                 <Check className="size-4" strokeWidth={2.6} /> On
               </span>
-            ) : s === "ics" ? (
-              <span className="inline-flex h-8 items-center rounded-full bg-paper px-3.5 text-[13px] font-semibold text-ink">Import</span>
             ) : (
               <span className="inline-flex h-8 items-center rounded-full bg-paper px-3.5 text-[13px] font-semibold text-ink">Connect</span>
             )}
@@ -91,6 +89,7 @@ export function ImportSheet({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const [token, setToken] = useState("");
+  const [link, setLink] = useState(state.settings.sync.ics ?? "");
   const file = useRef<HTMLInputElement>(null);
 
   const have = new Set(state.tasks.map((t) => t.ext).filter(Boolean) as string[]);
@@ -233,7 +232,7 @@ export function ImportSheet({
               <p className="t-small flex-1 text-ink-2">
                 {source === "google" && "Sign in with Google and allow read-only access. The sign-in lasts about an hour and is never saved."}
                 {source === "outlook" && "Sign in with your Microsoft account and allow read-only access to your calendar."}
-                {source === "ics" && "Export your calendar as an .ics file, then choose it here. The file is read on your phone and never uploaded."}
+                {source === "ics" && "Share a calendar from your iPhone as a link, once. NudgeMe reads it and never changes it."}
                 {source === "notion" && "Connect a Notion database that has a date column. Each page with a date in the next two weeks can become a task."}
                 {source === "calendly" && "Bring in the meetings people have booked with you."}
               </p>
@@ -266,14 +265,47 @@ export function ImportSheet({
 
             {source === "ics" && (
               <>
-                <ol className="t-small mt-4 list-decimal space-y-1 pl-5 text-ink-2">
-                  <li>Apple: on a Mac, open Calendar, pick a calendar, then File, Export.</li>
-                  <li>Outlook: on outlook.com, open Settings, Calendar, Shared calendars, and publish or download the calendar as .ics.</li>
-                  <li>Choose the file below.</li>
-                </ol>
-                <button type="button" className="btn btn-signal mt-5 w-full gap-2" disabled={busy} onClick={() => file.current?.click()}>
-                  <FileUp className="size-5" /> Choose an .ics file
-                </button>
+                <form
+                  className="mt-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const u = link.trim();
+                    if (!u) return;
+                    run(() => linkEvents(u), () => actions.setSync({ ics: u }));
+                  }}
+                >
+                  <ol className="space-y-2.5">
+                    {[
+                      "On your iPhone, open the Calendar app and tap Calendars.",
+                      "Tap the ⓘ next to the calendar you want.",
+                      "Turn on Public Calendar, then tap Share Link and Copy.",
+                      "Paste it below. NudgeMe checks it each time you open the app.",
+                    ].map((t, i) => (
+                      <li key={i} className="flex gap-2.5 text-[14px] leading-snug text-ink-2">
+                        <span className="grid size-5 shrink-0 place-items-center rounded-full bg-paper text-[11px] font-semibold tabular-nums text-ink ring-1 ring-line">{i + 1}</span>
+                        <span>{t}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  <label htmlFor="ics-link" className="t-small mt-4 block font-semibold text-ink-2">
+                    Calendar link
+                  </label>
+                  <input id="ics-link" value={link} onChange={(e) => setLink(e.target.value)} inputMode="url" autoCapitalize="off" autoCorrect="off" spellCheck={false} placeholder="webcal://p01-caldav.icloud.com/…" className="field mt-1.5" />
+                  <button type="submit" className="btn btn-signal mt-4 w-full" disabled={busy || !link.trim()}>
+                    {busy ? <Loader2 className="size-5 animate-spin" /> : state.settings.sync.ics ? "Check my calendar" : "Connect"}
+                  </button>
+                  {state.settings.sync.ics && (
+                    <button type="button" className="btn btn-quiet mt-1 w-full text-[14px]" onClick={() => (actions.setSync({ ics: undefined }), setLink(""), toast("Calendar link removed."))}>
+                      Remove this link
+                    </button>
+                  )}
+                </form>
+                <p className="t-small mt-5 text-center text-ink-3">
+                  Have an .ics file instead?{" "}
+                  <button type="button" className="font-semibold text-signal-ink underline underline-offset-2" disabled={busy} onClick={() => file.current?.click()}>
+                    Choose a file
+                  </button>
+                </p>
                 <input
                   ref={file}
                   type="file"

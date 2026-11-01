@@ -9,7 +9,7 @@ import type { Actions } from "@/lib/use-tasks";
 import { feel } from "@/lib/feedback";
 import { Art } from "./art";
 import { Credit } from "./settings";
-import { TaskRow, Tile } from "./task-row";
+import { TaskRow, Tile, DoneList } from "./task-row";
 
 export function Counter({ done, total }: { done: number; total: number }) {
   return (
@@ -29,7 +29,7 @@ export function Counter({ done, total }: { done: number; total: number }) {
   );
 }
 
-const round = "grid size-10 place-items-center rounded-full bg-white text-ink-2 shadow-[0_1px_2px_rgb(6_11_43/0.06),0_6px_16px_-10px_rgb(6_11_43/0.3)] transition-transform active:scale-90";
+const round = "btn btn-line btn-icon size-10 text-ink-2";
 
 export function TopBar({ done, total, onSettings, onAdd, onHelp }: { done: number; total: number; onSettings: () => void; onAdd: () => void; onHelp?: () => void }) {
   return (
@@ -44,7 +44,7 @@ export function TopBar({ done, total, onSettings, onAdd, onHelp }: { done: numbe
         <button type="button" className={round} aria-label="Settings, reminders and privacy" onClick={onSettings}>
           <Settings2 className="size-[18px]" />
         </button>
-        <button type="button" className="grid size-10 place-items-center rounded-full bg-ink text-white shadow-[0_8px_18px_-8px_rgb(6_11_43/0.6)] transition-transform active:scale-90" aria-label="Add a thought" onClick={onAdd}>
+        <button type="button" className="btn btn-ink btn-icon size-10" aria-label="Add a thought" onClick={onAdd}>
           <Plus className="size-5" />
         </button>
       </div>
@@ -137,15 +137,15 @@ export function Today({
 
       {/* The one painted moment, with the suggested task under it. */}
       {pick ? (
-        <section aria-label="Start here" className="mt-6">
-          <div className="relative h-[150px] overflow-hidden rounded-[26px]">
+        <section aria-label="Start here" className="mt-6 overflow-hidden rounded-[26px] bg-white shadow-[0_24px_50px_-34px_rgb(6_11_43/0.5)] ring-1 ring-line/60">
+          <div className="relative h-[150px] overflow-hidden">
             <Art mode={0} shift={shift} />
             <span className="absolute left-3.5 top-3.5 rounded-full bg-white/90 px-3 py-1 text-[12px] font-semibold uppercase tracking-[0.08em] text-ink backdrop-blur-sm">
               {easy ? "Today is easy" : "Start here"}
             </span>
           </div>
           <AnimatePresence mode="popLayout" initial={false}>
-            <motion.div key={pick.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ type: "spring", bounce: 0, duration: 0.4 }} className="px-1 pt-4">
+            <motion.div key={pick.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ type: "spring", bounce: 0, duration: 0.4 }} className="px-4 pb-3 pt-4">
               <button type="button" onClick={() => onOpen(pick)} className="flex w-full items-start gap-3 text-left">
                 <Tile task={pick} size={44} />
                 <span className="min-w-0 flex-1">
@@ -282,11 +282,9 @@ export function Today({
           </button>
           <AnimatePresence initial={false}>
             {showDone && (
-              <motion.ul initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="space-y-2 overflow-hidden">
-                {finished.map((t) => (
-                  <TaskRow key={t.id} task={t} actions={actions} onOpen={onOpen} onMenu={onMenu} />
-                ))}
-              </motion.ul>
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.36 }} className="overflow-hidden">
+                <DoneList tasks={finished} actions={actions} onOpen={onOpen} />
+              </motion.div>
             )}
           </AnimatePresence>
         </section>

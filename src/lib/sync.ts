@@ -14,7 +14,7 @@
 export type Source = "google" | "outlook" | "ics" | "notion" | "calendly";
 export type ExtEvent = { src: Source; id: string; title: string; start: Date; end?: Date; allDay: boolean };
 
-export const SOURCE_NAME: Record<Source, string> = { google: "Google Calendar", outlook: "Outlook", ics: "Apple, Outlook or any calendar", notion: "Notion", calendly: "Calendly" };
+export const SOURCE_NAME: Record<Source, string> = { google: "Google Calendar", outlook: "Outlook", ics: "Apple Calendar", notion: "Notion", calendly: "Calendly" };
 
 export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 export const MS_CLIENT_ID = process.env.NEXT_PUBLIC_MS_CLIENT_ID ?? "";
@@ -143,6 +143,13 @@ function icsDate(v: string): { d: Date; allDay: boolean } | null {
   if (!h) return { d: new Date(+y, +mo - 1, +d, 9, 0), allDay: true };
   const dt = z ? new Date(Date.UTC(+y, +mo - 1, +d, +h, +mi, +(s ?? 0))) : new Date(+y, +mo - 1, +d, +h, +mi, +(s ?? 0));
   return { d: dt, allDay: false };
+}
+
+/** A shared calendar link, read through the stateless relay. */
+export async function linkEvents(url: string): Promise<ExtEvent[]> {
+  const r = await fetch("/api/ics", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ url }) });
+  if (!r.ok) throw new Error(((await r.json().catch(() => ({}))) as { error?: string }).error ?? "That calendar did not answer.");
+  return parseIcs(await r.text());
 }
 
 export function parseIcs(text: string): ExtEvent[] {

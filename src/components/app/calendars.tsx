@@ -39,7 +39,7 @@ export function CalendarButtons({ events, file, onAdded, label, flat }: Props) {
   };
 
   const items = [
-    { name: "Google Calendar", mark: <GoogleMark className="size-[42px] max-w-none" />, bleed: true, fn: google },
+    { name: "Google Calendar", mark: <GoogleMark className="size-5" />, bleed: false, fn: google },
     { name: "Apple Calendar", mark: <AppleMark className="size-full" />, bleed: true, fn: apple },
     { name: "Outlook", mark: <OutlookMark className="size-[26px]" />, bleed: false, fn: outlook },
   ];
@@ -49,7 +49,7 @@ export function CalendarButtons({ events, file, onAdded, label, flat }: Props) {
       <ul className={flat ? "-mx-1" : "overflow-hidden rounded-[18px] bg-white ring-1 ring-line"}>
         {items.map((it, i) => (
           <motion.li key={it.name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04, type: "spring", bounce: 0, duration: 0.45 }} className={i ? "border-t border-line/70" : ""}>
-            <button type="button" onClick={it.fn} aria-label={`Add to ${it.name}`} className={`flex min-h-[56px] w-full items-center gap-3 text-left ${flat ? "rounded-xl px-1" : "px-3.5"} transition-colors active:bg-[rgb(6_11_43/0.04)]`}>
+            <button type="button" onClick={it.fn} aria-label={`Add to ${it.name}`} className={`flex min-h-[64px] w-full items-center gap-3 text-left ${flat ? "rounded-xl px-1" : "px-4"} transition-colors active:bg-[rgb(6_11_43/0.04)]`}>
               <LogoTile bleed={it.bleed} size={34}>{it.mark}</LogoTile>
               <span className="flex-1 text-[15px] font-semibold text-ink">{it.name}</span>
               <span className="inline-flex h-8 items-center rounded-full bg-paper px-3.5 text-[13px] font-semibold text-ink">Add</span>

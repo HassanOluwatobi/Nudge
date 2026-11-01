@@ -145,9 +145,9 @@ export function Focus({
           >
             <defs>
               <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#5c6cff" />
-                <stop offset="50%" stopColor="#ab68ff" />
-                <stop offset="100%" stopColor="#ff8ad8" />
+                <stop offset="0%" stopColor="#1236c2" />
+                <stop offset="50%" stopColor="#1d4df5" />
+                <stop offset="100%" stopColor="#6f97ff" />
               </linearGradient>
             </defs>
             <circle cx="140" cy="140" r={R} fill="none" stroke="#e8e1d3" strokeWidth="22" />
@@ -341,7 +341,7 @@ function Steps({ task, actions, onFinished, announce }: { task: Task; actions: A
           Add a step
         </label>
         <input id="focus-add" value={draft} maxLength={MAX_STEP} onChange={(e) => setDraft(e.target.value)} placeholder={task.steps.length ? "Add another step" : `Try: ${suggestStep(task.title)}`} className="field min-w-0 flex-1" />
-        <button type="submit" className="grid size-[50px] shrink-0 place-items-center rounded-[14px] bg-ink text-white transition-transform active:scale-95" aria-label="Add step">
+        <button type="submit" className="btn btn-ink btn-icon size-[50px] shrink-0 rounded-[14px]" aria-label="Add step">
           <Plus className="size-5" />
         </button>
       </form>

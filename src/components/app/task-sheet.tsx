@@ -146,7 +146,7 @@ export function TaskSheet({
             }}
           >
             <input value={draft} maxLength={MAX_STEP} onChange={(e) => setDraft(e.target.value)} placeholder={t.steps.length ? "Add a step" : "The smallest thing you could do first"} aria-label="New step" className="field min-w-0 flex-1" />
-            <button type="submit" className="grid size-[50px] shrink-0 place-items-center rounded-[14px] bg-ink text-white transition-transform active:scale-95" aria-label="Add step">
+            <button type="submit" className="btn btn-ink btn-icon size-[50px] shrink-0 rounded-[14px]" aria-label="Add step">
               <Plus className="size-5" />
             </button>
           </form>
