@@ -313,10 +313,10 @@ function Word({ p, at, bold, children }: { p: MotionValue<number>; at: number; b
 }
 
 const HOW = [
-  { title: "Dump it all out", body: "Type it or say it in one go. Every pause becomes its own task, so nothing gets lost.", art: Capture, sky: "blue" as SkyName },
-  { title: "Shrink the big ones", body: "Ask the AI you already use to break a scary task into tiny steps. Paste them back in.", art: AiSteps, sky: "violet" as SkyName },
-  { title: "See one thing", body: "Home shows one task and its next step. Not feeling it? Pick another.", art: OneThing, sky: "blue" as SkyName },
-  { title: "Do one step", body: "Focus hides everything else. Tick a step and the next one shows up. Add a timer if it helps.", art: Timer, sky: "night" as SkyName },
+  { title: "Empty your head", body: "Type it or say it in one go. Every pause becomes its own task, so nothing gets lost.", art: Capture, sky: "blue" as SkyName },
+  { title: "Make big tasks small", body: "Ask the AI you already use to break a scary task into tiny steps. Paste them back in.", art: AiSteps, sky: "violet" as SkyName },
+  { title: "Pick one thing", body: "Home shows one task and its next step. Not feeling it? Pick another.", art: OneThing, sky: "blue" as SkyName },
+  { title: "Start with one tiny step", body: "Focus hides everything else. Tick a step and the next one shows up. Add a timer if it helps.", art: Timer, sky: "night" as SkyName },
 ];
 
 function How() {
