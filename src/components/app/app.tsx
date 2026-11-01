@@ -18,6 +18,7 @@ import { Finish } from "./finish";
 import { Focus } from "./focus";
 import { Guide } from "./guide";
 import { ImportSheet } from "./import";
+import { InstallPrompt, installAskDue } from "./install";
 import { Petals } from "./petals";
 import { Settings } from "./settings";
 import { TabBar, type Tab } from "./tabbar";
@@ -56,6 +57,7 @@ export function NudgeApp() {
   const [settings, setSettings] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [menuId, setMenuId] = useState<string | null>(null);
+  const [installAsk, setInstallAsk] = useState(false);
   const [checkin, setCheckin] = useState<"morning" | "evening" | "weekly" | null>(null);
   const [said, setSaid] = useState("");
   const [guide, setGuide] = useState(false);
@@ -175,6 +177,15 @@ export function NudgeApp() {
     setBadge(todayTasks(state).length);
     return () => timers.forEach(clearTimeout);
   }, [state]);
+
+  // Ask once there is something worth keeping: the first task is in and nothing else is open.
+  const taskCount = state?.tasks.length ?? 0;
+  const busy = guide || settings || !!openId || !!menuId || !!checkin || !!importer || !!capture || !!over;
+  useEffect(() => {
+    if (taskCount < 1 || busy || installAsk || !installAskDue()) return;
+    const id = setTimeout(() => setInstallAsk(true), 2500);
+    return () => clearTimeout(id);
+  }, [taskCount, busy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Let the splash finish drawing, then fade it once the app is ready.
   const loaded = !!state;
@@ -345,6 +356,7 @@ export function NudgeApp() {
       <TaskSheet task={openTask} ai={state.settings.ai} onClose={() => setOpenId(null)} actions={actions} onFocus={startFocus} onFinished={finished} announce={announce} />
       <TaskMenu task={menuTask} onClose={() => setMenuId(null)} actions={actions} onOpen={(t) => (setMenuId(null), setTimeout(() => setOpenId(t.id), 220))} onFocus={startFocus} />
       <Settings open={settings} onClose={() => setSettings(false)} state={state} actions={actions} onCheckin={(k) => setTimeout(() => setCheckin(k), 320)} onGuide={() => setTimeout(() => setGuide(true), 320)} onImport={(src) => setTimeout(() => setImporter({ source: src }), 320)} />
+      <InstallPrompt open={installAsk} onClose={() => setInstallAsk(false)} />
       <ImportSheet open={!!importer} source={importer?.source} preload={importer?.preload} onClose={() => setImporter(null)} state={state} actions={actions} />
       <Checkin kind={checkin} onClose={() => setCheckin(null)} state={state} actions={actions} onStart={(t) => setTimeout(() => startFocus(t), 220)} />
       <Guide

@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { type Part, type State, type Task, checkinDue, doneToday, dueIdeas, nextStep, suggestion, todayTasks, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { feel } from "@/lib/feedback";
-import { InstallCard } from "./install";
 import { BreakItDown } from "./breakdown";
 import { GoogleRow } from "./import";
 import { type Kind, QuickCapture } from "./quick-capture";
@@ -244,7 +243,6 @@ export function Today({
         </section>
       )}
 
-      <InstallCard />
       {onGoogleSetup && <GoogleRow state={state} actions={actions} onSetup={onGoogleSetup} />}
 
       {ideasBack > 0 && (

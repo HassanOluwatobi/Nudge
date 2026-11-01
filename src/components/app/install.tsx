@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, MoreVertical, Share, SquarePlus } from "lucide-react";
+import { Bell, Check, Maximize2, MoreHorizontal, MoreVertical, Share, ShieldCheck, SquarePlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { feel } from "@/lib/feedback";
 import { platform } from "@/lib/reminders";
@@ -13,7 +13,7 @@ const clearOffer = () => {
   (window as Window & { __bip?: Prompt | null }).__bip = null;
 };
 
-const standalone = () =>
+export const standalone = () =>
   typeof window !== "undefined" && (matchMedia("(display-mode: standalone)").matches || (navigator as Navigator & { standalone?: boolean }).standalone === true);
 
 /** Add to Home Screen. Installed, NudgeMe opens full screen with no address bar. */
@@ -147,5 +147,107 @@ export function InstallCard() {
         Not now
       </button>
     </section>
+  );
+}
+
+const ASK = "nudgeme.installAsk";
+/** Should the Home Screen popup show now? Never when installed, at most 3 times, 3 days apart. */
+export function installAskDue() {
+  if (typeof window === "undefined" || standalone()) return false;
+  try {
+    const a = JSON.parse(localStorage.getItem(ASK) || "{}") as { n?: number; at?: number; never?: boolean };
+    if (a.never || (a.n ?? 0) >= 3) return false;
+    return !a.at || Date.now() - a.at > 3 * 864e5;
+  } catch {
+    return false;
+  }
+}
+function noteAsk(never = false) {
+  try {
+    const a = JSON.parse(localStorage.getItem(ASK) || "{}") as { n?: number };
+    localStorage.setItem(ASK, JSON.stringify({ n: (a.n ?? 0) + 1, at: Date.now(), never }));
+  } catch {
+    /* fine */
+  }
+}
+
+/** The popup that sells the Home Screen in three plain reasons, then helps you do it. */
+export function InstallPrompt({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    noteAsk();
+    setReady(!!offer());
+    const on = () => setReady(true);
+    window.addEventListener("nudge:installable", on);
+    return () => window.removeEventListener("nudge:installable", on);
+  }, [open]);
+  const plat = typeof window === "undefined" ? "other" : platform();
+  const add = async () => {
+    const o = offer();
+    if (!o) return;
+    feel("tap");
+    await o.prompt();
+    const r = await o.userChoice;
+    clearOffer();
+    if (r.outcome === "accepted") (feel("done"), noteAsk(true), onClose());
+  };
+  const reasons = [
+    { icon: <Bell className="size-5" />, t: "Reminders that actually ring", s: plat === "ios" ? "iPhone only lets NudgeMe ring when it's closed once it's on your Home Screen." : "Your reminders ring even when NudgeMe is closed." },
+    { icon: <ShieldCheck className="size-5" />, t: "Your list stays safe", s: "Phones can wipe websites you haven't opened in a while. Home Screen apps keep everything." },
+    { icon: <Maximize2 className="size-5" />, t: "One tap away", s: "It opens full screen, like any other app." },
+  ];
+  return (
+    <Sheet open={open} onClose={onClose} title="Add to Home Screen" hideTitle>
+      <div className="flex flex-col items-center pt-1 text-center">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/icon-192.png" alt="" width={52} height={52} className="size-[52px] rounded-[14px]" />
+        <h2 className="mt-3 font-serif text-[24px] leading-tight tracking-[-0.01em]">Put NudgeMe on your Home Screen</h2>
+        <p className="t-small mt-1 text-ink-2">Ten seconds, and everything works better.</p>
+      </div>
+      <ul className="mt-4 divide-y divide-line/70 overflow-hidden rounded-[18px] bg-white ring-1 ring-line">
+        {reasons.map((r) => (
+          <li key={r.t} className="flex items-start gap-3 px-3 py-2.5">
+            <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-[10px] bg-signal-soft text-signal-ink [&>svg]:size-[18px]">{r.icon}</span>
+            <span className="min-w-0">
+              <span className="block text-[15px] font-semibold">{r.t}</span>
+              <span className="block text-[13px] leading-snug text-ink-2">{r.s}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      {ready ? (
+        <button type="button" className="btn btn-signal mt-4 w-full" onClick={add}>
+          <SquarePlus className="size-5" /> Add to Home Screen
+        </button>
+      ) : (
+        <div className="mt-3 rounded-[18px] bg-paper px-4 py-3">
+          <p className="text-[14px] font-semibold">How to add it</p>
+          <ol className="mt-2 space-y-2 text-[14px] text-ink-2">
+            {(plat === "ios"
+              ? [
+                  <>Tap <Share className="inline size-4 -translate-y-0.5 text-ink" /> Share in Safari. If you don&apos;t see it, tap <MoreHorizontal className="inline size-4 -translate-y-0.5 text-ink" /> first.</>,
+                  <>Choose <span className="font-semibold text-ink">Add to Home Screen</span>. Scroll down if it&apos;s hidden.</>,
+                  <>Tap <span className="font-semibold text-ink">Add</span>, then open NudgeMe from its new icon.</>,
+                ]
+              : [
+                  <>Open the browser menu <MoreVertical className="inline size-4 -translate-y-0.5 text-ink" /> at the top right.</>,
+                  <>Choose <span className="font-semibold text-ink">Install app</span> or <span className="font-semibold text-ink">Add to Home screen</span>.</>,
+                  <>Confirm, then open NudgeMe from its new icon.</>,
+                ]
+            ).map((x, i) => (
+              <li key={i} className="flex gap-2.5">
+                <span className="grid size-5 shrink-0 place-items-center rounded-full bg-white text-[11px] font-semibold text-ink ring-1 ring-line">{i + 1}</span>
+                <span>{x}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+      <button type="button" className="btn btn-quiet mt-2 w-full text-[15px]" onClick={onClose}>
+        {ready ? "Maybe later" : "Got it, I'll do it now"}
+      </button>
+    </Sheet>
   );
 }
