@@ -2,6 +2,7 @@
 
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import type { Task } from "@/lib/tasks";
 import { useBackClose } from "@/lib/use-back";
 import { useTasks } from "@/lib/use-tasks";
@@ -11,6 +12,7 @@ import { Focus } from "./focus";
 import { MyList } from "./my-list";
 import { Settings } from "./settings";
 import { TaskSheet } from "./task-sheet";
+import { Aurora, useDaypart } from "./aurora";
 import { Mark, Thread } from "./thread";
 import { Today } from "./today";
 
@@ -30,11 +32,25 @@ export function NudgeApp() {
   const [settings, setSettings] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [said, setSaid] = useState("");
+  const part = useDaypart();
 
   const announce = useCallback((s: string) => {
     setSaid("");
     requestAnimationFrame(() => setSaid(s));
   }, []);
+
+  // Status bar matches the colour at the top of each screen.
+  useEffect(() => {
+    const h = new Date().getHours();
+    const top = view.name === "focus" ? "#000b2e" : view.name === "finish" ? "#1a4fe0" : view.name === "today" ? (h < 5 || h >= 21 ? "#000b2e" : h < 11 ? "#1a5fd9" : h < 17 ? "#1a4fe0" : "#0033a8") : "#f1ece3";
+    let m = document.querySelector('meta[name="theme-color"]');
+    if (!m) {
+      m = document.createElement("meta");
+      m.setAttribute("name", "theme-color");
+      document.head.appendChild(m);
+    }
+    m.setAttribute("content", top);
+  }, [view.name]);
 
   useEffect(() => {
     document.documentElement.dataset.view = view.name === "finish" || view.name === "focus" ? view.name : "page";
@@ -67,6 +83,7 @@ export function NudgeApp() {
     setView({ name: "focus", id: t.id });
   };
   const finished = (t: Task) => {
+    toast.dismiss();
     setOpenId(null);
     setView({ name: "finish", task: t });
     setSaid(`Finished: ${t.title}.`);
@@ -125,10 +142,10 @@ export function NudgeApp() {
         )}
 
         {view.name === "focus" && (!focusTask || focusTask.bucket === "done") && (
-          <motion.div key="focus-gone" {...fade} className="grid min-h-dvh place-items-center bg-night p-6 text-center text-paper">
+          <motion.div key="focus-gone" {...fade} className="on-night grid min-h-dvh place-items-center bg-night p-6 text-center text-paper">
             <div>
               <p className="text-[17px]">This task is no longer open.</p>
-              <button type="button" className="btn btn-moon mt-5" onClick={() => setView({ name: "today" })}>
+              <button type="button" className="btn btn-white mt-5" onClick={() => setView({ name: "today" })}>
                 Return to today
               </button>
             </div>
@@ -153,7 +170,9 @@ export function NudgeApp() {
 
         {view.name === "rest" && (
           <motion.div key="rest" {...fade} className="mx-auto flex min-h-dvh w-full max-w-md flex-col justify-center px-6 safe-t safe-b">
-            <Thread pull={1} done className="h-10 w-full max-w-[220px]" />
+            <Aurora field={part} className="grid h-44 place-items-center rounded-[32px]">
+              <Thread pull={1} done tone="night" className="h-10 w-[70%]" label="The thread is straight." />
+            </Aurora>
             <h1 className="mt-6 font-serif text-[34px] leading-tight tracking-[-0.02em]">You can stop here.</h1>
             <p className="mt-2 text-[17px] leading-relaxed text-ink-2">Your list is saved on this device. Close NudgeMe whenever you like.</p>
             <button type="button" className="btn btn-line mt-8 self-start" onClick={() => setView({ name: "today" })}>

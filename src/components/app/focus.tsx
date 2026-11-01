@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { type State, type Task, MAX_STEP, smallerStep, suggestStep } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
+import { Aurora } from "./aurora";
 import { Thread, pullFor } from "./thread";
 
 type Mode = "step" | "choose" | "next" | "smaller";
@@ -73,7 +74,7 @@ export function Focus({
   const stepNo = task.steps + 1;
 
   return (
-    <div className="on-night min-h-dvh bg-night text-paper">
+    <Aurora field="focus" grain={0.28} className="on-night min-h-dvh text-paper">
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 safe-t safe-b">
         <header className="flex items-center justify-between py-2">
           <button type="button" className="btn btn-night-quiet min-h-11 gap-1.5 px-4 text-[15px]" onClick={onPause}>
@@ -93,7 +94,7 @@ export function Focus({
         <TimerBell timer={timer} />
         <AnimatePresence initial={false}>
           {timerOpen && (
-            <motion.div id="timer" key="timer" {...swap} className="mt-2 rounded-3xl bg-night-2 p-4">
+            <motion.div id="timer" key="timer" {...swap} className="mt-2 rounded-3xl border border-white/10 bg-white/[0.07] p-4 backdrop-blur-md">
               <TimerPanel task={task} timer={timer} actions={actions} onDone={() => setTimerOpen(false)} />
             </motion.div>
           )}
@@ -110,7 +111,7 @@ export function Focus({
                 <h1 ref={heading} tabIndex={-1} className="mt-2 font-serif text-[34px] leading-[1.12] tracking-[-0.02em] focus:outline-none [overflow-wrap:anywhere]">
                   {task.step}
                 </h1>
-                <button type="button" className="btn btn-moon mt-8 w-full text-[17px]" onClick={doStep}>
+                <button type="button" className="btn btn-white mt-8 w-full text-[17px]" onClick={doStep}>
                   <Check className="size-5" strokeWidth={2.5} /> Do this step
                 </button>
                 <p className="mt-2 text-center text-[13px] text-paper/50">Tap when you have done it.</p>
@@ -172,7 +173,7 @@ export function Focus({
                     <Sparkles className="size-3.5 shrink-0 text-moon" /> Try: {suggestStep(task.title)}
                   </button>
                 )}
-                <button type="submit" className="btn btn-moon mt-6 w-full text-[17px]" disabled={!draft.trim()}>
+                <button type="submit" className="btn btn-white mt-6 w-full text-[17px]" disabled={!draft.trim()}>
                   {mode === "smaller" ? "Use this step" : "Set this step"}
                 </button>
                 <div className="mt-2 grid grid-cols-2 gap-2">
@@ -196,7 +197,7 @@ export function Focus({
           </AnimatePresence>
         </main>
       </div>
-    </div>
+    </Aurora>
   );
 }
 
@@ -289,11 +290,12 @@ function TimerPanel({ task, timer, actions, onDone }: { task: Task; timer?: Stat
   const pct = Math.max(0, Math.min(1, left / (timer.mins * 60_000)));
   return (
     <div className="flex items-center gap-4">
-      <div className="relative size-14 shrink-0" aria-hidden>
-        <svg viewBox="0 0 40 40" className="size-14 -rotate-90">
-          <circle cx="20" cy="20" r="17" stroke="rgb(255 255 255 / 0.12)" strokeWidth="3" fill="none" />
-          <circle cx="20" cy="20" r="17" stroke="var(--moon)" strokeWidth="3" fill="none" strokeLinecap="round" pathLength={1} strokeDasharray="1" strokeDashoffset={1 - pct} style={{ transition: "stroke-dashoffset 1s linear" }} />
-        </svg>
+      <div
+        className="relative grid size-16 shrink-0 place-items-center rounded-full"
+        aria-hidden
+        style={{ background: `conic-gradient(from -90deg, var(--cyan), var(--lime), var(--peach), var(--pink) ${pct * 100}%, rgb(255 255 255 / 0.1) 0)` }}
+      >
+        <div className="size-[52px] rounded-full bg-night" />
       </div>
       <div className="flex-1">
         <p className="text-[22px] font-semibold tabular-nums" role="timer" aria-live="off">
