@@ -2,6 +2,7 @@
 
 import { House, ListChecks, Timer } from "lucide-react";
 import { motion } from "motion/react";
+import { Credit } from "./settings";
 
 export type Tab = "today" | "todo" | "focus";
 
@@ -43,18 +44,8 @@ export function TabBar({ tab, onTab, dark, running }: { tab: Tab; onTab: (t: Tab
           <p className="t-small text-ink-3">
             Press <kbd className="rounded-md bg-white px-1.5 py-0.5 text-[12px] font-semibold text-ink-2 ring-1 ring-line">N</kbd> to add a task
           </p>
-          <div className="mt-5 grid gap-2 border-t border-line pt-5 text-[13px]">
-            <span className="flex items-center gap-2 text-ink-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/hassan.jpg" alt="" width={20} height={20} className="size-5 rounded-full object-cover" />
-              Made by Hassan
-            </span>
-            <a href="https://x.com/Art_sassin" target="_blank" rel="noopener noreferrer" className="side-item font-medium text-ink-2">
-              Say hi
-            </a>
-            <a href="https://selar.com/showlove/hassanx" target="_blank" rel="noopener noreferrer" className="side-item font-medium text-ink-2">
-              Buy me a coffee
-            </a>
+          <div className="mt-4">
+            <Credit compact stacked />
           </div>
         </div>
       </aside>

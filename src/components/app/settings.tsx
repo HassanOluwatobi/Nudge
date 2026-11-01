@@ -45,7 +45,7 @@ const XMark = () => (
 const SUPPORT_URL = "https://selar.com/showlove/hassanx";
 
 /** Made by Hassan. Shown at the top of Settings and the foot of Today. */
-export function Credit({ compact = false }: { compact?: boolean }) {
+export function Credit({ compact = false, stacked = false }: { compact?: boolean; stacked?: boolean }) {
   return (
     <div className={`rounded-2xl bg-white ring-1 ring-line ${compact ? "p-3" : "p-3.5"}`}>
       <div className="flex items-center gap-2.5">
@@ -56,7 +56,7 @@ export function Credit({ compact = false }: { compact?: boolean }) {
           <span className="t-small block truncate whitespace-nowrap text-ink-2">Say hi or share feedback</span>
         </span>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className={`mt-3 grid gap-2 ${stacked ? "grid-cols-1" : "grid-cols-2"}`}>
         <a href={X_URL} target="_blank" rel="noopener noreferrer" onClick={() => feel("tap", "light")} className="btn btn-ink min-h-10 gap-1.5 px-3 text-[13px]">
           <XMark /> @Art_sassin
         </a>
@@ -99,7 +99,9 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
   return (
     <Sheet open={open} onClose={() => (setClear(false), setDataOpen(false), onClose())} title="Settings">
       <div className="mt-2">
-        <Credit compact />
+        <div className="lg:hidden">
+          <Credit compact />
+        </div>
       </div>
       <div className="mt-3">
         <InstallButton variant="row" />
