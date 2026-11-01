@@ -145,9 +145,9 @@ export function Focus({
           >
             <defs>
               <linearGradient id="ring" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="#19d3e6" />
-                <stop offset="50%" stopColor="#c3ef6e" />
-                <stop offset="100%" stopColor="#ffb98a" />
+                <stop offset="0%" stopColor="#5c6cff" />
+                <stop offset="50%" stopColor="#ab68ff" />
+                <stop offset="100%" stopColor="#ff8ad8" />
               </linearGradient>
             </defs>
             <circle cx="140" cy="140" r={R} fill="none" stroke="#e8e1d3" strokeWidth="22" />

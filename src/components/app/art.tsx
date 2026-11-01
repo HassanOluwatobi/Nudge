@@ -3,96 +3,103 @@
 import { useEffect, useRef } from "react";
 
 /*
-  The painted art. A small WebGL shader: flowing domain-warped paint, a ribbon
-  lit across its width, edges that dissolve into printed stipple, fine grain.
+  The flowing gradient. A small WebGL shader that paints iridescent silk:
+  pink, violet, blue and peach bands that fold slowly over each other, with a
+  soft sheen and fine grain.
 
-  Smoothness: it renders below screen resolution (it is paint, so it stays
-  soft), runs on one steady clock, and stops whenever it is off screen or the
-  tab is hidden. Reduced motion draws a single still frame.
+  Touch and cursor: moving over it bends the silk like a lens, and every tap
+  or quick move sends out a ripple that fades as it travels.
 
-  mode 0: framed panel on Today
-  mode 1: full screen Finish
-  mode 2: inside the Focus ring
+  Smoothness: it renders below screen resolution (silk stays soft), runs on
+  one shared clock, and stops whenever it is off screen or the tab is hidden.
+  Reduced motion draws one still frame and skips the ripples.
+
+  mode 0: framed panel on Today, Rest and the guide
+  mode 1: Finish
+  mode 2: inside the Focus ring (deeper, so white numbers read clearly)
 */
 
 const FRAG = `
 precision mediump float;
 uniform vec2 R; uniform float T; uniform float M; uniform float S;
+uniform vec2 P; uniform float PA;
+uniform vec4 W[6];
 float h21(vec2 p){ p = fract(p*vec2(123.34, 456.21)); p += dot(p, p+45.32); return fract(p.x*p.y); }
 float n2(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
   return mix(mix(h21(i),h21(i+vec2(1,0)),u.x), mix(h21(i+vec2(0,1)),h21(i+vec2(1,1)),u.x), u.y); }
-float fbm(vec2 p){ float v=0., a=.5; mat2 m=mat2(1.6,1.2,-1.2,1.6); for(int i=0;i<4;i++){ v+=a*n2(p); p=m*p; a*=.5; } return v; }
+float fbm(vec2 p){ float v=0., a=.5; mat2 m=mat2(1.6,1.2,-1.2,1.6); for(int i=0;i<3;i++){ v+=a*n2(p); p=m*p; a*=.5; } return v; }
 vec3 C(float r,float g,float b){ return vec3(r,g,b)/255.; }
-vec3 ramp(float x){
-  vec3 a=C(25.,211.,230.), b=C(94.,240.,207.), c=C(195.,239.,110.), d=C(255.,185.,138.), e=C(255.,155.,214.);
-  x=fract(x)*4.;
-  if(x<1.) return mix(a,b,x); if(x<2.) return mix(b,c,x-1.); if(x<3.) return mix(c,d,x-2.); return mix(d,e,x-3.);
+vec3 silk(float x){
+  vec3 c0=C(255.,138.,216.), c1=C(171.,104.,255.), c2=C(92.,108.,255.), c3=C(126.,196.,255.), c4=C(255.,182.,140.);
+  x = fract(x) * 5.;
+  float f = smoothstep(0., 1., fract(x));
+  if (x < 1.) return mix(c0, c1, f);
+  if (x < 2.) return mix(c1, c2, f);
+  if (x < 3.) return mix(c2, c3, f);
+  if (x < 4.) return mix(c3, c4, f);
+  return mix(c4, c0, f);
 }
 void main(){
   vec2 uv = gl_FragCoord.xy / R;
   float asp = R.x / R.y;
-  vec2 p = vec2(uv.x*asp, uv.y) * (M > .5 && M < 1.5 ? 1.3 : 2.0);
-  float t = T * .05;
-  vec2 q = vec2(fbm(p + t), fbm(p + vec2(5.2,1.3) - t));
-  vec2 r = vec2(fbm(p + 3.*q + vec2(1.7,9.2) + t*1.3), fbm(p + 3.*q + vec2(8.3,2.8) - t));
-  float f = fbm(p + 2.6*r);
+  vec2 p = (uv - .5) * vec2(asp, 1.);
+  float t = T * .11;
 
-  vec3 navy=C(6.,11.,43.), deep=C(16.,26.,77.), blue=C(29.,77.,245.), cyan=C(25.,211.,230.), lilac=C(185.,162.,255.), lime=C(195.,239.,110.), pink=C(255.,155.,214.);
-  vec3 col;
-  if (M < .5) {
-    col = mix(deep, blue, smoothstep(.22, .78, f));
-    col = mix(col, cyan, smoothstep(.5, .92, r.x) * .6);
-    col = mix(col, lilac, smoothstep(.62, 1., q.y) * .35);
-    col = mix(col, lime, smoothstep(.72, 1., r.y) * smoothstep(.5, 0., uv.y) * .35);
-  } else if (M < 1.5) {
-    col = mix(navy, deep, smoothstep(.1, .6, f));
-    col = mix(col, blue, smoothstep(.28, .72, f) * smoothstep(.2, .95, uv.y) * .95);
-    col = mix(col, cyan, smoothstep(.62, .98, r.x) * .35 * smoothstep(.3, .9, uv.y));
-    col = mix(col, pink, smoothstep(.7, 1., q.x) * .25 * smoothstep(.5, 1., uv.y));
-  } else {
-    col = mix(deep, blue, smoothstep(.3, .85, f) * .8);
-    col = mix(col, cyan, smoothstep(.6, .95, r.x) * .4);
+  // Ripples: a ring that travels out from each touch and fades.
+  float glow = 0.;
+  for (int i = 0; i < 6; i++) {
+    vec4 w = W[i];
+    float age = T - w.z;
+    if (w.w > 0. && age > 0. && age < 2.6) {
+      vec2 dv = p - w.xy;
+      float d = length(dv);
+      float front = d - age * .62;
+      float env = exp(-front * front * 38.) * exp(-age * 1.5) * w.w;
+      p += (dv / (d + .001)) * sin(front * 34.) * env * .07;
+      glow += env * (.5 + .5 * sin(front * 34.));
+    }
+  }
+  // The cursor bends the silk like a soft lens.
+  vec2 mv = p - P;
+  float lens = exp(-dot(mv, mv) * 7.) * PA;
+  p -= mv * lens * .22;
+
+  vec2 q = p * 1.15;
+  q.x += .28 * sin(q.y * 2.0 + t * 1.3);
+  q.y += .22 * sin(q.x * 1.6 - t);
+  float g = fbm(q * 1.1 + vec2(t * .4, -t * .3));
+  float band = q.y * 1.25 + q.x * .35
+    + .32 * sin(q.x * 2.2 + t)
+    + .18 * sin(q.x * 4.3 - t * 1.4 + q.y * 1.8)
+    + g * .55;
+  vec3 col = silk(band * .55 + t * .18 + S);
+
+  // Folds and sheen, so it reads as fabric catching light.
+  float fold = sin(band * 6.2832 * .9 + t * .6);
+  col *= .9 + .1 * fold;
+  float sheen = pow(.5 + .5 * sin(band * 6.2832 * .45 - t * .8 + .6), 10.);
+  col += sheen * .32;
+  col += lens * .08 + glow * .14;
+
+  if (M > 1.5) {
+    // Focus ring: deeper silk behind white numbers.
+    col = mix(col, C(46.,40.,170.), .32) * .9;
+    col = mix(vec3(dot(col, vec3(.299,.587,.114))), col, 1.25);
+    col += sheen * .1;
+  } else if (M > .5) {
+    // Finish: a touch softer, with a light top for the headline area.
+    col = mix(col, vec3(1.), smoothstep(.55, 1., uv.y) * .1);
   }
 
-  float x = uv.x;
-  float yc = M < .5
-    ? .50 + .22*sin(x*3.1 + .5 + T*.2) + .05*sin(x*7. - T*.15) + (q.x-.5)*.08
-    : M < 1.5
-      ? .74 + .12*sin(x*2.4 + 1.2 + T*.18) + .04*sin(x*6.3 - T*.13) + (q.x-.5)*.05
-      : .5 + .18*sin(x*3.4 + T*.26) + (q.x-.5)*.08;
-  float tw = abs(cos(x*2.3 + .4 + T*.12));
-  float pulse = .5 + .5*sin(T*1.15);
-  float wid = (M < .5 ? .13 : M < 1.5 ? .085 : .12) * (.3 + .7*tw) * (.86 + .28*pulse);
-  float d = (uv.y - yc) / wid;
-  // Soft edges, so the ribbon reads as light rather than a cut-out.
-  float band = 1. - smoothstep(.4, 1.18, abs(d));
-  vec3 bc = ramp(x*.9 + .05 + S + .08*sin(T*.09));
-  float shade = .6 + .4*(1. - d*d);
-  float sheen = exp(-pow((d + .42)*3., 2.)) * .6 * tw;
-  vec3 rib = (bc*shade + sheen) * (.94 + .12*pulse);
-  rib = mix(rib*.62 + deep*.15, rib, tw);
-  col += bc * exp(-abs(d)*1.2) * (.16 + .12*pulse) * (1. - band);
-  col = mix(col, rib, band);
-
-  float px = 3.0;
-  vec2 cell = floor(gl_FragCoord.xy / px);
-  float hsh = h21(cell);
-  vec2 jit = vec2(h21(cell + 17.3), h21(cell + 41.9)) - .5;
-  vec2 cp = fract(gl_FragCoord.xy / px) - .5 - jit * .45;
-  float rad = .17 + .14 * h21(cell + 7.7);
-  float dotm = 1. - smoothstep(rad, rad + .12, length(cp));
-  float edge = pow(smoothstep(3.2, 1., abs(d)), 1.6) * (1. - band*.8) * smoothstep(.3, .8, fbm(p*3.5 + t*3.));
-  col = mix(col, bc*1.05 + .06, dotm * step(hsh, edge * .85));
-  col = mix(col, vec3(1.), dotm * step(hsh, sheen * band * .45) * .7);
-  col += dotm * smoothstep(.62, .9, f) * .05;
-  col += (h21(gl_FragCoord.xy + floor(T*12.)) - .5) * .05;
+  col += (h21(gl_FragCoord.xy + floor(T * 14.)) - .5) * .045;
   gl_FragColor = vec4(col, 1.);
 }`;
 
 const VERT = `attribute vec2 a; void main(){ gl_Position = vec4(a, 0., 1.); }`;
 
-// One clock for every canvas, so art never jumps between screens.
+// One clock for every canvas, so the silk never jumps between screens.
 const T0 = typeof performance !== "undefined" ? performance.now() - 40_000 : 0;
+const RIPPLES = 6;
 
 export function Art({ mode, shift = 0, className }: { mode: 0 | 1 | 2; shift?: number; className?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -102,7 +109,7 @@ export function Art({ mode, shift = 0, className }: { mode: 0 | 1 | 2; shift?: n
     if (!cv) return;
     const gl = cv.getContext("webgl", { antialias: false, alpha: false, preserveDrawingBuffer: false, powerPreference: "low-power" });
     if (!gl) {
-      cv.style.background = mode === 1 ? "#1d4df5" : "#101a4d";
+      cv.style.background = "linear-gradient(135deg,#ff8ad8,#ab68ff 40%,#5c6cff 70%,#ffb68c)";
       return;
     }
     const sh = (type: number, src: string) => {
@@ -124,20 +131,76 @@ export function Art({ mode, shift = 0, className }: { mode: 0 | 1 | 2; shift?: n
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
     const uR = gl.getUniformLocation(pr, "R");
     const uT = gl.getUniformLocation(pr, "T");
+    const uP = gl.getUniformLocation(pr, "P");
+    const uPA = gl.getUniformLocation(pr, "PA");
+    const uW = gl.getUniformLocation(pr, "W");
     gl.uniform1f(gl.getUniformLocation(pr, "M"), mode);
     gl.uniform1f(gl.getUniformLocation(pr, "S"), shift);
 
     const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // Paint stays soft, so render under native resolution. Big canvases go lower.
     const size = () => {
       const area = cv.clientWidth * cv.clientHeight;
-      const scale = Math.min(window.devicePixelRatio || 1, 1.5) * (area > 250_000 ? 0.55 : 0.8);
+      const scale = Math.min(window.devicePixelRatio || 1, 1.5) * (area > 250_000 ? 0.5 : 0.75);
       cv.width = Math.max(2, Math.round(cv.clientWidth * scale));
       cv.height = Math.max(2, Math.round(cv.clientHeight * scale));
       gl.viewport(0, 0, cv.width, cv.height);
       gl.uniform2f(uR, cv.width, cv.height);
     };
     size();
+
+    // Pointer state, in the shader's space: centred, height = 1.
+    const waves = new Float32Array(RIPPLES * 4);
+    let slot = 0;
+    let target = { x: 0, y: 0 };
+    const cur = { x: 0, y: 0 };
+    let active = 0;
+    let hover = false;
+    let last = { x: 9, y: 9, at: 0 };
+    const clock = () => (performance.now() - T0) / 1000;
+    const toLocal = (e: PointerEvent) => {
+      const r = cv.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return null;
+      const asp = r.width / r.height;
+      return { x: ((e.clientX - r.left) / r.width - 0.5) * asp, y: 0.5 - (e.clientY - r.top) / r.height };
+    };
+    const ripple = (x: number, y: number, amp: number) => {
+      waves.set([x, y, clock(), amp], slot * 4);
+      slot = (slot + 1) % RIPPLES;
+    };
+    const onMove = (e: PointerEvent) => {
+      const at = toLocal(e);
+      hover = !!at && e.pointerType === "mouse";
+      if (!at) return;
+      target = at;
+      if (!hover && e.pointerType !== "mouse" && e.buttons === 0) return;
+      const now = performance.now();
+      if (Math.hypot(at.x - last.x, at.y - last.y) > 0.12 && now - last.at > 140) {
+        ripple(at.x, at.y, 0.55);
+        last = { ...at, at: now };
+      }
+      kick();
+    };
+    const onDown = (e: PointerEvent) => {
+      const at = toLocal(e);
+      if (!at) return;
+      target = at;
+      cur.x = at.x;
+      cur.y = at.y;
+      ripple(at.x, at.y, 1);
+      last = { ...at, at: performance.now() };
+      hover = true;
+      kick();
+    };
+    const onUp = (e: PointerEvent) => {
+      if (e.pointerType !== "mouse") hover = false;
+    };
+    if (!reduce) {
+      window.addEventListener("pointermove", onMove, { passive: true });
+      window.addEventListener("pointerdown", onDown, { passive: true });
+      window.addEventListener("pointerup", onUp, { passive: true });
+      window.addEventListener("pointercancel", onUp, { passive: true });
+    }
+
     const ro = new ResizeObserver(() => {
       size();
       if (reduce) draw(performance.now());
@@ -147,16 +210,22 @@ export function Art({ mode, shift = 0, className }: { mode: 0 | 1 | 2; shift?: n
     let raf = 0;
     let visible = true;
     const draw = (now: number) => {
+      cur.x += (target.x - cur.x) * 0.1;
+      cur.y += (target.y - cur.y) * 0.1;
+      active += ((hover ? 1 : 0) - active) * 0.06;
       gl.uniform1f(uT, (now - T0) / 1000);
+      gl.uniform2f(uP, cur.x, cur.y);
+      gl.uniform1f(uPA, active);
+      gl.uniform4fv(uW, waves);
       gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     };
     const loop = (now: number) => {
       draw(now);
       raf = visible && !document.hidden && !reduce ? requestAnimationFrame(loop) : 0;
     };
-    const kick = () => {
+    function kick() {
       if (!raf && visible && !document.hidden && !reduce) raf = requestAnimationFrame(loop);
-    };
+    }
     const io = new IntersectionObserver(([e]) => {
       visible = e.isIntersecting;
       kick();
@@ -172,6 +241,10 @@ export function Art({ mode, shift = 0, className }: { mode: 0 | 1 | 2; shift?: n
       io.disconnect();
       ro.disconnect();
       document.removeEventListener("visibilitychange", kick);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
       gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
   }, [mode, shift]);

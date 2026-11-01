@@ -125,40 +125,37 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
                 Do it now
               </button>
             </span>
-            <select value={s.weeklyDay} onChange={(e) => actions.setSettings({ weeklyDay: Number(e.target.value) })} className="rounded-xl bg-white px-3 py-2 text-[16px] font-medium ring-1 ring-line" aria-label="Weekly reset day">
-              {DAYS.map((d, i) => (
-                <option key={d} value={i}>
-                  {d}
-                </option>
-              ))}
-            </select>
+            <label className="relative inline-flex h-11 items-center gap-1.5 rounded-xl bg-white pl-3.5 pr-2.5 text-[16px] font-medium ring-1 ring-line">
+              <span>{s.weeklyDay < 0 ? "Never" : DAYS[s.weeklyDay]}</span>
+              <ChevronDown className="size-4 text-ink-3" />
+              <select value={s.weeklyDay} onChange={(e) => (actions.setSettings({ weeklyDay: Number(e.target.value) }), feel("tick", "light"))} className="absolute inset-0 cursor-pointer appearance-none opacity-0" aria-label="Weekly reset day">
+                {DAYS.map((d, i) => (
+                  <option key={d} value={i}>
+                    {d}
+                  </option>
+                ))}
+                <option value={-1}>Never</option>
+              </select>
+            </label>
           </div>
         </div>
       </section>
 
       <section className="mt-6">
         <h3 className="t-label">Bring in your calendar</h3>
-        <div className="mt-2 rounded-2xl bg-white p-4 ring-1 ring-line">
-          <p className="font-medium">Turn events into tasks</p>
-          <p className="t-small mt-1 text-ink-2">Connect a calendar and NudgeMe shows what is coming up. You choose which events become tasks. It only reads, it never changes your calendar.</p>
-          <div className="mt-4">
-            <SourceButtons state={state} onPick={(src) => (onClose(), onImport(src))} />
-          </div>
-        </div>
+        <p className="t-small mb-3 mt-1 text-ink-2">Events become tasks, each with a reminder. NudgeMe only reads your calendar. It never changes it.</p>
+        <SourceButtons state={state} onPick={(src) => (onClose(), onImport(src))} />
       </section>
 
       <section className="mt-6">
         <h3 className="t-label">Reminders</h3>
-        <div className="mt-2 rounded-2xl bg-white p-4 ring-1 ring-line">
-          <p className="font-medium">Add your check-ins to a calendar</p>
-          <p className="t-small mt-1 text-ink-2">
-            Every day at {prettyTime(s.morning)} and {prettyTime(s.evening)}. It works even when NudgeMe is closed.
-          </p>
-          <div className="mt-3">
-            <CalendarButtons events={dailyEvents({ morning: s.morning, evening: s.evening })} file="nudgeme-check-ins" onAdded={() => actions.setSettings({ calendarAdded: ymd() })} label={s.calendarAdded ? "Added. If you change the times, add them again." : "Google, Apple or Outlook. Tap one."} />
-          </div>
-          {canNotify() && (
-            <div className="mt-3 border-t border-line">
+        <p className="t-small mb-3 mt-1 text-ink-2">
+          Add your check-ins to a calendar. It rings every day at {prettyTime(s.morning)} and {prettyTime(s.evening)}, even when NudgeMe is closed.
+        </p>
+        <CalendarButtons events={dailyEvents({ morning: s.morning, evening: s.evening })} file="nudgeme-check-ins" onAdded={() => actions.setSettings({ calendarAdded: ymd() })} label={s.calendarAdded ? "Added. If you change the times, add them again." : ""} />
+        {canNotify() && (
+          <div className="mt-3 rounded-2xl bg-white px-4 ring-1 ring-line">
+            <div>
               <Switch
                 icon={<Bell className="size-4" />}
                 label="Notifications"
@@ -173,8 +170,8 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
                 }}
               />
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </section>
 
       <section className="mt-6">
@@ -219,7 +216,20 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
           {dataOpen && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.36 }} className="overflow-hidden">
               <div className="border-t border-line px-4 pb-4 pt-3">
-                <p className="t-small text-ink-2">No account. Your tasks are never sent to a server. If you connect Notion or Calendly, your token is saved on this phone and passed through a NudgeMe relay that stores nothing. Voice typing uses your browser&apos;s speech feature, and some browsers send audio to their online service for it. Clearing your browser data also clears NudgeMe.</p>
+                <ol className="space-y-2">
+                  {[
+                    "No account. Your tasks, ideas and settings live only on this phone.",
+                    "Nothing is sent to a server. NudgeMe never sees your tasks.",
+                    "If you connect Notion or Calendly, your token is saved on this phone. It passes through a NudgeMe relay that stores nothing.",
+                    "Voice typing uses your browser's speech feature. Some browsers send the audio to their own online service.",
+                    "Clearing your browser data also clears NudgeMe. Download a backup first if you want to keep things.",
+                  ].map((t, i) => (
+                    <li key={i} className="flex gap-2.5 text-[14px] leading-snug text-ink-2">
+                      <span className="grid size-5 shrink-0 place-items-center rounded-full bg-paper text-[11px] font-semibold tabular-nums text-ink">{i + 1}</span>
+                      <span>{t}</span>
+                    </li>
+                  ))}
+                </ol>
                 <div className="mt-3 grid gap-2">
                   <button type="button" className="btn btn-line w-full justify-start gap-3 px-4" onClick={exportData} disabled={!count}>
                     <Download className="size-[18px] text-ink-2" />
