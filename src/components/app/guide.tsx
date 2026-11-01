@@ -5,7 +5,6 @@ import { AppleMark, GoogleMark, LogoTile, OutlookMark } from "./brands";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { feel } from "@/lib/feedback";
-import { Art } from "./art";
 import { burstFrom } from "./petals";
 
 /*
@@ -45,7 +44,7 @@ export function Capture() {
   const typed = n >= DUMP.length;
   return (
     <div className="flex h-full flex-col justify-center gap-2 px-6">
-      <div className="mb-1 overflow-hidden whitespace-nowrap rounded-[14px] bg-white px-3 py-2.5 font-serif text-[15px] ring-1 ring-line">
+      <div className="mb-1 min-h-[44px] rounded-[14px] bg-white px-3 py-2.5 font-serif text-[15px] leading-snug ring-1 ring-line">
         <span className={typed ? "text-ink-3 transition-colors duration-500" : ""}>{DUMP.slice(0, n)}</span>
         {!typed && <motion.span className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 bg-signal" animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 0.9 }} />}
       </div>
@@ -111,47 +110,74 @@ export function OneThing() {
   );
 }
 
+const START = 15 * 60; // the guide's clock reads 15:00 and runs fast
+
 export function Timer() {
   const reduce = useReducedMotion();
   const ring = useRef<HTMLDivElement>(null);
-  const [done, setDone] = useState(false);
   const R = 44;
   const C = 2 * Math.PI * R;
-  const STEP = 0.7; // seconds between ticks
-  // All three steps get ticked, the task finishes, then a burst of confetti.
+  const STEP = 0.8; // seconds between ticks
+  const [left, setLeft] = useState(START);
+  const [done, setDone] = useState(false);
+  const total = 0.6 + 3 * STEP;
+  // The clock runs down while the three steps get ticked, then the task finishes.
   useEffect(() => {
+    if (reduce) {
+      setDone(true);
+      return;
+    }
+    const t0 = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - t0) / (total * 1000));
+      setLeft(Math.round(START - p * 8 * 60));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
     const t = setTimeout(() => {
       setDone(true);
       feel("finish", "success");
       burstFrom(ring.current, 28);
-    }, (0.9 + 3 * STEP + 0.35) * 1000);
-    return () => clearTimeout(t);
-  }, []);
+    }, (total + 0.3) * 1000);
+    return () => (cancelAnimationFrame(raf), clearTimeout(t));
+  }, [reduce, total]);
+  const mm = Math.floor(left / 60);
+  const ss = String(left % 60).padStart(2, "0");
   return (
     <div className="flex h-full items-center justify-center gap-5 px-6">
-      <div ref={ring} className="relative size-[120px]">
+      <div ref={ring} className="relative size-[120px] shrink-0">
         <svg viewBox="0 0 110 110" className="absolute inset-0 size-full -rotate-90">
-          <defs>
-            <linearGradient id="g-ring" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#1d4df5" />
-              <stop offset="60%" stopColor="#1d4df5" />
-              <stop offset="100%" stopColor="#6f97ff" />
-            </linearGradient>
-          </defs>
-          <circle cx="55" cy="55" r={R} fill="none" stroke="var(--line)" strokeWidth="10" />
-          <motion.circle cx="55" cy="55" r={R} fill="none" stroke="url(#g-ring)" strokeWidth="10" strokeLinecap="round" strokeDasharray={C} initial={{ strokeDashoffset: reduce ? 0 : C * 0.8 }} animate={{ strokeDashoffset: 0 }} transition={{ duration: 0.9 + 3 * STEP, ease: "linear" }} />
+          <circle cx="55" cy="55" r={R} fill="none" stroke="var(--line)" strokeWidth="8" />
+          <motion.circle
+            cx="55"
+            cy="55"
+            r={R}
+            fill="none"
+            stroke="var(--signal)"
+            strokeWidth="8"
+            strokeLinecap="round"
+            strokeDasharray={C}
+            initial={{ strokeDashoffset: 0 }}
+            animate={{ strokeDashoffset: C * 0.53 }}
+            transition={{ duration: total, ease: "linear" }}
+          />
         </svg>
-        <div className="absolute inset-[18%] overflow-hidden rounded-full">
-          <Art mode={2} />
-          <AnimatePresence>
-            {done && (
-              <motion.div initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", bounce: 0.45, duration: 0.6 }} className="absolute inset-0 grid place-items-center">
-                <span className="grid size-11 place-items-center rounded-full bg-white">
-                  <svg viewBox="0 0 16 16" className="size-6" fill="none" aria-hidden>
-                    <motion.path d="M3.5 8.4 6.6 11.4 12.6 4.8" stroke="var(--signal)" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.15, duration: 0.3 }} />
-                  </svg>
+        <div className="absolute inset-[14px] grid place-items-center rounded-full bg-white">
+          <AnimatePresence mode="wait" initial={false}>
+            {done ? (
+              <motion.span key="done" initial={{ opacity: 0, scale: 0.6 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", bounce: 0.45, duration: 0.6 }} className="grid size-11 place-items-center rounded-full bg-signal">
+                <svg viewBox="0 0 16 16" className="size-6" fill="none" aria-hidden>
+                  <motion.path d="M3.5 8.4 6.6 11.4 12.6 4.8" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.15, duration: 0.3 }} />
+                </svg>
+              </motion.span>
+            ) : (
+              <motion.span key="time" exit={{ opacity: 0, scale: 0.9 }} className="text-center">
+                <span className="block font-serif text-[24px] leading-none tabular-nums tracking-[-0.02em] text-ink">
+                  {mm}:{ss}
                 </span>
-              </motion.div>
+                <span className="mt-1 block text-[9px] font-semibold uppercase tracking-[0.08em] text-ink-3">Focus</span>
+              </motion.span>
             )}
           </AnimatePresence>
         </div>
@@ -163,13 +189,13 @@ export function Timer() {
               className="grid size-[22px] shrink-0 place-items-center rounded-[7px] border-2"
               initial={{ backgroundColor: "rgba(29,77,245,0)", borderColor: "var(--ink-3)" }}
               animate={{ backgroundColor: "#1d4df5", borderColor: "#1d4df5", scale: [1, 0.85, 1.1, 1] }}
-              transition={{ delay: 0.9 + i * STEP, duration: 0.35 }}
+              transition={{ delay: 0.6 + i * STEP, duration: 0.35 }}
             >
               <svg viewBox="0 0 16 16" className="size-3.5" fill="none">
-                <motion.path d="M3.5 8.4 6.6 11.4 12.6 4.8" stroke="#fff" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 1 + i * STEP, duration: 0.3 }} />
+                <motion.path d="M3.5 8.4 6.6 11.4 12.6 4.8" stroke="#fff" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: 0.7 + i * STEP, duration: 0.3 }} />
               </svg>
             </motion.span>
-            <motion.span className="truncate" initial={{ opacity: 1 }} animate={{ opacity: 0.45 }} transition={{ delay: 1.2 + i * STEP }}>
+            <motion.span className="truncate" initial={{ opacity: 1 }} animate={{ opacity: 0.45 }} transition={{ delay: 0.9 + i * STEP }}>
               {t}
             </motion.span>
           </motion.div>
