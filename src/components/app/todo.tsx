@@ -10,11 +10,6 @@ import { feel } from "@/lib/feedback";
 import { TaskRow, DoneList } from "./task-row";
 import { TopBar } from "./today";
 
-const HINT: Record<Exclude<Bucket, "done">, string> = {
-  today: "Something for this week",
-  week: "Sometime this week",
-  later: "No rush. Park it here",
-};
 
 /** To-do: the whole list in three simple places, after Tiimo's To-do tab. */
 export function Todo({
@@ -58,7 +53,7 @@ export function Todo({
 
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-36 safe-t">
-      <TopBar onSettings={onSettings} onHelp={onHelp} dark={dark} onTheme={onTheme} title={<span className="block leading-tight"><span className="block text-[13px] font-medium text-ink-3">This week and later</span><span className="block font-serif text-[28px] leading-none tracking-[-0.02em]">Plan</span></span>} />
+      <TopBar onSettings={onSettings} onHelp={onHelp} dark={dark} onTheme={onTheme} title={<span className="block font-serif text-[32px] leading-none tracking-[-0.02em]">Plan</span>} />
 
 
       {groups.map(([b, items]) => (
@@ -84,7 +79,7 @@ export function Todo({
                   </ul>
                 )}
                 <button type="button" onClick={() => onAddTo(b)} className="add-row flex h-14 w-full items-center justify-between px-4 text-[15px]">
-                  {items.length ? `Add to ${BUCKET_NAME[b]}` : HINT[b]}
+                  Add a task
                   <Plus className="size-4" />
                 </button>
               </motion.div>

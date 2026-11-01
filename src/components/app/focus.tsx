@@ -9,7 +9,7 @@ import { type Settings, type State, type Task, MAX_STEP, nextStep, smallerStep, 
 import type { Actions } from "@/lib/use-tasks";
 import { BreakItDown } from "./breakdown";
 import { Sheet } from "./sheet";
-import { AddSubtask, SubtaskList } from "./steps";
+import { AddSubtask } from "./steps";
 import { burstFrom } from "./petals";
 import { Tile } from "./task-row";
 import { TopBar } from "./today";
@@ -355,32 +355,16 @@ function TimerCard({ state, actions, task, announce }: { state: State; actions: 
   );
 }
 
-/** 3. Folded away: the full list of subtasks, and finishing early. */
-function MoreSubtasks({ task, actions, onFinish }: { task: Task; actions: Actions; onFinish: () => void }) {
-  const [open, setOpen] = useState(false);
+/** 3. Finishing early. The full subtask list lives in task details, so Focus stays on one thing. */
+function MoreSubtasks({ task, onFinish }: { task: Task; actions?: Actions; onFinish: () => void }) {
   const n = task.steps.length;
   const k = task.steps.filter((s) => s.d).length;
   const allDone = n > 0 && k === n;
   if (!n) return null;
   return (
-    <section className="mt-6">
-      <button type="button" className="flex w-full items-center justify-between px-1" aria-expanded={open} onClick={() => (setOpen((v) => !v), feel("tap"))}>
-        <span className="text-[15px] font-semibold">
-          All subtasks <span className="font-medium tabular-nums text-ink-3">{k}/{n}</span>
-        </span>
-        <ChevronDown className={`size-5 text-ink-3 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      <AnimatePresence initial={false}>
-        {open && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }} className="overflow-hidden">
-            <div className="pt-3">
-              <SubtaskList task={task} actions={actions} suggest={false} />
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+    <section className="mt-4">
       {!allDone && (
-        <button type="button" className="btn btn-quiet mx-auto mt-4 flex min-h-10 gap-1.5 text-[14px]" onClick={onFinish}>
+        <button type="button" className="btn btn-quiet mx-auto flex min-h-10 gap-1.5 text-[14px]" onClick={onFinish}>
           <Check className="size-4" /> Finish the whole task now
         </button>
       )}

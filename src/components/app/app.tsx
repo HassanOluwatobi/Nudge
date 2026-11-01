@@ -121,7 +121,7 @@ export function NudgeApp() {
     // Opened from a calendar reminder: go straight to the check-in.
     const from = new URLSearchParams(location.search).get("from");
     // Morning lives on Home now. Evening still opens its short sheet.
-    if (from === "evening") setTimeout(() => setCheckin(from), 400);
+    if (from === "evening" || from === "morning") setTimeout(() => setCheckin(from), 400);
   }, []);
 
   useBackClose(tab !== "today" || !!over, () => {

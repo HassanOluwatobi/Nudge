@@ -166,9 +166,7 @@ export function Today({
       ) : (
       <motion.div key="task" custom={dir} variants={slide} initial="enter" animate="center" exit="exit" transition={{ type: "spring", bounce: 0, duration: 0.28 }}>
 
-      {due === "morning" && <MorningPick state={state} actions={actions} announce={announce} />}
-
-      {due && due !== "morning" && (
+      {due && (
         <motion.button
           type="button"
           initial={{ opacity: 0, y: 8 }}
@@ -307,48 +305,6 @@ export function Today({
       <MiniCredit />
 
     </div>
-  );
-}
-
-/** Morning check-in, right on Home: pick your one thing, or skip. */
-function MorningPick({ state, actions, announce }: { state: State; actions: Actions; announce: (s: string) => void }) {
-  const today = ymd();
-  const onToday = todayTasks(state, today);
-  const soon = state.tasks.filter((t) => t.bucket === "week").sort((a, b) => (a.due ?? "9999").localeCompare(b.due ?? "9999"));
-  const options = [...onToday, ...soon].slice(0, 4);
-  const pick = (t: Task) => {
-    if (t.bucket !== "today") actions.planToday([t.id]);
-    actions.choose(t.id);
-    actions.finishCheckin("morning");
-    feel("save", "success");
-    announce(`${t.title} is your one thing today.`);
-    toast("Got it. That's your one thing.");
-  };
-  return (
-    <motion.section initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="mt-3 rounded-[20px] bg-white p-4 ring-1 ring-line" aria-label="Morning check-in">
-      <p className="t-label flex items-center gap-1.5 text-signal-ink">
-        <Sun className="size-3.5" /> Good morning
-      </p>
-      <p className="mt-1.5 text-[17px] font-semibold">What's the one thing for today?</p>
-      {options.length ? (
-        <ul className="mt-3 grid gap-1.5">
-          {options.map((t) => (
-            <li key={t.id}>
-              <button type="button" onClick={() => pick(t)} className="flex min-h-[48px] w-full items-center gap-3 rounded-[14px] px-2 text-left ring-1 ring-line transition-colors active:bg-[rgb(6_11_43/0.04)]">
-                <Tile task={t} size={30} />
-                <span className="min-w-0 flex-1 truncate text-[15px] font-medium">{t.title}</span>
-                {t.bucket !== "today" && <span className="text-[12px] text-ink-3">This week</span>}
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="t-small mt-1 text-ink-3">Nothing here yet. Add something in the box above.</p>
-      )}
-      <button type="button" className="btn btn-quiet mt-1 min-h-10 w-full text-[14px]" onClick={() => (actions.finishCheckin("morning"), feel("tap"))}>
-        Skip for today
-      </button>
-    </motion.section>
   );
 }
 
