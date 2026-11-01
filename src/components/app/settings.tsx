@@ -97,7 +97,12 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
 
   return (
     <Sheet open={open} onClose={() => (setClear(false), setDataOpen(false), onClose())} title="Settings">
-      <InstallButton variant="row" />
+      <div className="mt-2">
+        <Credit compact />
+      </div>
+      <div className="mt-3">
+        <InstallButton variant="row" />
+      </div>
 
       <section className="mt-4">
         <h3 className="t-label">Daily check-ins</h3>
@@ -268,10 +273,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
       </section>
 
       <section className="mt-6">
-        <h3 className="t-label">About</h3>
-        <div className="mt-2">
-          <Credit compact />
-        </div>
+        <h3 className="t-label">Help</h3>
         <button type="button" className="btn btn-line mt-2 w-full gap-2" onClick={() => (onClose(), onGuide())}>
           <CircleHelp className="size-[18px]" /> How NudgeMe works
         </button>

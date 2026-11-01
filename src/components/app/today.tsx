@@ -187,18 +187,24 @@ export function Today({
 
       {/* The one painted moment, with the suggested task under it. */}
       {pick ? (
-        <section aria-label="Start here" className="start-card on-color relative mt-6 overflow-hidden rounded-[24px] text-white">
-          <p className="t-label relative px-5 pt-5 !text-white/75">Start here</p>
+        <section aria-label="Start here" className="start-card relative mt-6 overflow-hidden rounded-[24px]">
+          <p className="t-label relative flex items-center gap-2 px-5 pt-5 text-signal-ink">
+            <span className="relative grid size-2 place-items-center" aria-hidden>
+              <span className="absolute size-2 animate-ping rounded-full bg-signal opacity-50 [animation-duration:2.4s]" />
+              <span className="size-2 rounded-full bg-signal" />
+            </span>
+            Start here
+          </p>
           <AnimatePresence mode="popLayout" initial={false}>
             <motion.div key={pick.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ type: "spring", bounce: 0, duration: 0.4 }} className="relative px-5 pb-4 pt-3">
               <button type="button" {...pickHold.bind} onClick={() => onOpen(pick)} className="flex w-full items-start gap-3 text-left" aria-label={`${pick.title}. Open details. Hold for options.`}>
-                <span className="grid size-11 shrink-0 place-items-center rounded-[13px] bg-white/15 text-[22px] ring-1 ring-white/20">{pick.emoji ?? pick.title.charAt(0).toUpperCase()}</span>
+                <Tile task={pick} size={44} />
                 <span className="min-w-0 flex-1">
-                  <span className="t-title block text-[26px] text-white">{pick.title}</span>
-                  <span className="t-small mt-1 block text-white/80">
+                  <span className="t-title block text-[26px]">{pick.title}</span>
+                  <span className="t-small mt-1 block text-ink-2">
                     {step ? (
                       <>
-                        <span className="font-semibold text-white">Next: </span>
+                        <span className="font-semibold text-signal-ink">Next: </span>
                         {step.t}
                       </>
                     ) : pick.steps.length ? (
@@ -209,12 +215,12 @@ export function Today({
                   </span>
                 </span>
               </button>
-              <button type="button" className="btn btn-white mt-5 w-full text-[17px] !text-signal" onClick={() => (feel("tap", "light"), onFocus(pick))}>
+              <button type="button" className="btn btn-signal mt-5 w-full text-[17px]" onClick={() => (feel("tap", "light"), onFocus(pick))}>
                 Start <ArrowRight className="size-5" />
               </button>
               {rest.length > 0 && (
                 <div className="mt-1 flex justify-center">
-                  <button type="button" className="btn btn-quiet text-[15px] !text-white/85" onClick={() => (actions.pass(pick.id), feel("tap", "light"), announce("Showing another task."))}>
+                  <button type="button" className="btn btn-quiet text-[15px]" onClick={() => (actions.pass(pick.id), feel("tap", "light"), announce("Showing another task."))}>
                     Not this one
                   </button>
                 </div>

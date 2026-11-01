@@ -226,7 +226,7 @@ export function NudgeApp() {
   const common = { state, actions, announce, onHelp: () => setGuide(true), onSettings: () => setSettings(true), onAdd: () => setCapture({}), onOpen: (t: Task) => setOpenId(t.id), onMenu: (t: Task) => setMenuId(t.id) };
 
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="user" transition={{ type: "spring", bounce: 0, duration: 0.38 }}>
       <div aria-live="polite" className="sr-only">
         {said}
       </div>

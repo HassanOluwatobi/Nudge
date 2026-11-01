@@ -90,7 +90,7 @@ function Timer() {
         <svg viewBox="0 0 110 110" className="absolute inset-0 size-full -rotate-90">
           <defs>
             <linearGradient id="g-ring" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#1236c2" />
+              <stop offset="0%" stopColor="#1d4df5" />
               <stop offset="60%" stopColor="#1d4df5" />
               <stop offset="100%" stopColor="#6f97ff" />
             </linearGradient>

@@ -4,9 +4,8 @@
   NudgeMe's sound and touch. Everything is synthesised in the browser, so there
   are no files to load and nothing to pay for.
 
-  The palette is soft and wooden on purpose: a kalimba pluck for wins, a small
-  wooden tap for steps, a singing bowl when the timer ends. A short room reverb
-  makes them feel like real objects instead of computer beeps.
+  The palette is soft mallets and small bells in one key, a singing bowl when
+  the timer ends, and a warm room so they feel like real objects.
 
   Haptics: Android vibrates. iPhone Safari has no vibration API, so we toggle a
   hidden system switch, which plays the iOS switch haptic (iOS 18 and later).
@@ -20,6 +19,11 @@ export function setFeedback(o: { sound?: boolean; haptics?: boolean }) {
 }
 
 // ---------- audio ----------
+/*
+  The palette: soft mallets and small bells, all in D major pentatonic, so any
+  two sounds that land together still sound good. Quiet by design. A gentle
+  compressor glues them, and a warm room gives them space.
+*/
 let ctx: AudioContext | null = null;
 let master: GainNode | null = null;
 let wet: GainNode | null = null;
@@ -30,179 +34,188 @@ function audio() {
     const C = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     if (!C) return null;
     ctx = new C();
+    const glue = ctx.createDynamicsCompressor();
+    glue.threshold.value = -20;
+    glue.knee.value = 18;
+    glue.ratio.value = 3;
+    glue.attack.value = 0.004;
+    glue.release.value = 0.2;
+    const air = ctx.createBiquadFilter();
+    air.type = "highshelf";
+    air.frequency.value = 6000;
+    air.gain.value = -6;
     master = ctx.createGain();
-    master.gain.value = 0.55;
-    master.connect(ctx.destination);
-    // A small, warm room: decaying stereo noise as an impulse response.
-    const len = Math.floor(ctx.sampleRate * 1.4);
+    master.gain.value = 0.42;
+    master.connect(air).connect(glue).connect(ctx.destination);
+    // A warm room: decaying stereo noise, slightly darker each moment.
+    const len = Math.floor(ctx.sampleRate * 1.8);
     const ir = ctx.createBuffer(2, len, ctx.sampleRate);
     for (let ch = 0; ch < 2; ch++) {
       const d = ir.getChannelData(ch);
-      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3.2);
+      let lp = 0;
+      for (let i = 0; i < len; i++) {
+        lp += ((Math.random() * 2 - 1) - lp) * (0.6 - 0.45 * (i / len));
+        d[i] = lp * Math.pow(1 - i / len, 3);
+      }
     }
     const verb = ctx.createConvolver();
     verb.buffer = ir;
-    const tone = ctx.createBiquadFilter();
-    tone.type = "lowpass";
-    tone.frequency.value = 4200;
     wet = ctx.createGain();
-    wet.gain.value = 0.22;
-    wet.connect(tone).connect(verb).connect(master);
+    wet.gain.value = 0.3;
+    wet.connect(verb).connect(master);
   }
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
   return ctx;
 }
 
-function out(node: AudioNode) {
+function out(node: AudioNode, room = 1) {
   node.connect(master!);
-  node.connect(wet!);
+  if (room > 0) {
+    const send = ctx!.createGain();
+    send.gain.value = room;
+    node.connect(send).connect(wet!);
+  }
 }
 
-/** A kalimba tine: warm fundamental, a quick bright overtone, a tiny attack click. */
-function pluck(freq: number, at: number, vel = 1) {
-  const c = ctx!;
-  const g = c.createGain();
-  g.gain.setValueAtTime(0, at);
-  g.gain.linearRampToValueAtTime(0.32 * vel, at + 0.004);
-  g.gain.exponentialRampToValueAtTime(0.0001, at + 1.5);
-  const o = c.createOscillator();
-  o.type = "sine";
+function env(at: number, peak: number, attack: number, decay: number) {
+  const g = ctx!.createGain();
+  g.gain.setValueAtTime(0.0001, at);
+  g.gain.exponentialRampToValueAtTime(peak, at + attack);
+  g.gain.exponentialRampToValueAtTime(0.0001, at + attack + decay);
+  return g;
+}
+
+function osc(type: OscillatorType, freq: number, at: number, dur: number, into: AudioNode) {
+  const o = ctx!.createOscillator();
+  o.type = type;
   o.frequency.setValueAtTime(freq, at);
-  o.connect(g);
-  out(g);
+  o.connect(into);
   o.start(at);
-  o.stop(at + 1.6);
-
-  const g2 = c.createGain();
-  g2.gain.setValueAtTime(0, at);
-  g2.gain.linearRampToValueAtTime(0.1 * vel, at + 0.002);
-  g2.gain.exponentialRampToValueAtTime(0.0001, at + 0.16);
-  const o2 = c.createOscillator();
-  o2.type = "sine";
-  o2.frequency.setValueAtTime(freq * 5.93, at);
-  o2.connect(g2);
-  out(g2);
-  o2.start(at);
-  o2.stop(at + 0.2);
-
-  click(at, 3200, 0.05 * vel);
+  o.stop(at + dur + 0.05);
+  return o;
 }
 
-/** A soft filtered noise transient, the "touch" of a finger or mallet. */
-function click(at: number, f = 2400, v = 0.08, len = 0.03) {
+/** A soft marimba bar: round fundamental, a quick woody overtone, felt mallet. */
+function mallet(freq: number, at: number, vel = 1, decay = 0.9) {
+  const body = env(at, 0.3 * vel, 0.006, decay);
+  osc("sine", freq, at, decay, body);
+  out(body, 0.8);
+  const bar = env(at, 0.07 * vel, 0.003, 0.09);
+  osc("sine", freq * 3.98, at, 0.12, bar);
+  out(bar, 0.4);
+  felt(at, freq * 2, 0.025 * vel);
+}
+
+/** A small glass bell: FM shimmer that settles into a pure tone. */
+function bell(freq: number, at: number, vel = 1, decay = 1.6) {
+  const c = ctx!;
+  const tone = env(at, 0.18 * vel, 0.004, decay);
+  const car = osc("sine", freq, at, decay, tone);
+  const mod = c.createOscillator();
+  mod.frequency.setValueAtTime(freq * 3.5, at);
+  const depth = c.createGain();
+  depth.gain.setValueAtTime(freq * 1.4 * vel, at);
+  depth.gain.exponentialRampToValueAtTime(1, at + 0.35);
+  mod.connect(depth).connect(car.frequency);
+  mod.start(at);
+  mod.stop(at + decay);
+  out(tone, 1.1);
+}
+
+/** The touch of a felt mallet: a tiny, dark puff of noise. */
+function felt(at: number, f = 1400, v = 0.03, len = 0.025) {
   const c = ctx!;
   const n = Math.floor(c.sampleRate * len);
   const b = c.createBuffer(1, n, c.sampleRate);
   const d = b.getChannelData(0);
-  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 4);
-  const s = c.createBufferSource();
-  s.buffer = b;
-  const bp = c.createBiquadFilter();
-  bp.type = "bandpass";
-  bp.frequency.value = f;
-  bp.Q.value = 1.4;
+  for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 5);
+  const src = c.createBufferSource();
+  src.buffer = b;
+  const lp = c.createBiquadFilter();
+  lp.type = "lowpass";
+  lp.frequency.value = f;
   const g = c.createGain();
   g.gain.value = v;
-  s.connect(bp).connect(g);
-  out(g);
-  s.start(at);
+  src.connect(lp).connect(g);
+  out(g, 0.3);
+  src.start(at);
 }
 
-/** A small wooden tap with a little pitch drop. */
-function wood(freq: number, at: number, vel = 1) {
-  const c = ctx!;
-  const o = c.createOscillator();
-  o.type = "sine";
-  o.frequency.setValueAtTime(freq * 1.5, at);
-  o.frequency.exponentialRampToValueAtTime(freq, at + 0.03);
-  const g = c.createGain();
-  g.gain.setValueAtTime(0, at);
-  g.gain.linearRampToValueAtTime(0.22 * vel, at + 0.003);
-  g.gain.exponentialRampToValueAtTime(0.0001, at + 0.14);
-  o.connect(g);
-  out(g);
-  o.start(at);
-  o.stop(at + 0.16);
-  click(at, 1800, 0.06 * vel, 0.02);
-}
-
-/** A singing bowl: inharmonic partials, slow beating, a long gentle tail. */
-function bowl(freq: number, at: number) {
-  const c = ctx!;
+/** A singing bowl, softened: a few inharmonic partials with slow beating. */
+function bowl(freq: number, at: number, vel = 1) {
   [
-    [1, 0.22, 4.5],
-    [2.76, 0.08, 3.2],
-    [5.4, 0.04, 2.2],
+    [1, 0.12, 4],
+    [2.76, 0.04, 2.8],
+    [5.4, 0.015, 1.8],
   ].forEach(([ratio, vol, dec]) => {
-    [0, 1.6].forEach((detune, k) => {
-      const o = c.createOscillator();
-      o.type = "sine";
-      o.frequency.value = freq * ratio + detune;
-      const g = c.createGain();
-      g.gain.setValueAtTime(0, at);
-      g.gain.linearRampToValueAtTime(vol * (k ? 0.7 : 1), at + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, at + dec);
-      o.connect(g);
-      out(g);
-      o.start(at);
-      o.stop(at + dec + 0.1);
+    [0, 1.3].forEach((detune, k) => {
+      const g = env(at, vol * vel * (k ? 0.7 : 1), 0.08, dec);
+      osc("sine", freq * ratio + detune, at, dec + 0.08, g);
+      out(g, 1.2);
     });
   });
-  click(at, 900, 0.05, 0.05);
 }
 
-// Notes: a bright major pentatonic around E5.
-const N = { C5: 523.25, D5: 587.33, E5: 659.25, G5: 783.99, A5: 880, B5: 987.77, C6: 1046.5, D6: 1174.66, E6: 1318.5, G4: 392 };
+// D major pentatonic, so everything is in tune with everything else.
+const N = { D4: 293.66, A4: 440, B4: 493.88, D5: 587.33, E5: 659.25, Fs5: 739.99, A5: 880, B5: 987.77, D6: 1174.66, E6: 1318.51, Fs6: 1479.98, A6: 1760 };
+const LADDER = [N.D5, N.E5, N.Fs5, N.A5, N.B5, N.D6, N.E6, N.Fs6];
 
 export type Sound = "tap" | "step" | "unstep" | "done" | "finish" | "start" | "end" | "undo" | "open" | "tick" | "save";
+
+// Subtasks ticked in a row climb the scale, so progress sounds like progress.
+let climb = { n: 0, t: 0 };
 
 export function play(s: Sound) {
   if (!enabledSound) return;
   const c = audio();
   if (!c) return;
-  const t = c.currentTime + 0.01;
+  const t = c.currentTime + 0.008;
   switch (s) {
     case "tap":
-      wood(1400, t, 0.35);
+      felt(t, 1800, 0.035, 0.018);
       break;
     case "tick":
-      click(t, 3600, 0.035, 0.012);
+      bell(N.A6, t, 0.22, 0.25);
       break;
-    case "step":
-      wood(880, t, 0.8);
-      pluck(N.E6, t + 0.03, 0.35);
+    case "step": {
+      const now = performance.now();
+      climb = { n: now - climb.t < 9000 ? Math.min(climb.n + 1, LADDER.length - 1) : 0, t: now };
+      mallet(LADDER[climb.n], t, 0.85, 0.7);
+      bell(LADDER[climb.n] * 2, t + 0.012, 0.18, 0.5);
       break;
+    }
     case "unstep":
-      wood(620, t, 0.6);
+      mallet(N.A4, t, 0.5, 0.4);
       break;
     case "save":
-      pluck(N.G5, t, 0.6);
-      pluck(N.C6, t + 0.07, 0.5);
+      mallet(N.A5, t, 0.7, 0.6);
+      bell(N.D6, t + 0.06, 0.3, 0.9);
       break;
     case "done":
-      pluck(N.E5, t, 0.8);
-      pluck(N.G5, t + 0.07, 0.75);
-      pluck(N.B5, t + 0.14, 0.7);
-      pluck(N.E6, t + 0.24, 0.5);
+      mallet(N.D5, t, 0.8, 0.8);
+      mallet(N.A5, t + 0.085, 0.75, 0.9);
+      bell(N.D6, t + 0.17, 0.5, 1.4);
       break;
     case "finish":
-      [N.C5, N.E5, N.G5, N.B5, N.E6].forEach((f, i) => pluck(f, t + i * 0.09, 0.8 - i * 0.07));
-      bowl(N.C5 / 2, t + 0.05);
+      [N.D5, N.Fs5, N.A5, N.D6].forEach((f, i) => mallet(f, t + i * 0.1, 0.8 - i * 0.05, 1.1));
+      bell(N.A6, t + 0.42, 0.35, 2);
+      bell(N.Fs6, t + 0.5, 0.25, 2);
+      bowl(N.D4, t + 0.05, 0.8);
       break;
     case "start":
-      pluck(N.A5, t, 0.6);
-      pluck(N.E6, t + 0.1, 0.5);
+      mallet(N.D5, t, 0.6, 0.6);
+      bell(N.A5, t + 0.11, 0.4, 1.2);
       break;
     case "end":
-      bowl(N.G4, t);
-      pluck(N.D6, t + 0.6, 0.4);
+      bowl(N.A4 / 2, t, 1);
+      bell(N.E6, t + 0.5, 0.3, 2.2);
       break;
     case "undo":
-      pluck(N.B5, t, 0.5);
-      pluck(N.E5, t + 0.08, 0.45);
+      mallet(N.B5, t, 0.45, 0.4);
+      mallet(N.Fs5, t + 0.07, 0.4, 0.5);
       break;
     case "open":
-      wood(1100, t, 0.25);
+      mallet(N.D5 / 2, t, 0.35, 0.25);
       break;
   }
 }
@@ -214,6 +227,7 @@ function iosTap() {
   if (!iosSwitch) {
     const label = document.createElement("label");
     label.setAttribute("aria-hidden", "true");
+    label.setAttribute("data-nohaptic", "");
     label.style.cssText = "position:fixed;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none";
     const input = document.createElement("input");
     input.type = "checkbox";
@@ -240,16 +254,13 @@ export function haptic(h: Haptic = "light") {
   if (now - last.t < 60 && RANK[h] <= last.r) return;
   last = { t: now, r: RANK[h] };
   if ("vibrate" in navigator && typeof navigator.vibrate === "function") {
-    const pattern: Record<Haptic, number | number[]> = { light: 10, medium: 18, heavy: 28, success: [14, 50, 14, 50, 30], warning: [26, 70, 26] };
+    const pattern: Record<Haptic, number | number[]> = { light: 6, medium: 12, heavy: 20, success: [10, 60, 18], warning: [18, 80, 18] };
     navigator.vibrate(pattern[h]);
     return;
   }
   iosTap();
   if (h === "heavy") setTimeout(iosTap, 40);
-  if (h === "success") {
-    setTimeout(iosTap, 80);
-    setTimeout(iosTap, 170);
-  }
+  if (h === "success") setTimeout(iosTap, 90);
   if (h === "warning") setTimeout(iosTap, 110);
 }
 
@@ -274,14 +285,18 @@ export function feel(s: Sound, h?: Haptic) {
   haptic(h && RANK[h] > RANK[DEFAULT_HAPTIC[s]] ? h : DEFAULT_HAPTIC[s]);
 }
 
-/** A light touch on every button press, app-wide. Specific moments add stronger ones. */
+/**
+ * A light touch when a button is actually pressed, app-wide. It fires on the
+ * tap itself, not when a finger lands, so scrolling past buttons never buzzes.
+ * Specific moments add stronger ones.
+ */
 export function installTapHaptics() {
   if (typeof document === "undefined") return () => {};
-  const on = (e: PointerEvent) => {
-    const el = (e.target as Element | null)?.closest("button, a, [role='button'], [role='tab'], label, select, input[type='checkbox']");
+  const on = (e: MouseEvent) => {
+    const el = (e.target as Element | null)?.closest("button, a, [role='button'], [role='tab'], select, input[type='checkbox']");
     if (!el || el.closest("[data-nohaptic]") || (el as HTMLButtonElement).disabled) return;
     haptic("light");
   };
-  document.addEventListener("pointerdown", on, { passive: true });
-  return () => document.removeEventListener("pointerdown", on);
+  document.addEventListener("click", on, { capture: true, passive: true });
+  return () => document.removeEventListener("click", on, { capture: true });
 }
