@@ -100,7 +100,7 @@ await flow("swipe to delete, then undo", { tasks: [task("a", "Reply to Tunde"), 
 });
 
 await flow("add subtasks with Return, no extra button", { tasks: [task("a", "Reply to Tunde")] }, async (page, saved) => {
-  await page.getByRole("button", { name: /^Reply to Tunde\. Open details/ }).click();
+  await page.getByRole("button", { name: /Reply to Tunde\. Open details/ }).click();
   await page.waitForTimeout(700);
   await page.getByLabel("Add a subtask").click();
   for (const s of ["Open the email", "Write two lines"]) {

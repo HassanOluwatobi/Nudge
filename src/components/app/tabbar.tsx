@@ -15,11 +15,11 @@ const ITEMS: { id: Tab; label: string; icon: typeof ListChecks }[] = [
 export function TabBar({ tab, onTab, dark, running }: { tab: Tab; onTab: (t: Tab) => void; dark: boolean; running: boolean }) {
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 safe-b">
-      <div className={`pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t ${dark ? "from-night via-night/80" : "from-paper via-paper/80"} to-transparent`} />
+      <div aria-hidden className="bottom-frost" />
       <nav
         aria-label="Main"
         className={`pointer-events-auto relative mx-auto grid w-[calc(100%-2rem)] max-w-[19rem] grid-cols-3 gap-1 rounded-[26px] p-1.5 backdrop-blur-xl ${
-          dark ? "bg-white/[0.08] ring-1 ring-white/10" : "bg-white/90 shadow-[0_1px_0_var(--hi)_inset,0_16px_40px_-18px_rgb(6_11_43/0.45)] ring-1 ring-line/60"
+          dark ? "bg-white/[0.08] ring-1 ring-white/10" : "bg-white/75 shadow-[0_1px_0_var(--hi)_inset,0_16px_40px_-18px_rgb(6_11_43/0.35)] ring-1 ring-line/60"
         }`}
       >
         {ITEMS.map(({ id, label, icon: Icon }) => {

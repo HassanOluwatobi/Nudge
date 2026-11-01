@@ -112,7 +112,7 @@
 @layer base {
   html,
   body {
-    overscroll-behavior: none;
+    overscroll-behavior-x: none;
     background: var(--paper);
     color: var(--ink);
     -webkit-tap-highlight-color: transparent;
@@ -574,18 +574,80 @@ dialog.sheet {
 html[data-kb="open"] dialog.sheet .safe-b {
   padding-bottom: 0.75rem;
 }
-/* Start here: a white card with a faint electric-blue wash from one corner and
-   a blue-tinted edge. The blue accents the card instead of filling it. */
+/* The task to start with: a plain white card, no border, with three faded
+   electric-blue glows drifting slowly around it. Calm, a little ethereal. */
 .start-card {
-  background:
-    radial-gradient(90% 70% at 100% 0%, rgb(29 77 245 / 0.1), transparent 60%),
-    var(--sheet);
-  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--signal) 22%, var(--line));
+  background: var(--sheet);
 }
-html[data-theme="dark"] .start-card {
-  background:
-    radial-gradient(90% 70% at 100% 0%, rgb(47 92 255 / 0.16), transparent 60%),
-    var(--sheet);
+.start-card .glow {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  filter: blur(34px);
+  pointer-events: none;
+  will-change: transform;
+}
+.start-card .glow-a {
+  width: 70%;
+  height: 120%;
+  top: -60%;
+  right: -18%;
+  background: radial-gradient(closest-side, rgb(29 77 245 / 0.2), transparent);
+  animation: glow-a 19s ease-in-out infinite alternate;
+}
+.start-card .glow-b {
+  width: 60%;
+  height: 110%;
+  bottom: -62%;
+  left: -14%;
+  background: radial-gradient(closest-side, rgb(111 151 255 / 0.2), transparent);
+  animation: glow-b 23s ease-in-out infinite alternate;
+}
+.start-card .glow-c {
+  width: 45%;
+  height: 80%;
+  top: 20%;
+  left: 40%;
+  background: radial-gradient(closest-side, rgb(84 124 255 / 0.1), transparent);
+  animation: glow-c 29s ease-in-out infinite alternate;
+}
+html[data-theme="dark"] .start-card .glow-a {
+  background: radial-gradient(closest-side, rgb(47 92 255 / 0.3), transparent);
+}
+html[data-theme="dark"] .start-card .glow-b {
+  background: radial-gradient(closest-side, rgb(111 151 255 / 0.2), transparent);
+}
+@keyframes glow-a {
+  from { transform: translate(0, 0) scale(1); }
+  to { transform: translate(-30%, 25%) scale(1.15); }
+}
+@keyframes glow-b {
+  from { transform: translate(0, 0) scale(1.1); }
+  to { transform: translate(40%, -28%) scale(0.95); }
+}
+@keyframes glow-c {
+  from { transform: translate(-20%, -10%) scale(0.9); }
+  to { transform: translate(15%, 15%) scale(1.2); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .start-card .glow {
+    animation: none;
+  }
+}
+
+/* The bottom of every screen: a frosted strip under the tab bar, like Safari's
+   own toolbar. Content scrolls all the way down and blurs behind it. */
+.bottom-frost {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: calc(104px + env(safe-area-inset-bottom));
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  backdrop-filter: blur(18px) saturate(1.5);
+  background: color-mix(in oklab, var(--paper) 45%, transparent);
+  -webkit-mask-image: linear-gradient(to top, #000 55%, transparent);
+  mask-image: linear-gradient(to top, #000 55%, transparent);
+  pointer-events: none;
 }
 
 /* Toggle: a pressed-in groove with a raised, embossed knob. */
@@ -783,6 +845,7 @@ html[data-theme="dark"] .bg-white\/95,
 html[data-theme="dark"] .bg-white\/90 {
   background-color: color-mix(in oklab, var(--sheet) 92%, transparent);
 }
+html[data-theme="dark"] .bg-white\/75,
 html[data-theme="dark"] .bg-white\/70,
 html[data-theme="dark"] .bg-white\/60 {
   background-color: color-mix(in oklab, var(--sheet) 70%, transparent);

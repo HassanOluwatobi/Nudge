@@ -187,20 +187,16 @@ export function Today({
 
       {/* The one painted moment, with the suggested task under it. */}
       {pick ? (
-        <section aria-label="Start here" className="start-card relative mt-6 overflow-hidden rounded-[24px]">
-          <p className="t-label relative flex items-center gap-2 px-5 pt-5 text-signal-ink">
-            <span className="relative grid size-2 place-items-center" aria-hidden>
-              <span className="absolute size-2 animate-ping rounded-full bg-signal opacity-50 [animation-duration:2.4s]" />
-              <span className="size-2 rounded-full bg-signal" />
-            </span>
-            Start here
-          </p>
+        <section aria-label="Start here" className="start-card relative isolate mt-6 overflow-hidden rounded-[24px]">
+          {/* Calm light: three faded blue glows drifting slowly around the card. */}
+          <span aria-hidden className="glow glow-a" />
+          <span aria-hidden className="glow glow-b" />
+          <span aria-hidden className="glow glow-c" />
           <AnimatePresence mode="popLayout" initial={false}>
-            <motion.div key={pick.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ type: "spring", bounce: 0, duration: 0.4 }} className="relative px-5 pb-4 pt-3">
-              <button type="button" {...pickHold.bind} onClick={() => onOpen(pick)} className="flex w-full items-start gap-3 text-left" aria-label={`${pick.title}. Open details. Hold for options.`}>
-                <Tile task={pick} size={44} />
-                <span className="min-w-0 flex-1">
-                  <span className="t-title block text-[26px]">{pick.title}</span>
+            <motion.div key={pick.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ type: "spring", bounce: 0, duration: 0.4 }} className="relative px-5 pb-4 pt-6">
+              <button type="button" {...pickHold.bind} onClick={() => onOpen(pick)} className="block w-full text-left" aria-label={`Start here: ${pick.title}. Open details. Hold for options.`}>
+                <span className="block">
+                  <span className="t-title block text-[28px] leading-tight">{pick.title}</span>
                   <span className="t-small mt-1 block text-ink-2">
                     {step ? (
                       <>
