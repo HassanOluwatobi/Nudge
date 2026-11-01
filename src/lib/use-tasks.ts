@@ -285,6 +285,41 @@ export function useTasks() {
       update((s) => ({ ...s, tasks: s.tasks.map((t) => (ids.includes(t.id) && t.bucket !== "done" ? { ...t, bucket: "today" } : t)) }));
     },
 
+    // ---------- calendar import ----------
+    /** Turn approved calendar events into tasks. Skips anything already imported. */
+    importEvents(events: { key: string; title: string; start: Date; end?: Date; allDay: boolean }[]) {
+      const today = ymd();
+      let added = 0;
+      update((s) => {
+        const have = new Set(s.tasks.map((t) => t.ext).filter(Boolean));
+        const fresh = events
+          .filter((e) => !have.has(e.key))
+          .map((e) => {
+            const day = ymd(e.start);
+            const h = e.start.getHours();
+            const mins = e.end ? Math.max(5, Math.min(600, Math.round((e.end.getTime() - e.start.getTime()) / 60000))) : undefined;
+            const reminder = !e.allDay && e.start.getTime() - 10 * 60000 > Date.now() ? new Date(e.start.getTime() - 10 * 60000).toISOString() : undefined;
+            return makeTask(e.title, day === today ? "today" : day <= addDays(today, 6) ? "week" : "later", {
+              due: day,
+              part: e.allDay ? "anytime" : h < 12 ? "morning" : h < 17 ? "afternoon" : "evening",
+              mins: e.allDay ? undefined : mins,
+              remindAt: reminder,
+              emoji: "🗓️",
+              ext: e.key,
+            });
+          });
+        added = fresh.length;
+        return { ...s, tasks: [...s.tasks, ...fresh], settings: { ...s.settings, sync: { ...s.settings.sync, last: new Date().toISOString() } } };
+      });
+      return added;
+    },
+    skipEvents(keys: string[]) {
+      update((s) => ({ ...s, settings: { ...s.settings, sync: { ...s.settings.sync, skipped: [...(s.settings.sync.skipped ?? []), ...keys].slice(-500) } } }));
+    },
+    setSync(p: Partial<State["settings"]["sync"]>) {
+      update((s) => ({ ...s, settings: { ...s.settings, sync: { ...s.settings.sync, ...p } } }));
+    },
+
     // ---------- settings and data ----------
     setSettings(p: Partial<Settings>) {
       update((s) => ({ ...s, settings: { ...s.settings, ...p } }));

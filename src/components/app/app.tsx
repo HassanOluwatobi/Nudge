@@ -7,6 +7,7 @@ import { feel, installTapHaptics, setFeedback } from "@/lib/feedback";
 import { notify, setBadge } from "@/lib/reminders";
 import { type Bucket, type Part, type Task, doneToday, hhmmToday, suggestion, todayTasks, ymd } from "@/lib/tasks";
 import { useBackClose } from "@/lib/use-back";
+import { type ExtEvent, type Source, calendlyEvents, extKey, notionEvents, outlookEvents } from "@/lib/sync";
 import { useKeyboardInset } from "@/lib/use-keyboard";
 import { useTasks } from "@/lib/use-tasks";
 import { Art } from "./art";
@@ -15,6 +16,7 @@ import { Checkin } from "./checkin";
 import { Finish } from "./finish";
 import { Focus } from "./focus";
 import { Guide } from "./guide";
+import { ImportSheet } from "./import";
 import { Ideas } from "./ideas";
 import { Petals } from "./petals";
 import { Settings } from "./settings";
@@ -54,6 +56,8 @@ export function NudgeApp() {
   const [checkin, setCheckin] = useState<"morning" | "evening" | "weekly" | null>(null);
   const [said, setSaid] = useState("");
   const [guide, setGuide] = useState(false);
+  const [importer, setImporter] = useState<{ source?: Source | null; preload?: ExtEvent[] | null } | null>(null);
+  const [incoming, setIncoming] = useState<ExtEvent[]>([]);
   const [dir, setDir] = useState(0);
   const goTab = (t: Tab) => {
     if (t === tab) return;
@@ -152,6 +156,20 @@ export function NudgeApp() {
     return () => timers.forEach(clearTimeout);
   }, [state]);
 
+  // Quietly check connected calendars once per visit. Google needs a tap, so it gets a button instead.
+  const synced = useRef(false);
+  useEffect(() => {
+    if (!state || synced.current) return;
+    synced.current = true;
+    const y = state.settings.sync;
+    const jobs: Promise<ExtEvent[]>[] = [];
+    if (y.outlook) jobs.push(outlookEvents(false).catch(() => []));
+    if (y.notion) jobs.push(notionEvents(y.notion).catch(() => []));
+    if (y.calendly) jobs.push(calendlyEvents(y.calendly).catch(() => []));
+    if (!jobs.length) return;
+    Promise.all(jobs).then((lists) => setIncoming(lists.flat()));
+  }, [state]);
+
   if (!state) {
     return <div className="min-h-dvh bg-paper" aria-busy="true" />;
   }
@@ -175,6 +193,10 @@ export function NudgeApp() {
     setOver({ name: "finish", task: t });
     announce(`Finished: ${t.title}.`);
   };
+  const known = new Set([...state.tasks.map((t) => t.ext).filter(Boolean), ...(state.settings.sync.skipped ?? [])] as string[]);
+  const newEvents = incoming.filter((e) => !known.has(extKey(e)));
+  const googleDue = state.settings.sync.google && (!state.settings.sync.last || state.settings.sync.last.slice(0, 10) !== ymd());
+  const calendarCard = newEvents.length ? { count: newEvents.length, onReview: () => setImporter({ preload: newEvents }) } : googleDue ? { count: 0, onReview: () => setImporter({ source: "google" }) } : null;
   const common = { state, actions, announce, onHelp: () => setGuide(true), onSettings: () => setSettings(true), onAdd: () => setCapture({}), onOpen: (t: Task) => setOpenId(t.id), onMenu: (t: Task) => setMenuId(t.id) };
 
   return (
@@ -214,7 +236,7 @@ export function NudgeApp() {
         ) : (
           <motion.div key={tab} custom={dir} variants={tabMotion} initial="enter" animate="center" exit="exit" transition={{ type: "spring", bounce: 0, duration: 0.34 }}>
             {tab === "today" && (
-              <Today {...common} onAddTo={(part) => setCapture({ part, bucket: "today" })} onFocus={startFocus} onCheckin={setCheckin} />
+              <Today {...common} onAddTo={(part) => setCapture({ part, bucket: "today" })} onFocus={startFocus} onCheckin={setCheckin} calendarCard={calendarCard} />
             )}
             {tab === "todo" && <Todo {...common} onAddTo={(bucket) => setCapture({ bucket })} />}
             {tab === "focus" && <Focus state={state} actions={actions} announce={announce} taskId={focusId === null ? undefined : (focusId ?? suggestion(state)?.id)} onPickTask={(id) => (setFocusId(id ?? null), state.meta.timer && actions.stopTimer())} onFinished={finished} />}
@@ -228,7 +250,8 @@ export function NudgeApp() {
       <Capture open={!!capture} preset={capture ?? undefined} onClose={() => setCapture(null)} state={state} actions={actions} announce={announce} />
       <TaskSheet task={openTask} ai={state.settings.ai} onClose={() => setOpenId(null)} actions={actions} onFocus={startFocus} onFinished={finished} announce={announce} />
       <TaskMenu task={menuTask} onClose={() => setMenuId(null)} actions={actions} onOpen={(t) => (setMenuId(null), setTimeout(() => setOpenId(t.id), 220))} onFocus={startFocus} />
-      <Settings open={settings} onClose={() => setSettings(false)} state={state} actions={actions} onCheckin={(k) => setTimeout(() => setCheckin(k), 320)} onGuide={() => setTimeout(() => setGuide(true), 320)} />
+      <Settings open={settings} onClose={() => setSettings(false)} state={state} actions={actions} onCheckin={(k) => setTimeout(() => setCheckin(k), 320)} onGuide={() => setTimeout(() => setGuide(true), 320)} onImport={(src) => setTimeout(() => setImporter({ source: src }), 320)} />
+      <ImportSheet open={!!importer} source={importer?.source} preload={importer?.preload} onClose={() => (setImporter(null), setIncoming([]))} state={state} actions={actions} />
       <Checkin kind={checkin} onClose={() => setCheckin(null)} state={state} actions={actions} onStart={(t) => setTimeout(() => startFocus(t), 220)} />
       <Guide
         open={guide}

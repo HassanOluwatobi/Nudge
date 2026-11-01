@@ -214,7 +214,7 @@ const PAGES = [
   { art: OneThing, title: "Start with one thing", body: "Today picks one task and shows its next small step. Not feeling it? Tap Not this one, or Make today easy." },
   { art: Timer, title: "Focus, one step at a time", body: "Drag the ring to set a timer if you want one. Tick steps as you go. Finishing a step never finishes the task by itself." },
   { art: Checkins, title: "Gentle check-ins", body: "A two-minute morning kickoff, an evening wrap-up and a weekly reset on the day you choose. Change the times in Settings." },
-  { art: Calendars, title: "Reminders that ring", body: "Tap Google, Apple or Outlook in Settings to put your check-ins and task reminders in your calendar. Your phone rings even when NudgeMe is closed." },
+  { art: Calendars, title: "Your calendars, both ways", body: "Put check-ins and reminders in Google, Apple or Outlook so your phone rings. Connect Google, Outlook, Notion or Calendly to turn upcoming events into tasks. You choose which." },
   { art: AiSteps, title: "Break it down with your AI", body: "In any task, tap Break it down. NudgeMe opens ChatGPT, Claude, Gemini or Grok with the question ready. Paste the steps back and check them. Free." },
   { art: IdeasBack, title: "Ideas come back", body: "Park ideas in the Ideas tab. They return on Today later, so they stop circling in your head. Everything stays on your phone." },
 ];
