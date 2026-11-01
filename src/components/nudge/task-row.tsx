@@ -30,7 +30,7 @@ export function TaskMeta({ task }: { task: Task }) {
         {prettyDue(task.due, today)}
       </span>
     );
-  if (task.est) bits.push(<span key="est">{EST_LABEL[task.est]}</span>);
+  if (task.est) bits.push(<span key="est">Whole task: {EST_LABEL[task.est].toLowerCase()}</span>);
   if (task.subs.length)
     bits.push(
       <span key="subs" className="inline-flex items-center gap-1">
@@ -88,13 +88,13 @@ export function TaskRow({
             onOpen(task.id);
           }}
           className={cn(
-            "nm-open block text-left text-[15px] leading-snug font-medium text-pretty outline-none",
+            "nm-open block text-left text-[15px] leading-snug font-medium text-pretty outline-none [overflow-wrap:anywhere] line-clamp-3",
             done && "text-muted-foreground line-through decoration-muted-foreground/40"
           )}
         >
           {task.title}
         </button>
-        {!done && <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground text-pretty">{task.step}</p>}
+        {!done && <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground text-pretty">{task.step.replace(/^Start with: /, "")}</p>}
         {!done && <TaskMeta task={task} />}
       </div>
       {showStar && !done && (

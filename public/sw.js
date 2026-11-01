@@ -1,5 +1,5 @@
 // NudgeMe service worker: network first, fall back to cache so the app opens offline.
-const CACHE = "nudgeme-v1";
+const CACHE = "nudgeme-v2";
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/manifest.webmanifest", "/icon-192.png"])));
   self.skipWaiting();
@@ -19,5 +19,16 @@ self.addEventListener("fetch", (e) => {
         return res;
       })
       .catch(() => caches.match(req).then((r) => r || caches.match("/")))
+  );
+});
+// Tapping a NudgeMe notification opens the app.
+self.addEventListener("notificationclick", (e) => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || "/";
+  e.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((cs) => {
+      const c = cs.find((x) => "focus" in x);
+      return c ? c.focus() : self.clients.openWindow(url);
+    })
   );
 });

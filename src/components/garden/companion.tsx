@@ -305,9 +305,15 @@ export function Companion({ plants, cheer, mood = "happy", className }: Props) {
       const render = () => renderer.render(scene, camera);
 
       let raf = 0;
+      let last = 0;
+      let visible = true;
+      const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting));
+      io.observe(el);
+      // 30 frames a second is plenty for a gentle scene and saves battery.
       const loop = (now: number) => {
         raf = requestAnimationFrame(loop);
-        if (document.hidden) return;
+        if (document.hidden || !visible || now - last < 32) return;
+        last = now;
         const t = now / 1000;
         // Breathe.
         const br = Math.sin(t * 1.7) * 0.022 * (1 - sleepy * 0.4);
@@ -372,6 +378,7 @@ export function Companion({ plants, cheer, mood = "happy", className }: Props) {
       cleanup = () => {
         cancelAnimationFrame(raf);
         ro.disconnect();
+        io.disconnect();
         window.removeEventListener("pointermove", onMove);
         renderer.dispose();
         scene.traverse((o) => {
@@ -402,15 +409,15 @@ export function Companion({ plants, cheer, mood = "happy", className }: Props) {
 
   return (
     <div ref={host} className={className} role="img" aria-label={`Nudge, your clay companion, in a garden with ${plants} ${plants === 1 ? "thing" : "things"} grown`}>
-      {failed && <FallbackNudge />}
+      {(failed || !ready) && <FallbackNudge />}
     </div>
   );
 }
 
 /** Flat fallback when 3D is not available. Same character, simple shapes. */
-function FallbackNudge() {
+export function FallbackNudge({ className = "mt-6" }: { className?: string }) {
   return (
-    <div className="relative mx-auto mt-6 h-[150px] w-[220px]">
+    <div className={`relative mx-auto h-[150px] w-[220px] max-h-full ${className}`}>
       <div className="absolute inset-x-[-40px] bottom-0 h-10 rounded-[50%] bg-[#cfe8da]" />
       <div className="nm-float absolute bottom-4 left-1/2 h-[120px] w-[150px] -translate-x-1/2 rounded-[50%_50%_44%_44%/60%_60%_40%_40%] bg-[radial-gradient(circle_at_35%_30%,#f7c2ad,#e9a084_60%,#d98c70)] shadow-[0_14px_20px_-10px_rgb(140_70_60/0.4)]">
         <span className="absolute top-[40%] left-[32%] h-4 w-3 rounded-full bg-[#1d1420]" />
