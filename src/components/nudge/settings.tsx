@@ -1,23 +1,54 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
-import { Download, Lock, RotateCcw, Upload } from "lucide-react";
+import { Download, Lock, RotateCcw, Smartphone, Upload } from "lucide-react";
+import { platform, type Platform } from "@/lib/reminders";
 import type { State } from "@/lib/nudge";
 import type { Actions } from "@/lib/use-nudge";
 
-const Row = ({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) => (
-  <div className="flex items-center justify-between gap-4 px-4 py-3.5">
-    <div className="min-w-0">
-      <p className="text-[15px] font-medium">{title}</p>
-      {hint && <p className="mt-0.5 text-xs text-muted-foreground text-pretty">{hint}</p>}
+type BIP = Event & { prompt: () => Promise<void> };
+
+function InstallCard() {
+  const [os, setOs] = useState<Platform>("other");
+  const [prompt, setPrompt] = useState<BIP | null>(null);
+  const [installed, setInstalled] = useState(false);
+  useEffect(() => {
+    setOs(platform());
+    setInstalled(window.matchMedia("(display-mode: standalone)").matches);
+    const on = (e: Event) => {
+      e.preventDefault();
+      setPrompt(e as BIP);
+    };
+    window.addEventListener("beforeinstallprompt", on);
+    return () => window.removeEventListener("beforeinstallprompt", on);
+  }, []);
+  if (installed) return null;
+  return (
+    <div className="mt-5 rounded-2xl border bg-card p-4">
+      <p className="flex items-center gap-2 text-[15px] font-medium">
+        <Smartphone className="size-4 text-primary" /> Put NudgeMe on your home screen
+      </p>
+      <p className="mt-1 text-sm text-muted-foreground text-pretty">
+        {os === "ios"
+          ? "In Safari, tap the Share button, then Add to Home Screen. It opens like an app."
+          : prompt
+            ? "One tap and it opens like an app. No app store needed."
+            : "In your browser menu, tap Install app or Add to Home screen."}
+      </p>
+      {prompt && (
+        <button type="button" onClick={() => prompt.prompt().finally(() => setPrompt(null))} className="mt-3 inline-flex h-11 items-center gap-2 rounded-xl bg-muted px-4 text-sm font-medium hover:bg-accent">
+          Add to home screen
+        </button>
+      )}
     </div>
-    {children}
-  </div>
-);
+  );
+}
 
 export function Settings({ state, actions }: { state: State; actions: Actions }) {
   const file = useRef<HTMLInputElement>(null);
+  const [confirm, setConfirm] = useState(false);
 
   const exportData = () => {
     const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
@@ -34,35 +65,20 @@ export function Settings({ state, actions }: { state: State; actions: Actions })
         <h1 className="font-serif text-[30px] leading-tight tracking-tight">Settings</h1>
       </header>
 
-      <div className="mt-5 divide-y rounded-2xl border bg-card">
-        <Row title="Evening wrap-up" hint="When NudgeMe offers to close your day.">
-          <select
-            value={state.meta.eveningHour}
-            onChange={(e) => actions.setMeta({ eveningHour: Number(e.target.value) })}
-            aria-label="Evening wrap-up time"
-            className="h-9 rounded-xl bg-muted px-3 text-sm font-medium outline-none"
-          >
-            {[17, 18, 19, 20, 21, 22].map((h) => (
-              <option key={h} value={h}>
-                {h - 12} pm
-              </option>
-            ))}
-          </select>
-        </Row>
-      </div>
+      <InstallCard />
 
       <div className="mt-4 rounded-2xl border bg-card p-4">
         <p className="flex items-center gap-2 text-[15px] font-medium">
           <Lock className="size-4 text-primary" /> Your data stays on this device
         </p>
         <p className="mt-1 text-sm text-muted-foreground text-pretty">
-          No account, no tracking. Everything lives in this browser. Export a copy to move it or keep it safe.
+          Free. No account, no ads, no tracking. Your list is saved in this browser only. Export a copy to move it to a new phone.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <button type="button" onClick={exportData} className="inline-flex h-10 items-center gap-2 rounded-xl bg-muted px-4 text-sm font-medium hover:bg-accent">
+          <button type="button" onClick={exportData} className="inline-flex h-11 items-center gap-2 rounded-xl bg-muted px-4 text-sm font-medium hover:bg-accent">
             <Download className="size-4" /> Export
           </button>
-          <button type="button" onClick={() => file.current?.click()} className="inline-flex h-10 items-center gap-2 rounded-xl bg-muted px-4 text-sm font-medium hover:bg-accent">
+          <button type="button" onClick={() => file.current?.click()} className="inline-flex h-11 items-center gap-2 rounded-xl bg-muted px-4 text-sm font-medium hover:bg-accent">
             <Upload className="size-4" /> Import
           </button>
           <input
@@ -90,21 +106,38 @@ export function Settings({ state, actions }: { state: State; actions: Actions })
       <div className="mt-4 rounded-2xl border bg-card p-4">
         <p className="text-[15px] font-medium">Start over</p>
         <p className="mt-1 text-sm text-muted-foreground">Clears everything on this device. Export first if you want a copy.</p>
-        <button
-          type="button"
-          onClick={() => {
-            if (window.confirm("Clear everything and start fresh?")) {
-              actions.reset();
-              toast("Fresh start.");
-            }
-          }}
-          className="mt-3 inline-flex h-10 items-center gap-2 rounded-xl px-4 text-sm font-medium text-destructive hover:bg-destructive/10"
-        >
-          <RotateCcw className="size-4" /> Clear everything
-        </button>
+        {confirm ? (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                actions.reset();
+                try {
+                  localStorage.removeItem("nudgeme.draft");
+                } catch {}
+                toast("Everything is cleared. Fresh start.");
+              }}
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-destructive px-4 text-sm font-semibold text-white"
+            >
+              Yes, delete everything
+            </button>
+            <button type="button" onClick={() => setConfirm(false)} className="inline-flex h-11 items-center rounded-xl bg-muted px-4 text-sm font-medium">
+              Keep my list
+            </button>
+          </div>
+        ) : (
+          <button type="button" onClick={() => setConfirm(true)} className="mt-3 inline-flex h-11 items-center gap-2 rounded-xl px-4 text-sm font-medium text-destructive hover:bg-destructive/10">
+            <RotateCcw className="size-4" /> Clear everything
+          </button>
+        )}
       </div>
 
-      <p className="mt-8 text-center text-xs text-muted-foreground">NudgeMe · One calm step at a time</p>
+      <p className="mt-8 text-center text-xs text-muted-foreground">
+        NudgeMe · One calm step at a time ·{" "}
+        <Link href="/privacy" className="underline underline-offset-2">
+          Privacy and about
+        </Link>
+      </p>
     </div>
   );
 }

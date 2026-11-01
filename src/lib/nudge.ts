@@ -44,6 +44,12 @@ export type Meta = {
   startedAt?: string;
   /** Has the home-screen tour been shown? */
   toured?: boolean;
+  /** Small steps finished. Each one grows a plant too. */
+  stepWins?: number;
+  /** Daily calendar reminders the person added. */
+  reminders?: { morning: string; evening: string; added: string };
+  /** A running step timer. */
+  timer?: { taskId: string; end: number; mins: number };
 };
 
 export type State = { v: 1; tasks: Task[]; entries: Entry[]; meta: Meta };
@@ -92,22 +98,26 @@ export type Parsed =
   | { kind: "task"; title: string; bucket: Bucket; due?: string; est?: Est; step: string }
   | { kind: "idea" | "note"; text: string };
 
-const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const cap = (s: string) => (/^https?:/i.test(s) ? s : s.charAt(0).toUpperCase() + s.slice(1));
 
 export function suggestStep(title: string): string {
   const t = title.toLowerCase();
+  if (/\b(airtime|recharge|data bundle|top ?up)\b/.test(t)) return "Dial your recharge code or open your bank app.";
   if (/^(call|phone|ring)\b/.test(t)) return "Find the number and press call.";
-  if (/^(email|reply|message|text|dm|send|follow up)\b/.test(t))
-    return "Open a blank message and write the first line.";
-  if (/^(buy|order|get|pick up)\b/.test(t)) return "Open the shop or app and add it to your cart.";
-  if (/^(pay|transfer)\b/.test(t)) return "Open your banking app.";
-  if (/^(write|draft|outline|blog)\b/.test(t)) return "Open a blank page and write one rough sentence.";
-  if (/^(design|redesign|sketch|mock)\b/.test(t)) return "Open the file and screenshot what's there now.";
-  if (/^(fix|review|check|update|edit|clean)\b/.test(t)) return "Open it and list what needs changing.";
+  if (/^(email|reply|message|text|dm|send|follow up|whatsapp)\b/.test(t))
+    return "Open a new message and write the first line.";
+  if (/^(buy|order|get|pick up)\b/.test(t)) return "Write down where you will buy it, or open the shop app.";
+  if (/^(pay|transfer)\b/.test(t)) return "Open your bank app, or tell the person who pays.";
+  if (/^(write|draft|outline|blog|finish)\b.*\b(essay|article|post|report|letter|story)\b/.test(t) || /^(write|draft|outline|blog)\b/.test(t))
+    return "Open a blank page and write one rough sentence.";
+  if (/^(design|redesign|sketch|mock)\b/.test(t)) return "Open the file and look at what is there now.";
+  if (/^(clean|wash|tidy|laundry|sweep|iron)\b/.test(t)) return "Set a 5 minute timer and do one small part.";
+  if (/^(fix|review|check|update|edit)\b/.test(t)) return "Open the thing and write down what needs changing.";
   if (/^(book|schedule|plan)\b/.test(t)) return "Open your calendar and pick a day.";
-  if (/^(read|watch|learn|study)\b/.test(t)) return "Open it and do the first 5 minutes.";
-  if (/^(build|make|create|set up|setup)\b/.test(t)) return "Write down the very first thing it needs.";
-  return "Set a 10 minute timer and just begin.";
+  if (/^(read|study|revise|learn)\b/.test(t)) return "Open your notes or book and read for 5 minutes.";
+  if (/^(watch)\b/.test(t)) return "Press play and watch the first 5 minutes.";
+  if (/^(build|make|create|set up|setup)\b/.test(t)) return "Write down the very first thing you need to do.";
+  return "Set a 10 minute timer and just start.";
 }
 
 function nextWeekday(name: string, today: string) {
@@ -119,9 +129,13 @@ function nextWeekday(name: string, today: string) {
   return addDays(today, diff);
 }
 
+const TOMORROW = /\b(tomorrow|tomorow|tommorow|tommorrow|tomorro|tmrw|tmr|2moro|2morrow|tmorrow)\b/;
+const MAX_TITLE = 140;
+
 export function parseCapture(raw: string, today = ymd()): Parsed | null {
-  let text = raw.trim().replace(/^[-*•\d.)\s]+/, "").trim();
-  if (!text) return null;
+  let text = raw.trim().replace(/^[-*•\d.)\s]+/, "").replace(/\s+/g, " ").trim();
+  if (!/[\p{L}\p{N}\p{Extended_Pictographic}]/u.test(text)) return null;
+  if (text.length > MAX_TITLE) text = text.slice(0, MAX_TITLE - 1).trimEnd() + "…";
   const low = text.toLowerCase();
 
   if (/^(idea|what if|maybe|could we|imagine)\b/.test(low)) {
@@ -136,8 +150,12 @@ export function parseCapture(raw: string, today = ymd()): Parsed | null {
   if (/\b(today|tonight|asap|right now)\b/.test(low)) {
     bucket = "today";
     due = today;
-  } else if (/\btomorrow\b/.test(low)) {
+  } else if (TOMORROW.test(low)) {
     due = addDays(today, 1);
+  } else if (/\b(next week|in a week)\b/.test(low)) {
+    due = addDays(today, 7);
+  } else if (/\b(this weekend|weekend)\b/.test(low)) {
+    due = nextWeekday("saturday", today);
   } else if (/\b(someday|one day|eventually|sometime)\b/.test(low)) {
     bucket = "later";
   } else {
@@ -148,7 +166,7 @@ export function parseCapture(raw: string, today = ymd()): Parsed | null {
   // Tidy the title: drop filler and the date words we already captured.
   text = text
     .replace(/^(i need to|i have to|i should|i must|need to|have to|remember to|remind me to|don't forget to|dont forget to|todo:?|to do:?)\s+/i, "")
-    .replace(/\s+\b(today|tonight|tomorrow|asap|right now|someday|eventually|sometime)\b\.?$/i, "")
+    .replace(/\s+\b(today|tonight|tomorrow|tomorow|tommorow|tommorrow|tomorro|tmrw|tmr|2moro|2morrow|tmorrow|asap|right now|someday|eventually|sometime|next week|in a week|this weekend|weekend)\b\.?$/i, "")
     .replace(/\s+\b(on |by |this |next )?(sunday|monday|tuesday|wednesday|thursday|friday|saturday)\b\.?$/i, "")
     .replace(/[.]+$/, "")
     .trim();
@@ -200,9 +218,9 @@ export function makeEntry(kind: EntryKind, text: string, today = ymd(), linkedTa
 export function shrinkStep(task: Task): string {
   const next = task.subs.find((s) => !s.d);
   if (next) return `Start with: ${next.t}`;
-  if (/^Set a (5|2) minute timer/.test(task.step)) return "Just open it. That's the whole step.";
-  if (/timer/.test(task.step)) return "Set a 5 minute timer and just begin.";
-  return "Just open it. That's the whole step.";
+  if (/^Do it for 2 minutes|^Set a (5|2) minute timer/.test(task.step)) return "Do it for 2 minutes. You can stop after that.";
+  if (/timer/.test(task.step)) return "Set a 5 minute timer and just start.";
+  return "Do it for 2 minutes. You can stop after that.";
 }
 
 // ---------- new-day rollover (the evening wrap-up rules) ----------
@@ -243,12 +261,58 @@ export const WIN_LINES = [
 
 /** Rough size of a first step, for the "First step · 10 min" label. */
 export function stepMinutes(step: string): string {
-  const m = step.match(/(\d+)\s*minute/i);
-  if (m) return `${m[1]} min`;
-  if (/^just open it/i.test(step)) return "1 min";
-  if (/^(find|open|start with)/i.test(step)) return "2 min";
-  return "5 min";
+  return `${stepMins(step)} min`;
 }
+export function stepMins(step: string): number {
+  const m = step.match(/(\d+)\s*minute/i);
+  if (m) return Number(m[1]);
+  if (/^(find|open|dial|press|write down|start with)/i.test(step)) return 2;
+  return 5;
+}
+
+/** Make saved data safe, whatever shape it is in. */
+export function sanitize(raw: unknown): State {
+  const fresh = freshState();
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return fresh;
+  const r = raw as Partial<State>;
+  const BUCKETS: Bucket[] = ["today", "week", "later", "done"];
+  const tasks: Task[] = (Array.isArray(r.tasks) ? r.tasks : [])
+    .filter((t): t is Task => !!t && typeof t === "object" && typeof (t as Task).title === "string" && !!(t as Task).title.trim())
+    .map((t) => ({
+      ...t,
+      id: typeof t.id === "string" && t.id ? t.id : uid(),
+      title: t.title.slice(0, MAX_TITLE),
+      bucket: BUCKETS.includes(t.bucket) ? t.bucket : "week",
+      must: !!t.must,
+      step: typeof t.step === "string" && t.step.trim() ? t.step : suggestStep(t.title),
+      subs: (Array.isArray(t.subs) ? t.subs : []).map((x: unknown) =>
+        typeof x === "string" ? { t: x, d: false } : { t: String((x as Sub)?.t ?? ""), d: !!(x as Sub)?.d }
+      ),
+      createdAt: typeof t.createdAt === "string" ? t.createdAt : new Date().toISOString(),
+    }));
+  // Only one "one thing" at a time.
+  let seen = false;
+  for (const t of tasks) {
+    if (t.must && t.bucket === "today" && !seen) seen = true;
+    else t.must = false;
+  }
+  const entries: Entry[] = (Array.isArray(r.entries) ? r.entries : [])
+    .filter((e): e is Entry => !!e && typeof e === "object" && typeof (e as Entry).text === "string")
+    .map((e) => ({
+      ...e,
+      id: typeof e.id === "string" && e.id ? e.id : uid(),
+      kind: e.kind === "note" ? "note" : "idea",
+      status: e.status === "archived" || e.status === "task" ? e.status : "open",
+      nudgeCount: Number(e.nudgeCount) || 0,
+      createdAt: typeof e.createdAt === "string" ? e.createdAt : new Date().toISOString(),
+    }));
+  const meta = r.meta && typeof r.meta === "object" && !Array.isArray(r.meta) ? r.meta : fresh.meta;
+  return { v: 1, tasks, entries, meta: { ...meta, onboarded: !!meta.onboarded, eveningHour: Number(meta.eveningHour) || 18 } };
+}
+
+/** Same title already open? Used to skip accidental doubles. */
+export const isDuplicate = (state: State, title: string) =>
+  state.tasks.some((t) => t.bucket !== "done" && t.title.toLowerCase() === title.toLowerCase());
 
 /** Today first, then anything due soonest. Used to suggest a one thing. */
 export function candidates(state: State, limit = 3): Task[] {

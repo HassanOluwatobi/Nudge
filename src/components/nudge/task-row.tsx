@@ -8,8 +8,9 @@ import { prettyDue, type Task, WIN_LINES, ymd } from "@/lib/nudge";
 import type { Actions } from "@/lib/use-nudge";
 import { DoneCircle } from "./done-circle";
 
-export function finish(actions: Actions, task: Task, lowEnergy = false) {
+export function finish(actions: Actions, task: Task, lowEnergy = false, quiet = false) {
   actions.complete(task.id);
+  if (quiet) return;
   const line = lowEnergy || task.must ? "That was your one thing. Today is a win." : WIN_LINES[Math.floor(Math.random() * WIN_LINES.length)];
   toast(line, {
     duration: 5000,
@@ -30,7 +31,7 @@ export function TaskMeta({ task }: { task: Task }) {
         {prettyDue(task.due, today)}
       </span>
     );
-  if (task.est) bits.push(<span key="est">{EST_LABEL[task.est]}</span>);
+  if (task.est) bits.push(<span key="est">Whole task: {EST_LABEL[task.est].toLowerCase()}</span>);
   if (task.subs.length)
     bits.push(
       <span key="subs" className="inline-flex items-center gap-1">
@@ -88,13 +89,13 @@ export function TaskRow({
             onOpen(task.id);
           }}
           className={cn(
-            "nm-open block text-left text-[15px] leading-snug font-medium text-pretty outline-none",
+            "nm-open block text-left text-[15px] leading-snug font-medium text-pretty outline-none [overflow-wrap:anywhere] line-clamp-3",
             done && "text-muted-foreground line-through decoration-muted-foreground/40"
           )}
         >
           {task.title}
         </button>
-        {!done && <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground text-pretty">{task.step}</p>}
+        {!done && <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground text-pretty">{task.step.replace(/^Start with: /, "")}</p>}
         {!done && <TaskMeta task={task} />}
       </div>
       {showStar && !done && (

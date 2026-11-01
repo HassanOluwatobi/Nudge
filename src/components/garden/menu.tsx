@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Moon, PlayCircle, Sun } from "lucide-react";
+import { BellRing, Moon, PlayCircle, Sun } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { doneOn, type State, type Task, ymd } from "@/lib/nudge";
 import type { Actions } from "@/lib/use-nudge";
@@ -22,6 +22,7 @@ export function GardenMenu({
   onOpenTask,
   onTour,
   onCheckin,
+  onReminders,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -30,6 +31,7 @@ export function GardenMenu({
   onOpenTask: (id: string) => void;
   onTour: () => void;
   onCheckin: (k: "morning" | "evening") => void;
+  onReminders: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("list");
   const today = ymd();
@@ -44,7 +46,7 @@ export function GardenMenu({
   return (
     <Drawer open={open} onOpenChange={onOpenChange} showSwipeHandle>
       <DrawerContent className="mx-auto w-full max-w-xl bg-[#fffaf7]">
-        <DrawerTitle className="sr-only">Your garden shed</DrawerTitle>
+        <DrawerTitle className="sr-only">My list</DrawerTitle>
         <DrawerDescription className="sr-only">Your whole list, ideas and settings.</DrawerDescription>
         <div className="overflow-y-auto px-5 pt-2 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
           <div className="flex gap-1 rounded-full bg-[#f3ece9] p-1" role="tablist">
@@ -70,19 +72,22 @@ export function GardenMenu({
 
           {tab === "list" && (
             <div className="mt-2">
-              <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="mt-3 grid grid-cols-2 gap-2">
                 <button type="button" onClick={() => onCheckin("morning")} className="candy candy-soft h-auto flex-col gap-1 rounded-2xl py-3 text-[13px]">
                   <Sun className="size-5 text-[#e8a33d]" /> Morning plan
                 </button>
                 <button type="button" onClick={() => onCheckin("evening")} className="candy candy-soft h-auto flex-col gap-1 rounded-2xl py-3 text-[13px]">
-                  <Moon className="size-5 text-[#7c5df2]" /> Evening wrap
+                  <Moon className="size-5 text-[#7c5df2]" /> Evening check
+                </button>
+                <button type="button" onClick={onReminders} className="candy candy-soft h-auto flex-col gap-1 rounded-2xl py-3 text-[13px]">
+                  <BellRing className="size-5 text-[#6b4fd8]" /> {state.meta.reminders ? "Reminders are on" : "Daily reminders"}
                 </button>
                 <button type="button" onClick={onTour} className="candy candy-soft h-auto flex-col gap-1 rounded-2xl py-3 text-[13px]">
                   <PlayCircle className="size-5 text-[#e8664f]" /> Show me how
                 </button>
               </div>
               {lists.every(([, l]) => !l.length) && (
-                <p className="mt-8 text-center text-[15px] text-muted-foreground">Nothing here yet. Tell Nudge what&apos;s on your mind.</p>
+                <p className="mt-8 text-center text-[15px] text-muted-foreground">Nothing here yet. Type something in the box at the bottom of the home screen.</p>
               )}
               {lists.map(([title, l]) =>
                 l.length ? (

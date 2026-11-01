@@ -88,7 +88,7 @@ function Morning({ state, actions, onClose }: { state: State; actions: Actions; 
 
       {candidates.length > 0 && (
         <div className="mt-5">
-          <p className="mb-2 text-xs font-medium text-muted-foreground">Pick today&apos;s one thing</p>
+          <p className="mb-2 text-xs font-medium text-muted-foreground">Choose today&apos;s one thing</p>
           <ul className="space-y-1.5">
             {candidates.map((t) => (
               <li key={t.id}>
@@ -134,7 +134,7 @@ function Evening({ state, actions, onClose }: { state: State; actions: Actions; 
   return (
     <div>
       <p className="flex items-center gap-1.5 text-xs font-medium text-primary">
-        <Moon className="size-3.5" /> Evening wrap-up
+        <Moon className="size-3.5" /> Evening check
       </p>
       <DrawerTitle className="mt-1.5 font-serif text-[28px] leading-tight font-normal tracking-tight text-balance">
         {wins.length === 0

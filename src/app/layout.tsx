@@ -1,14 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { GeistSans } from "geist/font/sans";
-import { GeistSerif } from "geist/font/serif";
+import localFont from "next/font/local";
 import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
+// Two font files only, so the first screen loads fast on slow phones.
+const GeistSans = localFont({ src: "./fonts/Geist-Variable.woff2", variable: "--font-geist-sans", weight: "100 900", display: "swap" });
+const GeistSerif = localFont({ src: "./fonts/GeistSerifVF.woff2", variable: "--font-geist-serif", weight: "400", display: "swap", fallback: ["Georgia", "Times New Roman", "serif"] });
+
 export const metadata: Metadata = {
   title: "NudgeMe",
   description:
-    "One calm step at a time. Dump everything on your mind. NudgeMe picks out one thing and makes it small enough to start.",
+    "One calm step at a time. A free, simple to-do helper for ADHD. Write everything down, NudgeMe picks one thing and makes it small enough to start. No sign-up.",
   manifest: "/manifest.webmanifest",
   appleWebApp: { capable: true, title: "NudgeMe", statusBarStyle: "default" },
   icons: {
@@ -21,7 +24,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#fde6da",
+  themeColor: "#ffd8c2",
 };
 
 export default function RootLayout({
@@ -33,10 +36,17 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${GeistSans.variable} ${GeistSerif.variable}`}
     >
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var h=new Date().getHours();document.documentElement.dataset.time=h<5?"night":h<11?"morning":h<17?"day":h<21?"evening":"night";})();`,
+          }}
+        />
+      </head>
       <body>
         <ThemeProvider attribute="class" forcedTheme="light" defaultTheme="light">
           {children}
-          <Toaster position="bottom-center" offset={104} mobileOffset={{ bottom: 104 }} />
+          <Toaster position="top-center" offset={16} mobileOffset={{ top: 12 }} />
         </ThemeProvider>
       </body>
     </html>
