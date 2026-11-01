@@ -59,8 +59,8 @@ export function Todo({
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-36 safe-t">
       <TopBar done={finished.length} total={totalToday} onSettings={onSettings} onAdd={onAdd} onHelp={onHelp} />
-      <h1 className="mt-4 text-center font-serif text-[44px] leading-none tracking-[-0.025em]">To-do</h1>
-      <p className="t-small mt-2 text-center text-ink-3">Hold a task for quick actions.</p>
+      <h1 className="mt-4 text-center font-serif text-[44px] leading-none tracking-[-0.025em]">Plan</h1>
+      <p className="t-small mt-2 text-center text-ink-3">Everything you have, sorted by when. Hold a task for options.</p>
 
       {groups.map(([b, items]) => (
         <section key={b} className="mt-7" aria-labelledby={`b-${b}`}>

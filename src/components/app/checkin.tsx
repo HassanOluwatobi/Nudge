@@ -204,7 +204,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
                     <button type="button" className="btn btn-line" onClick={() => (actions.capture(thought, { bucket: "week", due: addDays(today, 1) }), toast("Saved for tomorrow."), close(true))}>
                       Save as task
                     </button>
-                    <button type="button" className="btn btn-line" onClick={() => (actions.addEntry(thought, "idea"), toast("Saved in Ideas."), close(true))}>
+                    <button type="button" className="btn btn-line" onClick={() => (actions.addEntry(thought, "idea"), toast("Saved under Ideas on Home."), close(true))}>
                       Save as idea
                     </button>
                   </div>
@@ -270,7 +270,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
         {i === 2 && (
           <motion.div key="w2" {...swap} className="pt-5">
             <h3 className="t-title">You are ready for the week</h3>
-            <p className="t-body mt-2 text-ink-2">{ideas ? `${ideas} ${ideas === 1 ? "idea is" : "ideas are"} resting in Ideas. They will come back when it is time.` : "Your ideas will come back on Today when it is time."}</p>
+            <p className="t-body mt-2 text-ink-2">{ideas ? `${ideas} ${ideas === 1 ? "idea is" : "ideas are"} resting under Ideas on Home. They will come back when it is time.` : "Your ideas will come back on Today when it is time."}</p>
             <button type="button" className="btn btn-signal mt-6 w-full" onClick={() => close(true)}>
               Done
             </button>

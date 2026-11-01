@@ -88,7 +88,7 @@ export function Capture({
       writeDraft("");
       setText("");
       feel("save", "success");
-      toast(kind === "idea" ? "Idea saved. It will come back on Today in a few days." : "Note saved in Ideas.");
+      toast(kind === "idea" ? "Idea saved. It comes back on Home in a few days." : "Note saved. Find it under Notes on Home.");
       onClose();
     }
   };
@@ -181,8 +181,8 @@ export function Capture({
 /** The optional details after a task is saved. Every choice is one tap. */
 const KIND_HINT: Record<Kind, string> = {
   task: "Something to do. It goes on your list, and you can add steps and a time.",
-  idea: "A spark for later. It comes back on Today in a few days.",
-  note: "Something to keep. It waits in Ideas until you need it.",
+  idea: "A spark for later. It comes back on Home in a few days.",
+  note: "Something to keep. It waits under Notes until you need it.",
 };
 
 function TaskDetails({ task, actions, onDone, onAnother }: { task: Task; actions: Actions; onDone: () => void; onAnother: () => void }) {

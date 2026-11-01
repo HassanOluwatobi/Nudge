@@ -1,15 +1,14 @@
 "use client";
 
-import { CalendarDays, Lightbulb, ListChecks, Timer } from "lucide-react";
+import { House, ListChecks, Timer } from "lucide-react";
 import { motion } from "motion/react";
 
-export type Tab = "todo" | "today" | "focus" | "ideas";
+export type Tab = "today" | "todo" | "focus";
 
 const ITEMS: { id: Tab; label: string; icon: typeof ListChecks }[] = [
-  { id: "todo", label: "To-do", icon: ListChecks },
-  { id: "today", label: "Today", icon: CalendarDays },
+  { id: "today", label: "Home", icon: House },
+  { id: "todo", label: "Plan", icon: ListChecks },
   { id: "focus", label: "Focus", icon: Timer },
-  { id: "ideas", label: "Ideas", icon: Lightbulb },
 ];
 
 /** A floating tab bar, after Tiimo. Dark on Focus so it stays quiet there. */
@@ -19,7 +18,7 @@ export function TabBar({ tab, onTab, dark, running }: { tab: Tab; onTab: (t: Tab
       <div className={`pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t ${dark ? "from-night via-night/80" : "from-paper via-paper/80"} to-transparent`} />
       <nav
         aria-label="Main"
-        className={`pointer-events-auto relative mx-auto grid w-[calc(100%-2rem)] max-w-[23rem] grid-cols-4 gap-1 rounded-[26px] p-1.5 backdrop-blur-xl ${
+        className={`pointer-events-auto relative mx-auto grid w-[calc(100%-2rem)] max-w-[19rem] grid-cols-3 gap-1 rounded-[26px] p-1.5 backdrop-blur-xl ${
           dark ? "bg-white/[0.08] ring-1 ring-white/10" : "bg-white/90 shadow-[0_1px_0_var(--hi)_inset,0_16px_40px_-18px_rgb(6_11_43/0.45)] ring-1 ring-line/60"
         }`}
       >

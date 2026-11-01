@@ -1,27 +1,25 @@
 "use client";
 
-import { Archive, ArrowUp, ChevronDown, Lightbulb, Mic, NotebookPen, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { Archive, ChevronDown, Lightbulb, NotebookPen, Pencil, Sparkles, Trash2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { type Entry, type EntryKind, type State, prettyDue, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
-import { useSpeech } from "@/lib/use-speech";
 import { feel } from "@/lib/feedback";
 import { useHold } from "@/lib/use-hold";
-import { keepFocus } from "./steps";
 import { Sheet } from "./sheet";
-import { TopBar } from "./today";
 
 const ago = (iso: string) => {
   const days = Math.round((Date.now() - Date.parse(iso)) / 864e5);
   return days <= 0 ? "Today" : days === 1 ? "Yesterday" : `${days} days ago`;
 };
 
-/** Ideas and notes. Ideas come back on Today after a while. Notes stay here. */
-export function Ideas({ state, actions, onAdd, onSettings, onHelp, doneCount, totalCount }: { state: State; actions: Actions; onAdd: () => void; onSettings: () => void; onHelp: () => void; doneCount: number; totalCount: number }) {
-  const [kind, setKind] = useState<EntryKind>("idea");
-  const [text, setText] = useState("");
+/**
+ * Ideas or notes as a list, shown on Home under the Ideas and Notes toggle.
+ * Tap to open, hold for options. Ideas come back on Home after a while.
+ */
+export function EntryList({ kind, state, actions }: { kind: EntryKind; state: State; actions: Actions }) {
   const [open, setOpen] = useState<Entry | null>(null);
   const [menu, setMenu] = useState<Entry | null>(null);
   // Keep the last item while the menu sheet slides away.
@@ -31,76 +29,19 @@ export function Ideas({ state, actions, onAdd, onSettings, onHelp, doneCount, to
   }, [menu]);
   const [edit, setEdit] = useState("");
   const [showArchived, setShowArchived] = useState(false);
-  const speech = useSpeech((t, final) => final && setText((v) => (v ? `${v} ${t}` : t)));
   const today = ymd();
   const list = state.entries.filter((e) => e.kind === kind && e.status === "open");
   const archived = state.entries.filter((e) => e.kind === kind && e.status !== "open");
 
-  const save = () => {
-    const e = actions.addEntry(text, kind);
-    if (!e) return;
-    setText("");
-    feel("save", "success");
-    toast(kind === "idea" ? "Idea saved. It will come back in a few days." : "Note saved.");
-  };
-
   return (
-    <div className="mx-auto w-full max-w-md px-4 pb-36 safe-t">
-      <TopBar done={doneCount} total={totalCount} onSettings={onSettings} onAdd={onAdd} onHelp={onHelp} />
-      <h1 className="mt-4 text-center font-serif text-[44px] leading-none tracking-[-0.025em]">Ideas</h1>
-      <p className="t-small mt-2 text-center text-ink-3">Ideas come back on Today later. Notes stay here.</p>
-
-      <div className="mx-auto mt-6 seg grid w-full max-w-[260px] grid-cols-2 p-1" role="tablist" aria-label="Ideas or notes">
-        {(["idea", "note"] as EntryKind[]).map((k) => (
-          <button key={k} type="button" role="tab" aria-selected={kind === k} onClick={() => (setKind(k), feel("tap"))} className="relative h-10 rounded-full text-[15px] font-semibold">
-            {kind === k && <motion.span layoutId="seg" className="seg-knob absolute inset-0" transition={{ type: "spring", bounce: 0, duration: 0.35 }} />}
-            <span className={`relative ${kind === k ? "text-ink" : "text-ink-3"}`}>{k === "idea" ? "Ideas" : "Notes"}</span>
-          </button>
-        ))}
-      </div>
-
-      <form
-        className="task-row mt-5 flex items-end gap-2 p-2 pl-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          save();
-        }}
-      >
-        <label htmlFor="jot" className="sr-only">
-          {kind === "idea" ? "Jot an idea" : "Write a note"}
-        </label>
-        <textarea
-          id="jot"
-          rows={1}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              save();
-            }
-          }}
-          placeholder={kind === "idea" ? "Jot an idea…" : "Write a note…"}
-          className="max-h-40 min-h-11 flex-1 resize-none bg-transparent py-2.5 text-[16px] placeholder:text-ink-3 focus:outline-none [field-sizing:content]"
-        />
-        {speech.supported && (
-          <button type="button" onClick={speech.toggle} aria-pressed={speech.listening} aria-label={speech.listening ? "Stop listening" : "Speak"} className={`btn btn-icon size-11 ${speech.listening ? "btn-danger" : "btn-line"}`}>
-            <Mic className="size-5" />
-          </button>
-        )}
-        <button type="submit" {...keepFocus} disabled={!text.trim()} aria-label={kind === "idea" ? "Save idea" : "Save note"} className="btn btn-signal btn-icon size-11 shrink-0">
-          <ArrowUp className="size-5" />
-        </button>
-      </form>
-      {speech.listening && <p className="t-small mt-2 px-2 text-ink-3">Listening. Your browser turns speech into text, and some browsers use their own online service for this.</p>}
-
+    <div>
       {list.length === 0 ? (
-        <div className="mt-10 text-center">
+        <div className="mt-8 rounded-[24px] bg-white px-5 py-7 text-center ring-1 ring-line">
           <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-signal-soft text-signal-ink">{kind === "idea" ? <Lightbulb className="size-6" /> : <NotebookPen className="size-6" />}</span>
-          <p className="t-body mt-3 text-ink-2">{kind === "idea" ? "No ideas yet. Put them here so they stop circling in your head." : "No notes yet. Keep numbers, addresses and little facts here."}</p>
+          <p className="t-body mt-3 text-ink-2">{kind === "idea" ? "No ideas yet. Type one above so it stops circling in your head. It comes back in a few days." : "No notes yet. Type one above. Numbers, addresses, little facts."}</p>
         </div>
       ) : (
-        <ul className="mt-6 space-y-2">
+        <ul className="mt-5 space-y-2">
           <AnimatePresence initial={false}>
             {list.map((e) => (
               <EntryItem key={e.id} entry={e} today={today} onOpen={() => (setOpen(e), setEdit(e.text))} onMenu={() => setMenu(e)} />

@@ -2,13 +2,14 @@
 
 import { ArrowRight, CalendarSync, ChevronRight, ChevronDown, CircleHelp, Feather, Lightbulb, Moon, Plus, Settings2, Sparkles, Sun } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { type Part, type State, type Task, PARTS, PART_NAME, checkinDue, doneToday, dueIdeas, nextStep, partNow, suggestion, todayTasks, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { feel } from "@/lib/feedback";
 import { Credit } from "./settings";
-import { QuickCapture } from "./quick-capture";
+import { type Kind, QuickCapture } from "./quick-capture";
+import { EntryList } from "./ideas";
 import { TaskRow, Tile, DoneList } from "./task-row";
 import { useHold } from "@/lib/use-hold";
 
@@ -55,6 +56,12 @@ export function TopBar({ done, total, onSettings, onAdd, onHelp }: { done: numbe
   );
 }
 
+const slide = {
+  enter: (d: number) => ({ opacity: 0, x: d * 24 }),
+  center: { opacity: 1, x: 0 },
+  exit: (d: number) => ({ opacity: 0, x: d * -24 }),
+};
+
 const CHECKIN = {
   morning: { icon: Sun, title: "Morning kickoff", body: "2 min", hue: "hue-peach" },
   evening: { icon: Moon, title: "Evening wrap-up", body: "2 min", hue: "hue-lilac" },
@@ -69,6 +76,8 @@ export function Today({
   onSettings,
   onOpen,
   onMenu,
+  view,
+  onView,
   onFocus,
   onCheckin,
   onHelp,
@@ -81,6 +90,8 @@ export function Today({
   onSettings: () => void;
   onOpen: (t: Task) => void;
   onMenu: (t: Task) => void;
+  view: Kind;
+  onView: (v: Kind) => void;
   onFocus: (t: Task) => void;
   onCheckin: (k: "morning" | "evening" | "weekly") => void;
   onHelp: () => void;
@@ -100,6 +111,20 @@ export function Today({
   const date = new Date().toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
   const step = pick ? nextStep(pick) : undefined;
 
+  // Slide the content toward the side of the toggle you tapped.
+  const ORDER: Kind[] = ["task", "idea", "note"];
+  const prev = useRef(view);
+  const dir = Math.sign(ORDER.indexOf(view) - ORDER.indexOf(prev.current));
+  useEffect(() => {
+    prev.current = view;
+  }, [view]);
+  const openIdeas = state.entries.filter((e) => e.kind === "idea" && e.status === "open").length;
+  const openNotes = state.entries.filter((e) => e.kind === "note" && e.status === "open").length;
+  const VIEWS: [Kind, string, number][] = [
+    ["task", "Tasks", list.length],
+    ["idea", "Ideas", openIdeas],
+    ["note", "Notes", openNotes],
+  ];
   const pickHold = useHold(() => {
     if (!pick) return;
     feel("open");
@@ -119,7 +144,30 @@ export function Today({
         <p className="t-body mt-2 text-ink-2">{date}</p>
       </div>
 
-      <QuickCapture state={state} actions={actions} announce={announce} onOpen={onOpen} />
+      {/* One toggle for everything. What you type lands in the list you are looking at. */}
+      <div className="seg mt-6 grid grid-cols-3 p-1" role="tablist" aria-label="Show">
+        {VIEWS.map(([k, name, count]) => (
+          <button key={k} type="button" role="tab" aria-selected={view === k} onClick={() => (onView(k), feel("tick", "light"))} className="relative h-11 rounded-full text-[15px] font-semibold">
+            {view === k && <motion.span layoutId="home-seg" className="seg-knob absolute inset-0" transition={{ type: "spring", bounce: 0, duration: 0.32 }} />}
+            <span className={`relative ${view === k ? "text-ink" : "text-ink-3"}`}>
+              {name}
+              {count > 0 && <span className="ml-1.5 text-[13px] font-medium tabular-nums text-ink-3">{count}</span>}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-3">
+        <QuickCapture kind={view} state={state} actions={actions} announce={announce} onOpen={onOpen} />
+      </div>
+
+      <AnimatePresence mode="wait" initial={false} custom={dir}>
+      {view !== "task" ? (
+        <motion.div key={view} custom={dir} variants={slide} initial="enter" animate="center" exit="exit" transition={{ type: "spring", bounce: 0, duration: 0.28 }}>
+          <EntryList kind={view} state={state} actions={actions} />
+        </motion.div>
+      ) : (
+      <motion.div key="task" custom={dir} variants={slide} initial="enter" animate="center" exit="exit" transition={{ type: "spring", bounce: 0, duration: 0.28 }}>
 
       {due && (
         <motion.button
@@ -229,7 +277,7 @@ export function Today({
             <button type="button" className="chip" onClick={() => (actions.snoozeEntry(idea.id), feel("tap", "light"), toast("It will come back later."))}>
               Not yet
             </button>
-            <button type="button" className="chip" onClick={() => (actions.archiveEntry(idea.id), feel("tap", "light"), toast("Archived. You can find it in Ideas."))}>
+            <button type="button" className="chip" onClick={() => (actions.archiveEntry(idea.id), feel("tap", "light"), toast("Archived. Find it under Ideas."))}>
               Let it go
             </button>
           </div>
@@ -285,6 +333,10 @@ export function Today({
           </AnimatePresence>
         </section>
       )}
+
+      </motion.div>
+      )}
+      </AnimatePresence>
 
       <div className="mt-10">
         <Credit />

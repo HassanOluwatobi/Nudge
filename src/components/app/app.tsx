@@ -17,12 +17,12 @@ import { Finish } from "./finish";
 import { Focus } from "./focus";
 import { Guide } from "./guide";
 import { ImportSheet } from "./import";
-import { Ideas } from "./ideas";
 import { Petals } from "./petals";
 import { Settings } from "./settings";
 import { TabBar, type Tab } from "./tabbar";
 import { TaskMenu, TaskSheet } from "./task-sheet";
 import { Today } from "./today";
+import type { Kind } from "./quick-capture";
 import { Todo } from "./todo";
 
 type Over = { name: "finish"; task: Task } | { name: "rest" } | null;
@@ -34,7 +34,7 @@ const page = {
   transition: { type: "spring" as const, bounce: 0, duration: 0.32 },
 };
 
-const ORDER: Tab[] = ["todo", "today", "focus", "ideas"];
+const ORDER: Tab[] = ["today", "todo", "focus"];
 // Tabs slide in the direction you moved, so the bar and the page agree.
 const tabMotion = {
   enter: (d: number) => ({ opacity: 0, x: d * 28 }),
@@ -46,6 +46,8 @@ export function NudgeApp() {
   const { state, actions } = useTasks();
   useKeyboardInset();
   const [tab, setTab] = useState<Tab>("today");
+  // Home shows Tasks, Ideas or Notes. It stays where you left it while the app is open.
+  const [homeView, setHomeView] = useState<Kind>("task");
   const [over, setOver] = useState<Over>(null);
   // undefined = follow the suggestion, null = just a timer
   const [focusId, setFocusId] = useState<string | null | undefined>();
@@ -246,11 +248,10 @@ export function NudgeApp() {
         ) : (
           <motion.div key={tab} custom={dir} variants={tabMotion} initial="enter" animate="center" exit="exit" transition={{ type: "spring", bounce: 0, duration: 0.34 }}>
             {tab === "today" && (
-              <Today {...common} onAddTo={(part) => setCapture({ part, bucket: "today" })} onFocus={startFocus} onCheckin={setCheckin} />
+              <Today {...common} view={homeView} onView={setHomeView} onAddTo={(part) => setCapture({ part, bucket: "today" })} onFocus={startFocus} onCheckin={setCheckin} />
             )}
             {tab === "todo" && <Todo {...common} onAddTo={(bucket) => setCapture({ bucket })} />}
             {tab === "focus" && <Focus state={state} actions={actions} announce={announce} taskId={focusId === null ? undefined : (focusId ?? suggestion(state)?.id)} onPickTask={(id) => (setFocusId(id ?? null), state.meta.timer && actions.stopTimer())} onFinished={finished} />}
-            {tab === "ideas" && <Ideas state={state} actions={actions} onAdd={() => setCapture({})} onSettings={() => setSettings(true)} onHelp={() => setGuide(true)} doneCount={doneCount} totalCount={totalCount} />}
           </motion.div>
         )}
       </AnimatePresence>

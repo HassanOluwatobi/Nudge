@@ -35,12 +35,16 @@ function Row({ emoji, text, hue, delay, done = false }: { emoji: string; text: s
 function Capture() {
   return (
     <div className="flex h-full flex-col justify-center gap-2 px-6">
-      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.5 }} className="mb-1 rounded-[14px] bg-white px-3 py-2.5 font-serif text-[17px] shadow-sm ring-1 ring-line">
+      <div className="seg grid grid-cols-3 p-0.5 text-center text-[12px] font-semibold">
+        <span className="seg-knob py-1.5 text-ink">Tasks</span>
+        <span className="py-1.5 text-ink-3">Ideas</span>
+        <span className="py-1.5 text-ink-3">Notes</span>
+      </div>
+      <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.5 }} className="mb-1 rounded-[14px] bg-white px-3 py-2.5 font-serif text-[17px] ring-1 ring-line">
         call mum tomorrow<motion.span className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 bg-signal" animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 1 }} />
       </motion.div>
       <Row emoji="📞" text="Call mum" hue="cyan" delay={0.25} />
       <Row emoji="🧺" text="Laundry" hue="aqua" delay={0.4} />
-      <Row emoji="💳" text="Buy airtime" hue="lime" delay={0.55} />
     </div>
   );
 }
@@ -238,13 +242,13 @@ function AiSteps() {
 }
 
 const PAGES = [
-  { art: Capture, title: "Put it all down", body: "Type or speak whatever is on your mind in the field at the top of Today. Messy is fine. Choose task, idea or note, then save. Press and hold anything for more options." },
-  { art: OneThing, title: "Start with one thing", body: "Today picks one task and shows its next small step. Not feeling it? Tap Not this one, or Make today easy." },
+  { art: Capture, title: "Put it all down", body: "Pick Tasks, Ideas or Notes at the top of Home, then type or speak. It lands right in that list. Messy is fine. Press and hold anything for more options." },
+  { art: OneThing, title: "Start with one thing", body: "Under Tasks, Home picks one thing and shows its next small step. Not feeling it? Tap Not this one, or Make today easy." },
   { art: Timer, title: "Focus, one step at a time", body: "Drag the ring to set a timer if you want one. Tick steps as you go, then finish the task when it is all done." },
   { art: Checkins, title: "Gentle check-ins", body: "A two-minute morning kickoff, an evening wrap-up and a weekly reset on the day you choose. Change the times in Settings." },
   { art: Calendars, title: "Your calendars, both ways", body: "Put check-ins and reminders in Google, Apple or Outlook so your phone rings. Connect Google, Apple or Calendly and upcoming events become tasks, each with a reminder." },
   { art: AiSteps, title: "Break it down with your AI", body: "In any task, tap Break it down. NudgeMe opens ChatGPT, Claude, Gemini or Grok with the question ready. Paste the steps back and check them. Free." },
-  { art: IdeasBack, title: "Ideas come back", body: "Park ideas in the Ideas tab. They return on Today later, so they stop circling in your head. Everything stays on your phone." },
+  { art: IdeasBack, title: "Ideas come back", body: "Tap Ideas at the top of Home and type it in. It comes back later, so it stops circling in your head. Everything stays on your phone." },
 ];
 
 export function Guide({ open, onClose }: { open: boolean; onClose: () => void }) {

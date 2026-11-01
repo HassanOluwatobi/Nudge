@@ -10,21 +10,22 @@ import type { Actions } from "@/lib/use-tasks";
 import { useSpeech } from "@/lib/use-speech";
 import { keepFocus } from "./steps";
 
-type Kind = "task" | EntryKind;
+export type Kind = "task" | EntryKind;
 
 const HINT: Record<Kind, string> = {
-  task: "Something to do. It goes on your list.",
+  task: "Something to do. It goes on your list below.",
   idea: "A spark for later. It comes back in a few days.",
-  note: "Something to keep. It waits in Ideas.",
+  note: "Something to keep, like a number or an address.",
 };
+const PLACEHOLDER: Record<Kind, string> = { task: "Add a task…", idea: "Jot an idea…", note: "Write a note…" };
 
 /**
- * Quick capture at the top of Today. One quiet field. The Task, Idea or Note
- * choice and the Save button only appear once you start, so Today stays calm.
+ * Quick capture on Home. It types into whatever the toggle above shows, so
+ * what you save always lands in the list you are looking at. Save appears
+ * only once you start.
  */
-export function QuickCapture({ state, actions, announce, onOpen }: { state: State; actions: Actions; announce: (s: string) => void; onOpen: (t: Task) => void }) {
+export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind: Kind; state: State; actions: Actions; announce: (s: string) => void; onOpen: (t: Task) => void }) {
   const [text, setText] = useState("");
-  const [kind, setKind] = useState<Kind>("task");
   const [focused, setFocused] = useState(false);
   const field = useRef<HTMLTextAreaElement>(null);
   // A tap inside the box (the toggle, mic or Save) must not count as leaving.
@@ -46,7 +47,6 @@ export function QuickCapture({ state, actions, announce, onOpen }: { state: Stat
   };
   const reset = () => {
     setText("");
-    setKind("task");
     requestAnimationFrame(grow);
   };
   const save = () => {
@@ -62,7 +62,7 @@ export function QuickCapture({ state, actions, announce, onOpen }: { state: Stat
       const e = actions.addEntry(text, kind);
       if (!e) return;
       feel("save", "success");
-      toast(kind === "idea" ? "Idea saved. It comes back in a few days." : "Note saved in Ideas.");
+      toast(kind === "idea" ? "Idea saved. It comes back in a few days." : "Note saved.");
     }
     reset();
     inside.current = false;
@@ -81,7 +81,7 @@ export function QuickCapture({ state, actions, announce, onOpen }: { state: Stat
         if (!inside.current) return;
         setTimeout(() => (inside.current = false), 0);
       }}
-      className={`mt-6 rounded-[20px] bg-white ring-1 transition-shadow ${open ? "ring-signal/40 shadow-[0_0_0_4px_rgb(29_77_245/0.08)]" : "ring-line"}`}
+      className={`rounded-[20px] bg-white ring-1 transition-shadow ${open ? "ring-signal/40 shadow-[0_0_0_4px_rgb(29_77_245/0.08)]" : "ring-line"}`}
       onSubmit={(e) => {
         e.preventDefault();
         save();
@@ -89,7 +89,7 @@ export function QuickCapture({ state, actions, announce, onOpen }: { state: Stat
     >
       <div className="flex items-start gap-2 pl-4 pr-1.5">
         <label htmlFor="quick" className="sr-only">
-          What is on your mind?
+          {PLACEHOLDER[kind]}
         </label>
         <textarea
           id="quick"
@@ -115,7 +115,7 @@ export function QuickCapture({ state, actions, announce, onOpen }: { state: Stat
             }
           }}
           enterKeyHint={kind === "task" ? "done" : "enter"}
-          placeholder={speech.listening ? "Listening…" : "What is on your mind?"}
+          placeholder={speech.listening ? "Listening…" : PLACEHOLDER[kind]}
           className="min-h-[54px] flex-1 resize-none bg-transparent py-[15px] text-[17px] leading-snug placeholder:text-ink-3 focus:outline-none"
         />
         {speech.supported && (
@@ -128,24 +128,16 @@ export function QuickCapture({ state, actions, announce, onOpen }: { state: Stat
         {open && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }} className="overflow-hidden">
             <div className="border-t border-line px-3 pb-3 pt-3">
-              <div className="flex items-center gap-2">
-                <div className="seg inline-grid grid-cols-3 p-0.5" role="tablist" aria-label="What is it?">
-                  {(["task", "idea", "note"] as Kind[]).map((k) => (
-                    <button key={k} type="button" role="tab" aria-selected={kind === k} {...keepFocus} onClick={() => (setKind(k), feel("tick", "light"), refocus())} className="relative h-8 rounded-full px-3 text-[13px] font-semibold">
-                      {kind === k && <motion.span layoutId="quick-seg" className="seg-knob absolute inset-0" transition={{ type: "spring", bounce: 0, duration: 0.28 }} />}
-                      <span className={`relative capitalize ${kind === k ? "text-ink" : "text-ink-3"}`}>{k}</span>
-                    </button>
-                  ))}
-                </div>
-                <button type="submit" {...keepFocus} disabled={!text.trim()} className="btn btn-signal ml-auto min-h-9 px-4 text-[14px]">
+              <div className="flex items-center gap-3">
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.p key={dup ? "dup" : kind} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: 0.15 }} className="t-small min-w-0 flex-1 px-1 text-ink-3">
+                    {dup ? "You already have this. Saving adds it again." : HINT[kind]}
+                  </motion.p>
+                </AnimatePresence>
+                <button type="submit" {...keepFocus} disabled={!text.trim()} className="btn btn-signal min-h-9 shrink-0 px-4 text-[14px]">
                   Save
                 </button>
               </div>
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.p key={dup ? "dup" : kind} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: 0.15 }} className="t-small mt-2 px-1 text-ink-3">
-                  {dup ? "You already have something like this. Saving adds it again." : HINT[kind]}
-                </motion.p>
-              </AnimatePresence>
             </div>
           </motion.div>
         )}
