@@ -45,12 +45,17 @@ export function useSpeech(onText: (text: string, final: boolean) => void) {
             sent.add(i);
             finalText += ` ${res[0].transcript}`;
           }
-        } else interim += res[0].transcript;
+        } else {
+          // Some phones send the whole phrase again in each piece. Don't double it.
+          const seg = res[0].transcript.trim();
+          const sofar = interim.trim().toLowerCase();
+          interim = sofar && seg.toLowerCase().startsWith(sofar) ? seg : `${interim} ${seg}`;
+        }
       }
       // Finished words are kept. Words still being heard show live, and are
       // replaced as the browser refines them.
-      if (finalText.trim()) cb.current(finalText.trim(), true);
-      pending.current = interim.trim();
+      if (finalText.trim()) cb.current(finalText.replace(/\s+/g, " ").trim(), true);
+      pending.current = interim.replace(/\s+/g, " ").trim();
       cb.current(pending.current, false);
     };
     // If listening stops before the browser marks the last words final, keep them anyway.
