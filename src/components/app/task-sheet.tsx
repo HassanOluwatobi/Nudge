@@ -66,13 +66,13 @@ export function TaskSheet({
         maxLength={MAX_TITLE}
         onChange={(e) => setTitle(e.target.value)}
         onBlur={commit}
-        className="mt-1 w-full resize-none bg-transparent font-serif text-[25px] leading-snug tracking-[-0.01em] focus:outline-none"
+        className="mt-1 w-full resize-none bg-transparent t-title focus:outline-none"
       />
       {t.steps > 0 && <p className="-mt-1 text-[14px] text-ink-3">{t.steps === 1 ? "1 step done" : `${t.steps} steps done`}</p>}
 
       {!done && (
         <>
-          <p className="mt-4 text-[15px] font-semibold">{t.steps ? "Next step" : "First step"}</p>
+          <p className="t-label mt-5">{t.steps ? "Next step" : "First step"}</p>
           <label htmlFor="t-step" className="sr-only">
             Step
           </label>
@@ -91,7 +91,7 @@ export function TaskSheet({
             </button>
           )}
 
-          <p className="mt-5 text-[15px] font-semibold">When</p>
+          <p className="t-label mt-6">When</p>
           <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="When">
             {(["today", "week", "later"] as Exclude<Bucket, "done">[]).map((b) => (
               <button
@@ -109,8 +109,8 @@ export function TaskSheet({
             ))}
           </div>
 
-          <p className="mt-5 text-[15px] font-semibold">
-            Due date <span className="font-normal text-ink-3">(optional)</span>
+          <p className="t-label mt-6">
+            Due date <span className="font-medium normal-case tracking-normal">(optional)</span>
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <button type="button" className="chip" aria-pressed={t.due === today} onClick={() => actions.edit(t.id, { due: t.due === today ? null : today })}>
@@ -182,7 +182,7 @@ export function TaskSheet({
           </>
         )}
         {confirm ? (
-          <div className="mt-1 flex items-center justify-between gap-2 rounded-2xl bg-paper p-2 pl-4" role="group" aria-label="Confirm delete">
+          <div className="mt-1 flex items-center justify-between gap-2 rounded-2xl bg-danger-soft p-2 pl-4" role="group" aria-label="Confirm delete">
             <span className="text-[15px]">Delete this task?</span>
             <div className="flex gap-1">
               <button type="button" className="btn btn-quiet min-h-11" onClick={() => setConfirm(false)}>
@@ -190,7 +190,7 @@ export function TaskSheet({
               </button>
               <button
                 type="button"
-                className="btn min-h-11 bg-[#b42318] px-4 text-white"
+                className="btn btn-danger min-h-11 px-4"
                 onClick={() => {
                   const gone = actions.remove(t.id);
                   onClose();

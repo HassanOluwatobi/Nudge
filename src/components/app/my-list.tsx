@@ -55,20 +55,20 @@ export function MyList({
         </button>
       </header>
 
-      <h1 className="mt-4 font-serif text-[34px] leading-tight tracking-[-0.02em]">My list</h1>
-      <p className="mt-1 text-[15px] text-ink-2">{choosing ? "Pick what you want to do next, or nothing at all." : "Tap a task to change it, move it, or start it."}</p>
+      <h1 className="t-display mt-6">My list</h1>
+      <p className="t-body mt-2 text-ink-2">{choosing ? "Pick what you want to do next, or nothing at all." : "Tap a task to change it, move it, or start it."}</p>
 
-      <div className="mt-6 space-y-7 pb-16">
+      <div className="mt-8 space-y-10 pb-16">
         {groups.map(([b, list]) => (
           <section key={b} aria-labelledby={`g-${b}`}>
-            <h2 id={`g-${b}`} className="flex items-baseline justify-between px-1">
-              <span className="text-[17px] font-semibold">{BUCKET_NAME[b]}</span>
-              {list.length > 0 && <span className="text-[14px] text-ink-3">{list.length}</span>}
+            <h2 id={`g-${b}`} className="flex items-baseline justify-between border-b border-ink/80 pb-2">
+              <span className="t-heading">{BUCKET_NAME[b]}</span>
+              <span className="t-small text-ink-3">{list.length}</span>
             </h2>
             {list.length === 0 ? (
-              <p className="mt-2 rounded-2xl border border-dashed border-line px-4 py-3.5 text-[15px] text-ink-3">{EMPTY[b]}</p>
+              <p className="t-small border-b border-line px-1 py-4 text-ink-3">{EMPTY[b]}</p>
             ) : (
-              <ul className="mt-2 divide-y divide-line/80 overflow-hidden rounded-3xl bg-sheet ring-1 ring-line/60">
+              <ul>
                 {list.map((t) => (
                   <Row key={t.id} t={t} today={today} onOpen={onOpen} actions={actions} announce={announce} />
                 ))}
@@ -80,7 +80,7 @@ export function MyList({
                   <ChevronDown className={`size-4 transition-transform ${older ? "rotate-180" : ""}`} /> Finished before today ({earlier.length})
                 </button>
                 {older && (
-                  <ul className="mt-1 divide-y divide-line/80 overflow-hidden rounded-3xl bg-sheet/70 ring-1 ring-line/60">
+                  <ul>
                     {earlier.slice(0, 50).map((t) => (
                       <Row key={t.id} t={t} today={today} onOpen={onOpen} actions={actions} announce={announce} />
                     ))}
@@ -98,13 +98,13 @@ export function MyList({
 function Row({ t, today, onOpen, actions, announce }: { t: Task; today: string; onOpen: (t: Task) => void; actions: Actions; announce: (s: string) => void }) {
   const done = t.bucket === "done";
   return (
-    <li className="flex items-center">
-      <button type="button" onClick={() => onOpen(t)} className="flex min-h-[60px] min-w-0 flex-1 items-center gap-3 py-3 pl-4 pr-2 text-left transition-colors active:bg-ink/[0.04]">
-        <span className={`size-2 shrink-0 rounded-full ${done ? "bg-warm" : t.bucket === "today" ? "bg-signal" : "bg-ink-3/40"}`} aria-hidden />
+    <li className="flex items-center border-b border-line">
+      <button type="button" onClick={() => onOpen(t)} className="row min-w-0 flex-1 border-b-0">
+        <span className={`size-2 shrink-0 rounded-full ${done ? "bg-coral" : t.bucket === "today" ? "bg-signal" : "bg-ink-3/40"}`} aria-hidden />
         <span className="min-w-0 flex-1">
           <span className={`block text-[16px] [overflow-wrap:anywhere] ${done ? "text-ink-3 line-through decoration-ink-3/50" : ""}`}>{t.title}</span>
           {!done && (t.step || t.due) && (
-            <span className="mt-0.5 block truncate text-[13.5px] text-ink-3">
+            <span className="t-small mt-0.5 block truncate text-ink-3">
               {t.due && <span className="text-ink-2">{prettyDue(t.due, today)}</span>}
               {t.due && t.step && " · "}
               {t.step}
@@ -115,7 +115,7 @@ function Row({ t, today, onOpen, actions, announce }: { t: Task; today: string; 
       {done && (
         <button
           type="button"
-          className="icon-btn mr-2"
+          className="icon-btn"
           aria-label={`Put back: ${t.title}`}
           onClick={() => {
             actions.restore(t.id);

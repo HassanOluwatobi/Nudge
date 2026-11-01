@@ -65,7 +65,7 @@ export function Settings({ open, onClose, state, actions }: { open: boolean; onC
           }}
         />
         {clear ? (
-          <div className="flex items-center justify-between gap-2 rounded-2xl border border-[#f3c7c2] bg-[#fdf3f2] p-2 pl-4" role="group" aria-label="Confirm clear">
+          <div className="flex items-center justify-between gap-2 rounded-2xl border border-danger/25 bg-danger-soft p-2 pl-4" role="group" aria-label="Confirm clear">
             <span className="text-[15px]">Delete all {count} tasks?</span>
             <div className="flex gap-1">
               <button type="button" className="btn btn-quiet min-h-11" onClick={() => setClear(false)}>
@@ -73,7 +73,7 @@ export function Settings({ open, onClose, state, actions }: { open: boolean; onC
               </button>
               <button
                 type="button"
-                className="btn min-h-11 bg-[#b42318] px-4 text-white"
+                className="btn btn-danger min-h-11 px-4"
                 onClick={() => {
                   actions.clearAll();
                   setClear(false);
@@ -86,14 +86,14 @@ export function Settings({ open, onClose, state, actions }: { open: boolean; onC
             </div>
           </div>
         ) : (
-          <button type="button" className="btn btn-quiet w-full justify-start gap-3 text-[#b42318]" onClick={() => setClear(true)} disabled={!count}>
+          <button type="button" className="btn btn-quiet w-full justify-start gap-3 text-danger" onClick={() => setClear(true)} disabled={!count}>
             <Trash2 className="size-[18px]" /> Clear everything
           </button>
         )}
       </div>
 
       <p className="mt-5 text-[13px] leading-relaxed text-ink-3">
-        To add NudgeMe to your home screen, use your browser&apos;s Share or menu button and choose Add to Home Screen. It works offline after the first visit.
+        <a href="/system" className="font-medium text-signal-ink underline underline-offset-2">See the design system</a>. To add NudgeMe to your home screen, use your browser&apos;s Share or menu button and choose Add to Home Screen. It works offline after the first visit.
       </p>
     </Sheet>
   );

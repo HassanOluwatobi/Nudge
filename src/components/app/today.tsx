@@ -4,7 +4,7 @@ import { ArrowRight, ChevronRight, Feather, ListTodo, Pencil, Plus, Settings2 } 
 import { AnimatePresence, motion } from "motion/react";
 import { type State, type Task, doneToday, prettyDue, suggestion, todayTasks, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
-import { Aurora, useDaypart } from "./aurora";
+import { Contours, Dot, Field, Ribbon, useDaypart } from "./motifs";
 import { Mark, Thread, pullFor } from "./thread";
 
 const hello = () => {
@@ -43,8 +43,11 @@ export function Today({
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <Aurora field={part} className="rounded-b-[36px] on-color">
-        <div className="mx-auto w-full max-w-md px-5 pb-28 safe-t">
+      {/* Brand moment: the field, one ribbon, one set of contours. Text sits on the calm top-left. */}
+      <Field tone={part} className="on-color text-white">
+        <Contours className="pointer-events-none absolute inset-0 -z-10 h-full w-full" count={6} />
+        <Ribbon tone={part} className="pointer-events-none absolute -left-[6%] bottom-[2%] -z-10 h-[50%] w-[118%]" />
+        <div className="mx-auto w-full max-w-md px-6 pb-48 safe-t">
           <header className="flex items-center justify-between py-2">
             <div className="flex items-center gap-2">
               <Mark light className="h-5 w-auto" />
@@ -54,9 +57,9 @@ export function Today({
               <Settings2 className="size-5" />
             </button>
           </header>
-          <p className="mt-8 text-[15px] font-medium text-white/75">{dateLine}</p>
-          <h1 className="mt-1 text-[42px] font-medium leading-[1.02] tracking-[-0.04em]">{hello()}</h1>
-          <p className="mt-3 max-w-[30ch] text-[16px] leading-snug text-white/85">
+          <p className="t-small mt-10 font-medium text-white/75">{dateLine}</p>
+          <h1 className="t-display mt-2">{hello()}</h1>
+          <p className="t-body mt-3 max-w-[26ch] text-white/85">
             {!pick
               ? "Clear your head first. Then pick one small step."
               : easy
@@ -66,7 +69,7 @@ export function Today({
                   : "Here is a good place to start."}
           </p>
         </div>
-      </Aurora>
+      </Field>
 
       <main className="relative z-10 mx-auto -mt-20 w-full max-w-md flex-1 px-5 pb-40">
         {!pick ? (
@@ -80,82 +83,85 @@ export function Today({
                 initial={{ opacity: 0, y: 14, scale: 0.985 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.985 }}
-                transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                className="float-card p-5"
+                transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+                className="float-card p-6"
               >
                 <div className="flex items-center justify-between">
-                  <span className="eyebrow">Start here</span>
-                  {pick.due && <span className="text-[13px] text-ink-3">Due {prettyDue(pick.due, today).toLowerCase()}</span>}
+                  <span className="t-label">Start here</span>
+                  {pick.due && <span className="t-small text-ink-3">Due {prettyDue(pick.due, today).toLowerCase()}</span>}
                 </div>
                 <button type="button" onClick={() => onOpen(pick)} className="mt-2 block w-full text-left">
-                  <h2 className="font-serif text-[27px] leading-[1.15] tracking-[-0.015em] [overflow-wrap:anywhere]">{pick.title}</h2>
+                  <h2 className="t-title">{pick.title}</h2>
                 </button>
 
-                <Thread pull={pullFor(pick.steps)} className="mt-3 h-8 w-full max-w-[220px]" />
+                <Thread pull={pullFor(pick.steps)} className="mt-3 h-7 w-full max-w-[200px]" />
 
-                <div className="relative mt-3 overflow-hidden rounded-2xl bg-signal-soft/70 p-4 pl-5">
-                  <span aria-hidden className="absolute inset-y-3 left-0 w-1 rounded-r-full bg-gradient-to-b from-cyan via-lime to-peach" />
+                <div className="mt-4 border-t border-line pt-4">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-[13px] font-semibold text-signal-ink">{pick.steps ? "Next step" : "First step"}</span>
-                    <button type="button" className="-my-2 -mr-2 inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-[13px] font-medium text-signal-ink" onClick={() => onOpen(pick)}>
+                    <span className="t-label text-signal-ink">{pick.steps ? `Step ${pick.steps + 1}` : "First step"}</span>
+                    <button type="button" className="-my-2 -mr-2 inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-[14px] font-medium text-signal-ink" onClick={() => onOpen(pick)}>
                       <Pencil className="size-3.5" /> {pick.step ? "Edit" : "Add"}
                     </button>
                   </div>
-                  <p className={`mt-1 text-[17px] leading-snug [overflow-wrap:anywhere] ${pick.step ? "text-ink" : "text-ink-3"}`}>
+                  <p className={`mt-1 text-[18px] leading-snug [overflow-wrap:anywhere] ${pick.step ? "text-ink" : "text-ink-3"}`}>
                     {pick.step || "No step yet. You can choose one when you start."}
                   </p>
                 </div>
 
-                <button type="button" className="btn btn-signal mt-4 w-full text-[17px]" onClick={() => onFocus(pick)}>
+                <button type="button" className="btn btn-signal mt-6 w-full text-[17px]" onClick={() => onFocus(pick)}>
                   Start <ArrowRight className="size-5" />
                 </button>
-
-                <div className="mt-2 flex flex-wrap items-center justify-center gap-x-1">
-                  {!easy && others.length > 0 && (
-                    <button
-                      type="button"
-                      className="btn btn-quiet text-[15px]"
-                      onClick={() => {
-                        actions.pass(pick.id);
-                        announce("Showing another task.");
-                      }}
-                    >
-                      Not this one
-                    </button>
-                  )}
-                  {easy ? (
-                    <button
-                      type="button"
-                      className="btn btn-quiet text-[15px]"
-                      onClick={() => {
-                        actions.clearEasy();
-                        announce("Showing your full day.");
-                      }}
-                    >
-                      Show my full day
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      className="btn btn-quiet gap-1.5 text-[15px]"
-                      onClick={() => {
-                        actions.makeEasy(pick.id);
-                        announce("Today is set to easy. One thing is enough.");
-                      }}
-                    >
-                      <Feather className="size-4" /> Make today easy
-                    </button>
-                  )}
-                </div>
               </motion.section>
             </AnimatePresence>
 
+            {/* Secondary actions live on the page, not in another card. */}
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-1">
+              {!easy && others.length > 0 && (
+                <button
+                  type="button"
+                  className="btn btn-quiet text-[15px]"
+                  onClick={() => {
+                    actions.pass(pick.id);
+                    announce("Showing another task.");
+                  }}
+                >
+                  Not this one
+                </button>
+              )}
+              {easy ? (
+                <button
+                  type="button"
+                  className="btn btn-quiet text-[15px]"
+                  onClick={() => {
+                    actions.clearEasy();
+                    announce("Showing your full day.");
+                  }}
+                >
+                  Show my full day
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="btn btn-quiet gap-1.5 text-[15px]"
+                  onClick={() => {
+                    actions.makeEasy(pick.id);
+                    announce("Today is set to easy. One thing is enough.");
+                  }}
+                >
+                  <Feather className="size-4" /> Make today easy
+                </button>
+              )}
+            </div>
+
             {others.length > 0 && (
-              <section className="mt-8" aria-labelledby="also">
-                <h3 id="also" className="eyebrow px-1">
-                  Also today
-                </h3>
-                <ul className="mt-2 divide-y divide-line/80 overflow-hidden rounded-3xl bg-sheet/60 ring-1 ring-line/60">
+              <section className="mt-10" aria-labelledby="also">
+                <div className="flex items-baseline justify-between border-b border-ink/80 pb-2">
+                  <h3 id="also" className="t-heading">
+                    Also today
+                  </h3>
+                  <span className="t-small text-ink-3">{others.length}</span>
+                </div>
+                <ul>
                   {others.slice(0, 3).map((t) => (
                     <li key={t.id}>
                       <button
@@ -164,14 +170,13 @@ export function Today({
                           actions.choose(t.id);
                           announce(`${t.title} is now your place to start.`);
                         }}
-                        className="flex min-h-[60px] w-full items-center gap-3 px-4 py-3 text-left transition-colors active:bg-ink/[0.04]"
+                        className="row"
                       >
-                        <span className="size-2 shrink-0 rounded-full bg-ink-3/50" aria-hidden />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-[16px]">{t.title}</span>
-                          {t.step && <span className="block truncate text-[13.5px] text-ink-3">{t.step}</span>}
+                          {t.step && <span className="t-small block truncate text-ink-3">{t.step}</span>}
                         </span>
-                        <span className="text-[13px] text-ink-3">Start here</span>
+                        <span className="t-small shrink-0 font-medium text-signal-ink">Start here</span>
                       </button>
                     </li>
                   ))}
@@ -185,8 +190,8 @@ export function Today({
             )}
 
             {finished.length > 0 && (
-              <p className="mt-8 px-1 text-[15px] text-ink-3">
-                Finished today: <span className="text-ink-2">{finished.length === 1 ? finished[0].title : `${finished.length} tasks`}</span>
+              <p className="t-small mt-8 flex items-center gap-2 text-ink-3">
+                <Dot /> Finished today: <span className="text-ink-2">{finished.length === 1 ? finished[0].title : `${finished.length} tasks`}</span>
               </p>
             )}
           </>
@@ -212,24 +217,24 @@ export function Today({
 function Empty({ onCapture, hasOthers, onList, finished }: { onCapture: () => void; hasOthers: boolean; onList: () => void; finished: number }) {
   return (
     <section className="float-card p-6">
-      <Thread pull={finished ? 1 : 0} done={finished > 0} className="h-10 w-full max-w-[220px]" />
+      <Thread pull={finished ? 1 : 0} done={finished > 0} className="h-9 w-full max-w-[200px]" />
       {finished ? (
         <>
-          <h2 className="mt-4 font-serif text-[27px] leading-tight tracking-[-0.015em]">Today is clear.</h2>
-          <p className="mt-2 text-[16px] leading-relaxed text-ink-2">You finished {finished === 1 ? "one task" : `${finished} tasks`}. You can stop here.</p>
+          <h2 className="t-title mt-4">Today is clear.</h2>
+          <p className="t-body mt-2 text-ink-2">You finished {finished === 1 ? "one task" : `${finished} tasks`}. You can stop here.</p>
         </>
       ) : (
         <>
-          <h2 className="mt-4 font-serif text-[27px] leading-tight tracking-[-0.015em]">Put what is on your mind here.</h2>
-          <p className="mt-2 text-[16px] leading-relaxed text-ink-2">NudgeMe holds it, then helps you start with one small step.</p>
+          <h2 className="t-title mt-4">Put what is on your mind here.</h2>
+          <p className="t-body mt-2 text-ink-2">NudgeMe holds it, then helps you start with one small step.</p>
         </>
       )}
-      <div className="mt-5 flex flex-col gap-2">
+      <div className="mt-6 flex flex-col gap-2">
         <button type="button" className={`btn w-full ${finished ? "btn-line" : "btn-signal"}`} onClick={onCapture}>
           <Plus className="size-5" /> {finished || hasOthers ? "Add a thought" : "Add your first thought"}
         </button>
         {hasOthers && (
-          <button type="button" className="btn btn-line w-full" onClick={onList}>
+          <button type="button" className="btn btn-quiet w-full" onClick={onList}>
             Choose from My list
           </button>
         )}

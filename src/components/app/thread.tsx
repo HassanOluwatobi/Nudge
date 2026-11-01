@@ -88,7 +88,7 @@ export function Thread({
         cx={W - 8}
         cy={MID}
         initial={false}
-        animate={{ r: done ? 7 : 5, fill: done ? "var(--peach)" : dotIdle }}
+        animate={{ r: done ? 7 : 5, fill: done ? "var(--coral)" : dotIdle }}
         transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 16, delay: done ? 0.25 : 0 }}
       />
     </svg>
@@ -108,7 +108,7 @@ export function Mark({ className, light = false }: { className?: string; light?:
         strokeWidth={3}
         strokeLinecap="round"
       />
-      <circle cx={34.5} cy={12} r={3.5} fill="var(--peach)" />
+      <circle cx={34.5} cy={12} r={3.5} fill="var(--coral)" />
     </svg>
   );
 }

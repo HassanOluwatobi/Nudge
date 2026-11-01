@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { type State, type Task, MAX_STEP, smallerStep, suggestStep } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
-import { Aurora } from "./aurora";
+import { Field } from "./motifs";
 import { Thread, pullFor } from "./thread";
 
 type Mode = "step" | "choose" | "next" | "smaller";
@@ -74,7 +74,7 @@ export function Focus({
   const stepNo = task.steps + 1;
 
   return (
-    <Aurora field="focus" grain={0.28} className="on-night min-h-dvh text-paper">
+    <Field tone="focus" stipple={false} grain={0} className="on-night min-h-dvh text-paper">
       <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 safe-t safe-b">
         <header className="flex items-center justify-between py-2">
           <button type="button" className="btn btn-night-quiet min-h-11 gap-1.5 px-4 text-[15px]" onClick={onPause}>
@@ -108,7 +108,7 @@ export function Focus({
             {mode === "step" && (
               <motion.div key={`step-${task.step}`} {...swap}>
                 <p className="mt-6 text-[13px] font-semibold uppercase tracking-[0.08em] text-moon">Step {stepNo}</p>
-                <h1 ref={heading} tabIndex={-1} className="mt-2 font-serif text-[34px] leading-[1.12] tracking-[-0.02em] focus:outline-none [overflow-wrap:anywhere]">
+                <h1 ref={heading} tabIndex={-1} className="mt-2 t-title text-[34px] focus:outline-none">
                   {task.step}
                 </h1>
                 <button type="button" className="btn btn-white mt-8 w-full text-[17px]" onClick={doStep}>
@@ -142,7 +142,7 @@ export function Focus({
                   setStep(draft);
                 }}
               >
-                <h1 ref={heading} tabIndex={-1} className="mt-6 font-serif text-[30px] leading-[1.15] tracking-[-0.02em] focus:outline-none">
+                <h1 ref={heading} tabIndex={-1} className="t-title mt-6 text-[30px] focus:outline-none">
                   {mode === "next" ? "Nice. What is next?" : mode === "smaller" ? "A smaller step" : "What is the first step?"}
                 </h1>
                 <p className="mt-2 text-[15px] text-paper/60">
@@ -197,7 +197,7 @@ export function Focus({
           </AnimatePresence>
         </main>
       </div>
-    </Aurora>
+    </Field>
   );
 }
 

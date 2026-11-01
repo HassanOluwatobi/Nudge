@@ -101,7 +101,7 @@ export function Capture({
                 save();
               }
             }}
-            className="mt-2 w-full resize-none bg-transparent font-serif text-[24px] leading-snug tracking-[-0.01em] placeholder:text-ink-3/80 focus:outline-none"
+            className="mt-2 w-full resize-none bg-transparent t-title text-[26px] placeholder:text-ink-3/80 focus:outline-none"
           />
           <div className="mt-1 flex min-h-5 items-center justify-between text-[13px] text-ink-3">
             <span>{dup ? "This is already on your list. You can still save it." : text ? "Your words are kept as you type." : "Messy is fine. You can tidy it later."}</span>
@@ -114,7 +114,7 @@ export function Capture({
       ) : (
         <div>
           <div className="flex items-start gap-3 rounded-2xl bg-paper p-4">
-            <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-signal text-white">
+            <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-success text-white">
               <Check className="size-3.5" strokeWidth={3} />
             </span>
             <div className="min-w-0">
@@ -123,8 +123,8 @@ export function Capture({
             </div>
           </div>
 
-          <p className="mt-5 text-[15px] font-semibold">
-            First step <span className="font-normal text-ink-3">(optional)</span>
+          <p className="t-label mt-6">
+            First step <span className="font-medium normal-case tracking-normal">(optional)</span>
           </p>
           <label htmlFor="first-step" className="sr-only">
             First step
@@ -144,7 +144,7 @@ export function Capture({
             </button>
           )}
 
-          <p className="mt-5 text-[15px] font-semibold">When</p>
+          <p className="t-label mt-6">When</p>
           <div className="mt-2 flex flex-wrap gap-2" role="group" aria-label="When">
             {(["today", "week", "later"] as Exclude<Bucket, "done">[]).map((b) => (
               <button key={b} type="button" className="chip" aria-pressed={live.bucket === b} onClick={() => actions.move(live.id, b)}>
