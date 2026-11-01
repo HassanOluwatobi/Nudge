@@ -38,20 +38,29 @@ const XMark = () => (
   </svg>
 );
 
+const SUPPORT_URL = "https://selar.com/showlove/hassanx";
+
 /** Made by Hassan. Shown at the top of Settings and the foot of Today. */
 export function Credit({ compact = false }: { compact?: boolean }) {
   return (
-    <a href={X_URL} target="_blank" rel="noopener noreferrer" onClick={() => feel("tap", "light")} className={`flex items-center gap-2.5 rounded-2xl bg-white ring-1 ring-line transition-transform active:scale-[0.98] ${compact ? "p-2.5 pl-3" : "p-3"}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src="/hassan.jpg" alt="Hassan" width={40} height={40} className="size-10 shrink-0 rounded-full object-cover ring-1 ring-line" />
-      <span className="min-w-0 flex-1">
-        <span className="block text-[15px] font-semibold">Made by Hassan</span>
-        <span className="t-small block truncate whitespace-nowrap text-ink-2">Say hi or share feedback</span>
-      </span>
-      <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full bg-ink px-2.5 text-[12px] font-semibold text-white">
-        <XMark /> @Art_sassin
-      </span>
-    </a>
+    <div className={`rounded-2xl bg-white ring-1 ring-line ${compact ? "p-3" : "p-3.5"}`}>
+      <div className="flex items-center gap-2.5">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/hassan.jpg" alt="Hassan" width={40} height={40} className="size-10 shrink-0 rounded-full object-cover ring-1 ring-line" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-[15px] font-semibold">Made by Hassan</span>
+          <span className="t-small block truncate whitespace-nowrap text-ink-2">Say hi or share feedback</span>
+        </span>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2">
+        <a href={X_URL} target="_blank" rel="noopener noreferrer" onClick={() => feel("tap", "light")} className="btn btn-ink min-h-10 gap-1.5 px-3 text-[13px]">
+          <XMark /> @Art_sassin
+        </a>
+        <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer" onClick={() => feel("save", "light")} className="btn btn-line min-h-10 gap-1.5 px-3 text-[13px]">
+          <span aria-hidden>☕</span> Buy me a coffee
+        </a>
+      </div>
+    </div>
   );
 }
 
