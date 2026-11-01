@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { type Bucket, type State, type Task, addDays, doneOn, dueIdeas, todayTasks, weekStart, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
+import { feel } from "@/lib/feedback";
 import { burst } from "./petals";
 import { Sheet } from "./sheet";
 import { Tile } from "./task-row";
@@ -55,7 +56,10 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
   const today = ymd();
 
   const close = (finished: boolean) => {
-    if (finished) actions.finishCheckin(k);
+    if (finished) {
+      actions.finishCheckin(k);
+      feel("save", "success");
+    }
     onClose();
   };
 
@@ -76,11 +80,11 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
               <h3 className="t-title">Good morning. How is your energy?</h3>
               {yesterday.length > 0 && <p className="t-body mt-2 text-ink-2">Yesterday you finished {yesterday.length === 1 ? `“${yesterday[0].title}”` : `${yesterday.length} tasks`}. Nice.</p>}
               <div className="mt-5 grid gap-2">
-                <button type="button" className="flex min-h-[64px] items-center gap-3 rounded-2xl bg-white px-4 text-left ring-1 ring-line" onClick={() => (actions.setEnergy("ok"), actions.clearEasy(), setI(1))}>
+                <button type="button" className="flex min-h-[64px] items-center gap-3 rounded-2xl bg-white px-4 text-left ring-1 ring-line" onClick={() => (actions.setEnergy("ok"), actions.clearEasy(), feel("start", "light"), setI(1))}>
                   <span className="hue-lime tile grid size-10 place-items-center rounded-xl"><Zap className="size-5" /></span>
                   <span><span className="block font-semibold">Ready to go</span><span className="t-small text-ink-3">Plan a normal day</span></span>
                 </button>
-                <button type="button" className="flex min-h-[64px] items-center gap-3 rounded-2xl bg-white px-4 text-left ring-1 ring-line" onClick={() => (actions.setEnergy("low"), actions.makeEasy(), setI(1))}>
+                <button type="button" className="flex min-h-[64px] items-center gap-3 rounded-2xl bg-white px-4 text-left ring-1 ring-line" onClick={() => (actions.setEnergy("low"), actions.makeEasy(), feel("tap", "light"), setI(1))}>
                   <span className="hue-lilac tile grid size-10 place-items-center rounded-xl"><BatteryLow className="size-5" /></span>
                   <span><span className="block font-semibold">Running low</span><span className="t-small text-ink-3">One thing is enough today</span></span>
                 </button>
@@ -94,7 +98,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
               {candidates.length ? (
                 <ul className="mt-4 max-h-[44vh] space-y-2 overflow-auto">
                   {candidates.map((t) => (
-                    <Pick key={t.id} t={t} on={picked.includes(t.id)} onToggle={() => setPicked((p) => (p.includes(t.id) ? p.filter((x) => x !== t.id) : [...p, t.id]))} />
+                    <Pick key={t.id} t={t} on={picked.includes(t.id)} onToggle={() => (feel(picked.includes(t.id) ? "unstep" : "step", "light"), setPicked((p) => (p.includes(t.id) ? p.filter((x) => x !== t.id) : [...p, t.id])))} />
                   ))}
                 </ul>
               ) : (
@@ -157,7 +161,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
               ) : (
                 <p className="t-body mt-2 text-ink-2">Nothing ticked today, and that is okay. Rest counts too.</p>
               )}
-              <button type="button" className="btn btn-signal mt-5 w-full" onClick={(e) => (done.length && burst(e.clientX, e.clientY, 18), setI(left.length ? 1 : 2))}>
+              <button type="button" className="btn btn-signal mt-5 w-full" onClick={(e) => (done.length && (burst(e.clientX, e.clientY, 18), feel("done", "success")), setI(left.length ? 1 : 2))}>
                 Continue
               </button>
             </motion.div>
@@ -230,7 +234,7 @@ export function Checkin({ kind, onClose, state, actions, onStart }: { kind: Kind
             <p className="font-serif text-[88px] leading-none tracking-[-0.03em]">{weekDone.length}</p>
             <h3 className="t-title mt-2">{weekDone.length === 1 ? "thing finished this week" : "things finished this week"}</h3>
             <p className="t-body mt-2 text-ink-2">{weekDone.length ? "Every one of them counts." : "A quiet week is still a week. Let us set up the next one."}</p>
-            <button type="button" className="btn btn-signal mt-6 w-full" onClick={(e) => (weekDone.length && burst(e.clientX, e.clientY, 22), setI(1))}>
+            <button type="button" className="btn btn-signal mt-6 w-full" onClick={(e) => (weekDone.length && (burst(e.clientX, e.clientY, 22), feel("finish", "success")), setI(1))}>
               Continue
             </button>
           </motion.div>

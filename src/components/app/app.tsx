@@ -3,15 +3,18 @@
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { feel, setFeedback } from "@/lib/feedback";
 import { notify, setBadge } from "@/lib/reminders";
 import { type Bucket, type Part, type Task, doneToday, hhmmToday, suggestion, todayTasks, ymd } from "@/lib/tasks";
 import { useBackClose } from "@/lib/use-back";
+import { useKeyboardInset } from "@/lib/use-keyboard";
 import { useTasks } from "@/lib/use-tasks";
 import { Art } from "./art";
 import { Capture } from "./capture";
 import { Checkin } from "./checkin";
 import { Finish } from "./finish";
 import { Focus } from "./focus";
+import { Guide } from "./guide";
 import { Ideas } from "./ideas";
 import { Petals } from "./petals";
 import { Settings } from "./settings";
@@ -29,8 +32,17 @@ const page = {
   transition: { type: "spring" as const, bounce: 0, duration: 0.32 },
 };
 
+const ORDER: Tab[] = ["todo", "today", "focus", "ideas"];
+// Tabs slide in the direction you moved, so the bar and the page agree.
+const tabMotion = {
+  enter: (d: number) => ({ opacity: 0, x: d * 28 }),
+  center: { opacity: 1, x: 0 },
+  exit: (d: number) => ({ opacity: 0, x: d * -20 }),
+};
+
 export function NudgeApp() {
   const { state, actions } = useTasks();
+  useKeyboardInset();
   const [tab, setTab] = useState<Tab>("today");
   const [over, setOver] = useState<Over>(null);
   // undefined = follow the suggestion, null = just a timer
@@ -41,13 +53,32 @@ export function NudgeApp() {
   const [menuId, setMenuId] = useState<string | null>(null);
   const [checkin, setCheckin] = useState<"morning" | "evening" | "weekly" | null>(null);
   const [said, setSaid] = useState("");
+  const [guide, setGuide] = useState(false);
+  const [dir, setDir] = useState(0);
+  const goTab = (t: Tab) => {
+    if (t === tab) return;
+    setDir(Math.sign(ORDER.indexOf(t) - ORDER.indexOf(tab)));
+    feel("tap", "light");
+    setTab(t);
+  };
 
   const announce = useCallback((s: string) => {
     setSaid("");
     requestAnimationFrame(() => setSaid(s));
   }, []);
 
-  const dark = over ? over.name === "finish" : tab === "focus";
+  const dark = over?.name === "finish";
+  useEffect(() => {
+    if (state) setFeedback({ sound: state.settings.sound, haptics: state.settings.haptics });
+  }, [state?.settings.sound, state?.settings.haptics]); // eslint-disable-line react-hooks/exhaustive-deps
+  // First visit: show the guide once.
+  const introShown = useRef(false);
+  useEffect(() => {
+    if (state && !state.meta.intro && !introShown.current) {
+      introShown.current = true;
+      setTimeout(() => setGuide(true), 500);
+    }
+  }, [state]);
   useEffect(() => {
     document.documentElement.dataset.view = over?.name === "finish" ? "finish" : dark ? "focus" : "page";
     let m = document.querySelector('meta[name="theme-color"]');
@@ -134,15 +165,16 @@ export function NudgeApp() {
     setMenuId(null);
     actions.choose(t.id);
     setFocusId(t.id);
-    setTab("focus");
+    goTab("focus");
   };
   const finished = (t: Task) => {
     toast.dismiss();
+    feel("finish", "success");
     setOpenId(null);
     setOver({ name: "finish", task: t });
     announce(`Finished: ${t.title}.`);
   };
-  const common = { state, actions, announce, onSettings: () => setSettings(true), onAdd: () => setCapture({}), onOpen: (t: Task) => setOpenId(t.id), onMenu: (t: Task) => setMenuId(t.id) };
+  const common = { state, actions, announce, onHelp: () => setGuide(true), onSettings: () => setSettings(true), onAdd: () => setCapture({}), onOpen: (t: Task) => setOpenId(t.id), onMenu: (t: Task) => setMenuId(t.id) };
 
   return (
     <MotionConfig reducedMotion="user">
@@ -150,7 +182,7 @@ export function NudgeApp() {
         {said}
       </div>
 
-      <AnimatePresence mode="wait" initial={false}>
+      <AnimatePresence mode="wait" initial={false} custom={dir}>
         {over?.name === "finish" ? (
           <motion.div key="finish" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}>
             <Finish
@@ -179,24 +211,31 @@ export function NudgeApp() {
             </button>
           </motion.div>
         ) : (
-          <motion.div key={tab} {...page}>
+          <motion.div key={tab} custom={dir} variants={tabMotion} initial="enter" animate="center" exit="exit" transition={{ type: "spring", bounce: 0, duration: 0.34 }}>
             {tab === "today" && (
               <Today {...common} onAddTo={(part) => setCapture({ part, bucket: "today" })} onFocus={startFocus} onCheckin={setCheckin} />
             )}
             {tab === "todo" && <Todo {...common} onAddTo={(bucket) => setCapture({ bucket })} />}
             {tab === "focus" && <Focus state={state} actions={actions} announce={announce} taskId={focusId === null ? undefined : (focusId ?? suggestion(state)?.id)} onPickTask={(id) => (setFocusId(id ?? null), state.meta.timer && actions.stopTimer())} onFinished={finished} />}
-            {tab === "ideas" && <Ideas state={state} actions={actions} onAdd={() => setCapture({})} onSettings={() => setSettings(true)} doneCount={doneCount} totalCount={totalCount} />}
+            {tab === "ideas" && <Ideas state={state} actions={actions} onAdd={() => setCapture({})} onSettings={() => setSettings(true)} onHelp={() => setGuide(true)} doneCount={doneCount} totalCount={totalCount} />}
           </motion.div>
         )}
       </AnimatePresence>
 
-      {!over && <TabBar tab={tab} onTab={setTab} dark={tab === "focus"} running={!!state.meta.timer} />}
+      {!over && <TabBar tab={tab} onTab={goTab} dark={false} running={!!state.meta.timer} />}
 
       <Capture open={!!capture} preset={capture ?? undefined} onClose={() => setCapture(null)} state={state} actions={actions} announce={announce} />
       <TaskSheet task={openTask} ai={state.settings.ai} onClose={() => setOpenId(null)} actions={actions} onFocus={startFocus} onFinished={finished} announce={announce} />
       <TaskMenu task={menuTask} onClose={() => setMenuId(null)} actions={actions} onOpen={(t) => (setMenuId(null), setTimeout(() => setOpenId(t.id), 220))} onFocus={startFocus} />
-      <Settings open={settings} onClose={() => setSettings(false)} state={state} actions={actions} onCheckin={(k) => setTimeout(() => setCheckin(k), 220)} />
+      <Settings open={settings} onClose={() => setSettings(false)} state={state} actions={actions} onCheckin={(k) => setTimeout(() => setCheckin(k), 320)} onGuide={() => setTimeout(() => setGuide(true), 320)} />
       <Checkin kind={checkin} onClose={() => setCheckin(null)} state={state} actions={actions} onStart={(t) => setTimeout(() => startFocus(t), 220)} />
+      <Guide
+        open={guide}
+        onClose={() => {
+          setGuide(false);
+          if (!state.meta.intro) actions.seenIntro();
+        }}
+      />
       <Petals />
     </MotionConfig>
   );

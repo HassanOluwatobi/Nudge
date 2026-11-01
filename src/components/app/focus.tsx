@@ -1,14 +1,15 @@
 "use client";
 
-import { Check, ChevronDown, Pause, Play, Plus, Scissors, X } from "lucide-react";
+import { Check, ChevronDown, Pause, Play, Plus, Scissors } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+import { feel } from "@/lib/feedback";
 import { notify } from "@/lib/reminders";
 import { type State, type Task, MAX_STEP, nextStep, smallerStep, suggestStep, todayTasks, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { Art } from "./art";
 import { Sheet } from "./sheet";
-import { Tile } from "./task-row";
+import { StepCheck, Tile } from "./task-row";
 
 const R = 118;
 const CIRC = 2 * Math.PI * R;
@@ -38,27 +39,6 @@ const fmt = (ms: number) => {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 };
 const clock = (ms: number) => new Date(ms).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-
-function chime() {
-  try {
-    const Ctx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new Ctx();
-    [523, 659, 784].forEach((f, i) => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
-      o.frequency.value = f;
-      o.type = "sine";
-      const t = ctx.currentTime + i * 0.16;
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(0.16, t + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
-      o.connect(g).connect(ctx.destination);
-      o.start(t);
-      o.stop(t + 0.75);
-    });
-    navigator.vibrate?.([120, 80, 120]);
-  } catch {}
-}
 
 /** Focus: a ring timer around a small painting, then the steps. After Tiimo. */
 export function Focus({
@@ -94,7 +74,7 @@ export function Focus({
     if (timer && running && left <= 0 && rang.current !== timer.end) {
       rang.current = timer.end;
       if (left > -60_000) {
-        chime();
+        feel("end", "warning");
         if (document.hidden) notify("Time is up", task ? `Nice work on: ${task.title}` : "Your focus time is done.");
       }
       announce("Time is up.");
@@ -110,7 +90,7 @@ export function Focus({
     let deg = (a * 180) / Math.PI + 90;
     if (deg < 0) deg += 360;
     const m = Math.max(5, Math.min(60, Math.round((deg / 360) * 60 / 5) * 5 || 60));
-    if (m !== mins) navigator.vibrate?.(4);
+    if (m !== mins) feel("tick", "light");
     setMins(m);
   };
 
@@ -120,23 +100,23 @@ export function Focus({
   const step = task ? nextStep(task) : undefined;
 
   return (
-    <div className="on-night min-h-dvh bg-night text-white">
+    <div className="min-h-dvh bg-paper text-ink">
       <div className="mx-auto w-full max-w-md px-5 pb-36 safe-t">
         <header className="flex items-center justify-between py-2">
-          <button type="button" onClick={() => setPicker(true)} className="flex h-10 max-w-[70%] items-center gap-2 rounded-full border border-white/15 bg-white/[0.06] pl-1.5 pr-3 text-[14px] font-medium" aria-label="Choose what to focus on">
-            {task ? <Tile task={task} size={28} /> : <span className="grid size-7 place-items-center rounded-full bg-white/10 text-[13px]">⏱</span>}
+          <button type="button" onClick={() => setPicker(true)} className="flex h-10 max-w-[70%] items-center gap-2 rounded-full bg-white pl-1.5 pr-3 text-[14px] font-medium shadow-[0_1px_2px_rgb(6_11_43/0.06),0_6px_16px_-10px_rgb(6_11_43/0.3)]" aria-label="Choose what to focus on">
+            {task ? <Tile task={task} size={28} /> : <span className="grid size-7 place-items-center rounded-full bg-paper text-[13px]">⏱</span>}
             <span className="truncate">{task ? task.title : "Just a timer"}</span>
-            <ChevronDown className="size-4 shrink-0 text-white/60" />
+            <ChevronDown className="size-4 shrink-0 text-ink-3" />
           </button>
           {timer && (
-            <button type="button" className="grid size-10 place-items-center rounded-full border border-white/15 bg-white/[0.06]" aria-label="Stop timer" onClick={() => (actions.stopTimer(), announce("Timer stopped."))}>
-              <X className="size-4" />
+            <button type="button" className="btn btn-quiet min-h-10 px-3 text-[15px]" onClick={() => (actions.stopTimer(), feel("undo", "light"), announce("Timer stopped."))}>
+              Stop timer
             </button>
           )}
         </header>
 
         <h1 className="mt-6 text-center font-serif text-[40px] leading-none tracking-[-0.02em]">{timer ? (over ? "Time is up" : "Focus") : "Focus"}</h1>
-        <p className="t-small mt-2 text-center text-white/60">{timer && !over ? `${clock(timer.end - timer.mins * 60_000)} → ${clock(timer.pausedLeft !== undefined ? now + timer.pausedLeft : timer.end)}` : timer ? "Keep going, or stop here. Both are fine." : "Drag the ring, or pick a time."}</p>
+        <p className="t-small mt-2 text-center text-ink-3">{timer && !over ? `${clock(timer.end - timer.mins * 60_000)} → ${clock(timer.pausedLeft !== undefined ? now + timer.pausedLeft : timer.end)}` : timer ? "Keep going, or stop here. Both are fine." : "Drag the ring, or pick a time."}</p>
 
         <div className="relative mx-auto mt-6 aspect-square w-full max-w-[300px]">
           <svg
@@ -170,7 +150,7 @@ export function Focus({
                 <stop offset="100%" stopColor="#ffb98a" />
               </linearGradient>
             </defs>
-            <circle cx="140" cy="140" r={R} fill="none" stroke="rgb(255 255 255 / 0.1)" strokeWidth="22" />
+            <circle cx="140" cy="140" r={R} fill="none" stroke="#e8e1d3" strokeWidth="22" />
             <motion.circle
               cx="140"
               cy="140"
@@ -185,7 +165,7 @@ export function Focus({
               animate={{ strokeDashoffset: CIRC * (1 - (over ? 1 : frac)) }}
               transition={timer ? { duration: 0.3, ease: "linear" } : { type: "spring", bounce: 0, duration: 0.3 }}
             />
-            {!over && <circle cx={kx} cy={ky} r="13" fill="#fff" className="drop-shadow" />}
+            {!over && <circle cx={kx} cy={ky} r="13" fill="#fff" stroke="#060b2b" strokeOpacity="0.08" style={{ filter: "drop-shadow(0 2px 6px rgb(6 11 43 / 0.35))" }} />}
           </svg>
           {/* The painting sits inside the ring. */}
           <div className="absolute inset-[17%] overflow-hidden rounded-full">
@@ -211,19 +191,19 @@ export function Focus({
             <div className="mt-5 flex items-center justify-center gap-3">
               {over ? (
                 <>
-                  <button type="button" className="btn btn-glass" onClick={() => actions.startTimer(5, timer.taskId)}>
+                  <button type="button" className="btn btn-line" onClick={() => (actions.startTimer(5, timer.taskId), feel("start", "light"))}>
                     +5 min
                   </button>
-                  <button type="button" className="btn btn-white" onClick={() => (actions.stopTimer(), announce("Timer closed."))}>
+                  <button type="button" className="btn btn-ink" onClick={() => (actions.stopTimer(), announce("Timer closed."))}>
                     Done for now
                   </button>
                 </>
               ) : (
                 <>
-                  <button type="button" className="btn btn-quiet text-[16px] font-semibold text-white" onClick={() => actions.addMinute()}>
+                  <button type="button" className="btn btn-quiet text-[16px] font-semibold text-ink" onClick={() => (actions.addMinute(), feel("tick", "light"))}>
                     +1 min
                   </button>
-                  <button type="button" className="btn btn-white min-w-[96px]" aria-label={running ? "Pause" : "Resume"} onClick={() => (running ? actions.pauseTimer() : actions.resumeTimer())}>
+                  <button type="button" className="btn btn-ink min-w-[96px]" aria-label={running ? "Pause" : "Resume"} onClick={() => (running ? actions.pauseTimer() : actions.resumeTimer(), feel("tap", "light"))}>
                     {running ? <Pause className="size-5" /> : <Play className="size-5" />}
                   </button>
                 </>
@@ -234,16 +214,17 @@ export function Focus({
           <>
             <div className="mt-6 flex justify-center gap-2" role="group" aria-label="Quick times">
               {QUICK.map((m) => (
-                <button key={m} type="button" aria-pressed={mins === m} onClick={() => setMins(m)} className={`h-10 min-w-12 rounded-full px-3 text-[14px] font-semibold transition-colors ${mins === m ? "bg-white text-night" : "border border-white/15 bg-white/[0.06] text-white/85"}`}>
+                <button key={m} type="button" aria-pressed={mins === m} onClick={() => (setMins(m), feel("tick", "light"))} className={`h-10 min-w-12 rounded-full px-3 text-[14px] font-semibold transition-[background-color,color,transform] duration-150 active:scale-95 ${mins === m ? "bg-ink text-white" : "bg-white text-ink-2 ring-1 ring-line"}`}>
                   {m}m
                 </button>
               ))}
             </div>
             <button
               type="button"
-              className="btn btn-white mx-auto mt-6 flex w-full max-w-[240px] text-[17px]"
+              className="btn btn-ink mx-auto mt-6 flex w-full max-w-[240px] text-[17px]"
               onClick={() => {
                 actions.startTimer(mins, task?.id);
+                feel("start", "medium");
                 announce(`${mins} minute timer started.`);
               }}
             >
@@ -288,7 +269,7 @@ function Steps({ task, actions, onFinished, announce }: { task: Task; actions: A
       <div className="mb-3 flex items-baseline justify-between">
         <h2 className="text-[15px] font-semibold">{task.steps.length ? "Steps" : "Add a first step"}</h2>
         {task.steps.length > 0 && (
-          <span className="t-small tabular-nums text-white/55">
+          <span className="t-small tabular-nums text-ink-3">
             {task.steps.filter((s) => s.d).length}/{task.steps.length}
           </span>
         )}
@@ -296,20 +277,19 @@ function Steps({ task, actions, onFinished, announce }: { task: Task; actions: A
       <ul className="space-y-2">
         <AnimatePresence initial={false}>
           {task.steps.map((s) => (
-            <motion.li key={s.id} layout="position" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`rounded-2xl ${current?.id === s.id ? "bg-white/[0.12] ring-1 ring-white/20" : "bg-white/[0.05]"}`}>
+            <motion.li key={s.id} layout="position" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className={`task-row ${current?.id === s.id ? "ring-2 ring-signal/30" : ""}`}>
               <button
                 type="button"
                 aria-pressed={s.d}
                 onClick={() => {
                   actions.toggleStep(task.id, s.id);
+                  feel(s.d ? "unstep" : "step", "light");
                   if (!s.d) announce("Step done. The task is still open.");
                 }}
                 className="flex min-h-[54px] w-full items-center gap-3 px-4 py-2.5 text-left"
               >
-                <span className={`hue-${task.hue} grid size-6 shrink-0 place-items-center rounded-full border-2 transition-colors ${s.d ? "border-[var(--h)] bg-[var(--h)]" : "border-white/50"}`}>
-                  {s.d && <Check className="size-3.5 text-white" strokeWidth={3} />}
-                </span>
-                <span className={`text-[16px] ${s.d ? "text-white/45 line-through" : ""}`}>{s.t}</span>
+                <StepCheck done={s.d} hue={task.hue} />
+                <span className={`text-[16px] transition-colors ${s.d ? "text-ink-3 line-through" : ""}`}>{s.t}</span>
               </button>
             </motion.li>
           ))}
@@ -317,13 +297,13 @@ function Steps({ task, actions, onFinished, announce }: { task: Task; actions: A
       </ul>
 
       {current && smaller === null && (
-        <button type="button" className="btn btn-quiet mt-2 gap-1.5 px-2 text-[14px] text-white/75" onClick={() => setSmaller(smallerStep(current.t))}>
+        <button type="button" className="btn btn-quiet mt-2 gap-1.5 px-2 text-[14px]" onClick={() => setSmaller(smallerStep(current.t))}>
           <Scissors className="size-4" /> Make the current step smaller
         </button>
       )}
       {current && smaller !== null && (
         <form
-          className="mt-3 rounded-2xl bg-white/[0.06] p-3"
+          className="mt-3 rounded-[18px] bg-white p-3 ring-1 ring-line"
           onSubmit={(e) => {
             e.preventDefault();
             if (!smaller.trim()) return;
@@ -332,15 +312,15 @@ function Steps({ task, actions, onFinished, announce }: { task: Task; actions: A
             announce("Step made smaller.");
           }}
         >
-          <label className="text-[13px] font-medium text-white/70" htmlFor="smaller">
+          <label className="t-small font-medium text-ink-2" htmlFor="smaller">
             A smaller version. Change it if you like.
           </label>
-          <input id="smaller" value={smaller} maxLength={MAX_STEP} onChange={(e) => setSmaller(e.target.value)} className="mt-2 w-full rounded-xl border border-white/15 bg-white/[0.06] px-3 py-2.5 text-white focus:border-moon focus:outline-none" />
+          <input id="smaller" value={smaller} maxLength={MAX_STEP} onChange={(e) => setSmaller(e.target.value)} className="field mt-2" />
           <div className="mt-2 flex gap-2">
-            <button type="submit" className="btn btn-white min-h-11 flex-1 text-[15px]">
+            <button type="submit" className="btn btn-ink min-h-11 flex-1 text-[15px]">
               Use this
             </button>
-            <button type="button" className="btn btn-glass min-h-11 flex-1 text-[15px]" onClick={() => setSmaller(null)}>
+            <button type="button" className="btn btn-line min-h-11 flex-1 text-[15px]" onClick={() => setSmaller(null)}>
               Keep mine
             </button>
           </div>
@@ -353,26 +333,27 @@ function Steps({ task, actions, onFinished, announce }: { task: Task; actions: A
           e.preventDefault();
           if (!draft.trim()) return;
           actions.addStep(task.id, draft);
+          feel("save", "light");
           setDraft("");
         }}
       >
         <label htmlFor="focus-add" className="sr-only">
           Add a step
         </label>
-        <input id="focus-add" value={draft} maxLength={MAX_STEP} onChange={(e) => setDraft(e.target.value)} placeholder={task.steps.length ? "Add another step" : `Try: ${suggestStep(task.title)}`} className="min-w-0 flex-1 rounded-2xl border border-white/15 bg-white/[0.06] px-4 py-3 text-white placeholder:text-white/40 focus:border-moon focus:outline-none" />
-        <button type="submit" className="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/10" aria-label="Add step">
+        <input id="focus-add" value={draft} maxLength={MAX_STEP} onChange={(e) => setDraft(e.target.value)} placeholder={task.steps.length ? "Add another step" : `Try: ${suggestStep(task.title)}`} className="field min-w-0 flex-1" />
+        <button type="submit" className="grid size-[50px] shrink-0 place-items-center rounded-[14px] bg-ink text-white transition-transform active:scale-95" aria-label="Add step">
           <Plus className="size-5" />
         </button>
       </form>
       {!task.steps.length && (
-        <button type="button" className="mt-2 text-[14px] text-white/70 underline underline-offset-2" onClick={() => actions.addStep(task.id, suggestStep(task.title))}>
+        <button type="button" className="mt-2 text-[14px] text-ink-2 underline underline-offset-2" onClick={() => actions.addStep(task.id, suggestStep(task.title))}>
           Use “{suggestStep(task.title)}”
         </button>
       )}
 
       <button
         type="button"
-        className="btn btn-glass mt-8 w-full"
+        className="btn btn-line mt-8 w-full"
         onClick={() => {
           actions.finish(task.id);
           onFinished(task);
@@ -380,7 +361,7 @@ function Steps({ task, actions, onFinished, announce }: { task: Task; actions: A
       >
         <Check className="size-5" /> Finish this task
       </button>
-      <p className="t-small mt-2 text-center text-white/50">Only when the whole task is done.</p>
+      <p className="t-small mt-2 text-center text-ink-3">Only when the whole task is done.</p>
     </section>
   );
 }

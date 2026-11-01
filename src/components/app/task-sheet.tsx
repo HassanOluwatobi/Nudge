@@ -2,14 +2,15 @@
 
 import { ArrowRight, Check, Copy, ExternalLink, Plus, RotateCcw, Sparkles, SunMedium, Trash2, Wand2, X, Copy as Dup } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { AI_NAME, aiLink, breakdownPrompt, copy } from "@/lib/ai";
 import { type Bucket, type Settings, type Task, BUCKET_NAME, HUES, MAX_STEP, MAX_TITLE, MIN_CHOICES, PARTS, PART_NAME, addDays, fmtMins, parseSteps, suggestStep, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
+import { feel } from "@/lib/feedback";
 import { RemindPicker } from "./remind";
 import { Sheet } from "./sheet";
-import { Tile } from "./task-row";
+import { StepCheck, Tile } from "./task-row";
 
 const EMOJIS = ["✨", "📞", "✉️", "🛒", "💳", "🧺", "🏃", "📚", "✍️", "🎨", "🍳", "🩺", "🗓️", "💻", "🌱", "🧘", "🧹", "🎧", "🚗", "💡"];
 
@@ -37,6 +38,9 @@ export function TaskSheet({
   const [confirm, setConfirm] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [pasted, setPasted] = useState("");
+  const aiRef = useRef<HTMLDivElement>(null);
+  const [dueOpen, setDueOpen] = useState(false);
+  const [dueDraft, setDueDraft] = useState("");
 
   useEffect(() => {
     if (task) {
@@ -115,8 +119,8 @@ export function TaskSheet({
           <ul className="mt-2 space-y-1.5">
             {t.steps.map((s) => (
               <li key={s.id} className="flex items-center gap-2 rounded-xl bg-white pl-2 pr-1 ring-1 ring-line/70">
-                <button type="button" aria-pressed={s.d} aria-label={s.d ? "Mark step not done" : "Mark step done"} onClick={() => actions.toggleStep(t.id, s.id)} className={`hue-${t.hue} grid size-9 shrink-0 place-items-center`}>
-                  <span className={`grid size-5 place-items-center rounded-full border-2 ${s.d ? "border-[var(--h)] bg-[var(--h)]" : "border-ink-3/60"}`}>{s.d && <Check className="size-3 text-white" strokeWidth={3} />}</span>
+                <button type="button" aria-pressed={s.d} aria-label={s.d ? "Mark step not done" : "Mark step done"} onClick={() => (actions.toggleStep(t.id, s.id), feel(s.d ? "unstep" : "step", "light"))} className="grid size-9 shrink-0 place-items-center">
+                  <StepCheck done={s.d} hue={t.hue} size={20} />
                 </button>
                 <input
                   defaultValue={s.t}
@@ -125,7 +129,7 @@ export function TaskSheet({
                   onBlur={(e) => e.target.value !== s.t && actions.editStep(t.id, s.id, e.target.value)}
                   className={`min-w-0 flex-1 bg-transparent py-2.5 text-[15px] focus:outline-none ${s.d ? "text-ink-3 line-through" : ""}`}
                 />
-                <button type="button" className="icon-btn size-9" aria-label="Remove step" onClick={() => actions.removeStep(t.id, s.id)}>
+                <button type="button" className="icon-btn size-9 text-ink-3" aria-label="Remove step" onClick={() => (actions.removeStep(t.id, s.id), feel("tap"))}>
                   <X className="size-4" />
                 </button>
               </li>
@@ -137,11 +141,12 @@ export function TaskSheet({
               e.preventDefault();
               if (!draft.trim()) return;
               actions.addStep(t.id, draft);
+              feel("save", "light");
               setDraft("");
             }}
           >
             <input value={draft} maxLength={MAX_STEP} onChange={(e) => setDraft(e.target.value)} placeholder={t.steps.length ? "Add a step" : "The smallest thing you could do first"} aria-label="New step" className="field min-w-0 flex-1" />
-            <button type="submit" className="grid size-[50px] shrink-0 place-items-center rounded-[14px] bg-ink text-white" aria-label="Add step">
+            <button type="submit" className="grid size-[50px] shrink-0 place-items-center rounded-[14px] bg-ink text-white transition-transform active:scale-95" aria-label="Add step">
               <Plus className="size-5" />
             </button>
           </form>
@@ -151,7 +156,17 @@ export function TaskSheet({
                 <Sparkles className="size-3.5 shrink-0 text-signal" /> {suggestStep(t.title)}
               </button>
             )}
-            <button type="button" className="chip gap-1.5" aria-expanded={aiOpen} onClick={() => setAiOpen((v) => !v)}>
+            <button
+              type="button"
+              className="chip gap-1.5"
+              aria-expanded={aiOpen}
+              onClick={() => {
+                setAiOpen((v) => !v);
+                feel("tap", "light");
+                // Bring the panel into view so the tap visibly leads somewhere.
+                if (!aiOpen) setTimeout(() => aiRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 360);
+              }}
+            >
               <Wand2 className="size-3.5 text-signal" /> Break it down with {AI_NAME[ai]}
             </button>
           </div>
@@ -159,7 +174,7 @@ export function TaskSheet({
           <AnimatePresence initial={false}>
             {aiOpen && (
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }} className="overflow-hidden">
-                <div className="mt-3 rounded-2xl bg-white p-4 ring-1 ring-line">
+                <div ref={aiRef} className="mt-3 scroll-mb-6 rounded-2xl bg-white p-4 ring-1 ring-line">
                   <p className="text-[15px] font-semibold">Use your own {AI_NAME[ai]}</p>
                   <p className="t-small mt-1 text-ink-2">Free. Nothing is sent from NudgeMe. You choose what to paste back.</p>
                   <ol className="mt-3 space-y-3">
@@ -203,6 +218,7 @@ export function TaskSheet({
                         className="btn btn-signal mt-3 min-h-12 w-full"
                         onClick={() => {
                           actions.addSteps(t.id, parsed);
+                          feel("done", "success");
                           setPasted("");
                           setAiOpen(false);
                           announce(`${parsed.length} steps added.`);
@@ -253,11 +269,22 @@ export function TaskSheet({
             <button type="button" className="chip" aria-pressed={t.due === addDays(today, 1)} onClick={() => actions.patch(t.id, { due: t.due === addDays(today, 1) ? undefined : addDays(today, 1) })}>
               Tomorrow
             </button>
-            <label className="chip relative cursor-pointer">
+            <button type="button" className="chip" aria-expanded={dueOpen} aria-pressed={!!t.due && t.due !== today && t.due !== addDays(today, 1)} onClick={() => (setDueOpen((v) => !v), setDueDraft(t.due ?? ""), feel("tap"))}>
               {t.due && t.due !== today && t.due !== addDays(today, 1) ? new Date(t.due + "T00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "Pick a date"}
-              <input type="date" aria-label="Pick a due date" className="absolute inset-0 cursor-pointer opacity-0" value={t.due ?? ""} onChange={(e) => actions.patch(t.id, { due: e.target.value || undefined })} />
-            </label>
+            </button>
           </div>
+          <AnimatePresence initial={false}>
+            {dueOpen && (
+              <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }} className="overflow-hidden">
+                <div className="mt-3 flex gap-2 rounded-2xl bg-white p-3 ring-1 ring-line">
+                  <input type="date" aria-label="Due date" min={today} value={dueDraft} onChange={(e) => setDueDraft(e.target.value)} className="field min-w-0 flex-1" />
+                  <button type="button" disabled={!dueDraft} className="btn btn-signal min-h-[50px] px-4" onClick={() => (actions.patch(t.id, { due: dueDraft }), feel("save", "light"), setDueOpen(false))}>
+                    Set
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <p className="t-label mt-5">Remind me</p>
           <RemindPicker task={t} actions={actions} />
@@ -327,7 +354,7 @@ export function TaskMenu({ task, onClose, actions, onOpen, onFocus }: { task: Ta
   if (!t) return null;
   const item = (label: string, icon: React.ReactNode, fn: () => void, danger = false) => (
     <li>
-      <button type="button" className={`flex min-h-[52px] w-full items-center gap-3 rounded-xl px-2 text-left text-[16px] ${danger ? "text-danger" : ""}`} onClick={() => (fn(), onClose())}>
+      <button type="button" className={`flex min-h-[52px] w-full items-center gap-3 rounded-xl px-2 text-left text-[16px] transition-colors active:bg-ink/5 ${danger ? "text-danger" : ""}`} onClick={() => (fn(), feel("tap", "light"), onClose())}>
         <span className="grid size-6 place-items-center">{icon}</span>
         {label}
       </button>

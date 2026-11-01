@@ -36,7 +36,9 @@ export function Sheet({
       d.classList.remove("closing");
       setShow(true);
       d.showModal();
-      initialFocus?.current?.focus();
+      // Focus the field we were given, or the sheet itself, never the close button.
+      if (initialFocus?.current) initialFocus.current.focus();
+      else d.focus({ preventScroll: true });
     } else if (!open && d.open) {
       const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
       if (reduce) {
@@ -49,7 +51,7 @@ export function Sheet({
         d.classList.remove("closing");
         d.close();
         setShow(false);
-      }, 190);
+      }, 290);
       return () => clearTimeout(t);
     }
   }, [open, initialFocus]);
@@ -82,7 +84,7 @@ export function Sheet({
     if (!g || !d) return;
     // Project where the flick is heading, then decide.
     const projected = g.y + ((g.v / 1000) * 0.99) / (1 - 0.99);
-    d.style.transition = "transform 320ms cubic-bezier(0.22, 1, 0.36, 1)";
+    d.style.transition = "transform 360ms cubic-bezier(0.32, 0.72, 0, 1)";
     if (projected > 140) {
       d.style.transform = `translateY(${d.offsetHeight}px)`;
       setTimeout(() => {
@@ -101,6 +103,7 @@ export function Sheet({
   return (
     <dialog
       ref={ref}
+      tabIndex={-1}
       className="sheet"
       aria-label={title}
       onCancel={(e) => {
@@ -117,7 +120,7 @@ export function Sheet({
         <div className="grabber" aria-hidden />
         <div className="flex items-center justify-between px-5 pt-2">
           <h2 className={hideTitle ? "sr-only" : "text-[17px] font-semibold"}>{title}</h2>
-          <button type="button" className="icon-btn -mr-2" aria-label="Close" onClick={() => closeRef.current()}>
+          <button type="button" className="icon-btn -mr-2 text-ink-2" aria-label="Close" onClick={() => closeRef.current()}>
             <X className="size-5" />
           </button>
         </div>
