@@ -23,6 +23,8 @@ export type Task = {
   updatedAt: string;
   doneAt?: string;
   prevBucket?: Exclude<Bucket, "done">;
+  /** Where an imported task came from, e.g. "google:abc123". Stops double imports. */
+  ext?: string;
 };
 
 export type EntryKind = "idea" | "note";
@@ -46,6 +48,8 @@ export type Settings = {
   sound: boolean;
   haptics: boolean;
   calendarAdded?: string;
+  /** Connected calendars. Tokens for Notion and Calendly stay on this device. */
+  sync: { google?: boolean; outlook?: boolean; notion?: string; calendly?: string; last?: string; skipped?: string[] };
 };
 
 export type Meta = {
@@ -72,7 +76,7 @@ export const PART_NAME: Record<Part, string> = { anytime: "Anytime", morning: "M
 export const MIN_CHOICES = [5, 10, 15, 30, 45, 60];
 export const RESURFACE_DAYS = [3, 7, 14, 30];
 
-export const DEFAULT_SETTINGS: Settings = { morning: "08:30", evening: "20:00", weeklyDay: 0, ai: "chatgpt", notify: false, sound: true, haptics: true };
+export const DEFAULT_SETTINGS: Settings = { morning: "08:30", evening: "20:00", weeklyDay: 0, ai: "chatgpt", notify: false, sound: true, haptics: true, sync: {} };
 
 export const freshState = (): State => ({ v: 12, tasks: [], entries: [], settings: { ...DEFAULT_SETTINGS }, meta: {} });
 
@@ -293,6 +297,7 @@ export function sanitize(raw: unknown): State {
       updatedAt: str(t.updatedAt) ?? now,
       doneAt: str(t.doneAt) ?? (bucket === "done" ? now : undefined),
       prevBucket: ["today", "week", "later"].includes(t.prevBucket as string) ? (t.prevBucket as Task["prevBucket"]) : undefined,
+      ext: str(t.ext),
     });
   }
   const entries: Entry[] = (Array.isArray(r.entries) ? r.entries : [])
@@ -317,6 +322,17 @@ export function sanitize(raw: unknown): State {
     sound: st.sound !== false,
     haptics: st.haptics !== false,
     calendarAdded: str(st.calendarAdded),
+    sync: (() => {
+      const y = (st.sync && typeof st.sync === "object" ? st.sync : {}) as Settings["sync"];
+      return {
+        google: !!y.google,
+        outlook: !!y.outlook,
+        notion: typeof y.notion === "string" && y.notion ? y.notion : undefined,
+        calendly: typeof y.calendly === "string" && y.calendly ? y.calendly : undefined,
+        last: typeof y.last === "string" ? y.last : undefined,
+        skipped: Array.isArray(y.skipped) ? y.skipped.filter((x) => typeof x === "string").slice(-500) : [],
+      };
+    })(),
   };
   const m = r.meta && typeof r.meta === "object" && !Array.isArray(r.meta) ? r.meta : {};
   const meta: Meta = {

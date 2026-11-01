@@ -8,8 +8,10 @@ import { AI_NAME } from "@/lib/ai";
 import { feel } from "@/lib/feedback";
 import { askNotify, canNotify, dailyEvents, prettyTime } from "@/lib/reminders";
 import { type Settings as S, type State, sanitize, ymd } from "@/lib/tasks";
+import type { Source } from "@/lib/sync";
 import type { Actions } from "@/lib/use-tasks";
 import { CalendarButtons } from "./calendars";
+import { SourceButtons } from "./import";
 import { InstallButton } from "./install";
 import { Sheet } from "./sheet";
 
@@ -65,7 +67,7 @@ export function Credit({ compact = false }: { compact?: boolean }) {
 }
 
 /** Reminders, check-ins, your AI, and your data. Plain words throughout. */
-export function Settings({ open, onClose, state, actions, onCheckin, onGuide }: { open: boolean; onClose: () => void; state: State; actions: Actions; onCheckin: (k: "morning" | "evening" | "weekly") => void; onGuide: () => void }) {
+export function Settings({ open, onClose, state, actions, onCheckin, onGuide, onImport }: { open: boolean; onClose: () => void; state: State; actions: Actions; onCheckin: (k: "morning" | "evening" | "weekly") => void; onGuide: () => void; onImport: (s: Source) => void }) {
   const [clear, setClear] = useState(false);
   const [dataOpen, setDataOpen] = useState(false);
   const file = useRef<HTMLInputElement>(null);
@@ -130,6 +132,17 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide }: 
                 </option>
               ))}
             </select>
+          </div>
+        </div>
+      </section>
+
+      <section className="mt-6">
+        <h3 className="t-label">Bring in your calendar</h3>
+        <div className="mt-2 rounded-2xl bg-white p-4 ring-1 ring-line">
+          <p className="font-medium">Turn events into tasks</p>
+          <p className="t-small mt-1 text-ink-2">Connect a calendar and NudgeMe shows what is coming up. You choose which events become tasks. It only reads, it never changes your calendar.</p>
+          <div className="mt-4">
+            <SourceButtons state={state} onPick={(src) => (onClose(), onImport(src))} />
           </div>
         </div>
       </section>
@@ -206,7 +219,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide }: 
           {dataOpen && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.36 }} className="overflow-hidden">
               <div className="border-t border-line px-4 pb-4 pt-3">
-                <p className="t-small text-ink-2">No account, and nothing is sent to a server. Voice typing uses your browser&apos;s speech feature, and some browsers send audio to their online service for it. Clearing your browser data also clears NudgeMe.</p>
+                <p className="t-small text-ink-2">No account. Your tasks are never sent to a server. If you connect Notion or Calendly, your token is saved on this phone and passed through a NudgeMe relay that stores nothing. Voice typing uses your browser&apos;s speech feature, and some browsers send audio to their online service for it. Clearing your browser data also clears NudgeMe.</p>
                 <div className="mt-3 grid gap-2">
                   <button type="button" className="btn btn-line w-full justify-start gap-3 px-4" onClick={exportData} disabled={!count}>
                     <Download className="size-[18px] text-ink-2" />
