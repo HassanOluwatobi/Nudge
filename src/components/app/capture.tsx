@@ -157,7 +157,7 @@ export function Capture({
           </p>
           <div className="mt-4 flex gap-2">
             {speech.supported && (
-              <button type="button" onClick={() => (speech.toggle(), feel("tap", "light"))} aria-pressed={speech.listening} aria-label={speech.listening ? "Stop listening" : "Speak instead"} className={`btn btn-icon size-[52px] ${speech.listening ? "btn-danger" : "btn-line"}`}>
+              <button type="button" onClick={() => (speech.toggle(), feel("tap", "light"))} aria-pressed={speech.listening} aria-label={speech.listening ? "Stop listening" : "Speak instead"} className={`btn btn-icon size-[52px] ${speech.listening ? "btn-signal mic-live" : "btn-line"}`}>
                 {speech.listening ? (
                   <motion.span animate={{ scale: [1, 1.18, 1] }} transition={{ repeat: Infinity, duration: 1.1 }}>
                     <Mic className="size-5" />

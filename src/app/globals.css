@@ -635,6 +635,31 @@ html[data-theme="dark"] .start-card .glow-b {
   }
 }
 
+/* The mic while listening: bright blue with a soft breathing ring. */
+.mic-live {
+  overflow: visible;
+}
+.mic-live::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: inherit;
+  border: 2px solid var(--signal);
+  opacity: 0;
+  animation: mic-breathe 1.6s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes mic-breathe {
+  0% { transform: scale(0.92); opacity: 0.55; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mic-live::before {
+    animation: none;
+    opacity: 0.4;
+  }
+}
+
 /* The bottom of every screen: a frosted strip under the tab bar, like Safari's
    own toolbar. Content scrolls all the way down and blurs behind it. */
 .bottom-frost {

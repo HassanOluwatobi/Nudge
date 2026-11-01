@@ -140,7 +140,7 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
           className="min-h-[54px] flex-1 resize-none bg-transparent py-[15px] text-[17px] leading-snug placeholder:text-ink-3 focus:outline-none"
         />
         {speech.supported && (
-          <button type="button" {...keepFocus} onClick={() => (speech.toggle(), feel("tap", "light"), refocus())} aria-pressed={speech.listening} aria-label={speech.listening ? "Stop listening" : "Speak instead"} className={`btn btn-icon mt-[7px] size-10 ${speech.listening ? "btn-danger" : "btn-quiet text-ink-2"}`}>
+          <button type="button" {...keepFocus} onClick={() => (speech.toggle(), feel("tap", "light"), refocus())} aria-pressed={speech.listening} aria-label={speech.listening ? "Stop listening" : "Speak instead"} className={`btn btn-icon mt-[7px] size-10 ${speech.listening ? "btn-signal mic-live" : "btn-quiet text-ink-2"}`}>
             <Mic className="size-[18px]" />
           </button>
         )}
