@@ -97,7 +97,7 @@ function splitAnd(t: string): string[] {
   if (parts.length < 2) return [t];
   const out = [parts[0]];
   for (const p of parts.slice(1)) {
-    if (startsWithVerb(p)) out.push(p);
+    if (startsWithVerb(p) && out[out.length - 1].trim().split(/\s+/).length >= 2) out.push(p);
     else out[out.length - 1] += ` and ${p}`;
   }
   return out;
@@ -121,8 +121,11 @@ function splitCommas(t: string): string[] {
 
 /** Dictation has no punctuation: "pay rent email sade book the dentist". Split before a to-do word. */
 function splitRunOn(t: string): string[] {
+  // Spoken lists often restart with "I need to…" or "I have to…". Each restart is a new task.
+  const restarts = t.split(/\s+(?=(?:i\s+(?:need|have|want|got)\s+to|i\s+gotta|i\s+should|i\s+must|remember\s+to|don'?t\s+forget\s+to)\b)/i);
+  if (restarts.length > 1) return restarts.flatMap(splitRunOn);
   const w = t.trim().split(/\s+/);
-  if (w.length < 5) return [t];
+  if (w.length < 4) return [t];
   const cuts: number[] = [0];
   for (let i = 2; i < w.length - 1; i++) {
     const word = w[i].toLowerCase();
@@ -145,12 +148,11 @@ export function splitLines(text: string): string[] {
     // Sentences and semicolons first.
     const sentences = bare.split(/(?<=[.!?])\s+(?=\S)|;\s*/);
     for (const sen of sentences) {
-      const hasPunct = /[,.;!?]/.test(sen.replace(/[.!?]\s*$/, ""));
       const pieces = sen.includes(",") ? splitCommas(sen) : [sen];
       for (const piece of pieces) {
         const ands = splitAnd(piece);
         for (const a of ands) {
-          const runs = !hasPunct && pieces.length === 1 && ands.length === 1 ? splitRunOn(a) : [a];
+          const runs = splitRunOn(a);
           for (const r of runs) {
             const c = clean(r);
             if (c) out.push(c);

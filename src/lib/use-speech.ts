@@ -19,6 +19,8 @@ export function useSpeech(onText: (text: string, final: boolean) => void) {
   const [listening, setListening] = useState(false);
   const rec = useRef<Rec | null>(null);
   const cb = useRef(onText);
+  const pending = useRef("");
+  const muted = useRef(false);
   cb.current = onText;
 
   useEffect(() => {
@@ -29,21 +31,37 @@ export function useSpeech(onText: (text: string, final: boolean) => void) {
     r.continuous = true;
     r.interimResults = true;
     r.lang = navigator.language || "en-US";
+    // Each result is sent as final once only. Some browsers repeat earlier results.
+    const sent = new Set<number>();
+    (r as Rec & { onstart: (() => void) | null }).onstart = () => (sent.clear(), (pending.current = ""), (muted.current = false));
     r.onresult = (e) => {
+      if (muted.current) return;
       let finalText = "";
       let interim = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
         const res = e.results[i];
-        if (res.isFinal) finalText += res[0].transcript;
-        else interim += res[0].transcript;
+        if (res.isFinal) {
+          if (!sent.has(i)) {
+            sent.add(i);
+            finalText += ` ${res[0].transcript}`;
+          }
+        } else interim += res[0].transcript;
       }
       // Finished words are kept. Words still being heard show live, and are
       // replaced as the browser refines them.
-      if (finalText) cb.current(finalText.trim(), true);
-      cb.current(interim.trim(), false);
+      if (finalText.trim()) cb.current(finalText.trim(), true);
+      pending.current = interim.trim();
+      cb.current(pending.current, false);
     };
-    r.onend = () => (setListening(false), cb.current("", false));
-    r.onerror = () => (setListening(false), cb.current("", false));
+    // If listening stops before the browser marks the last words final, keep them anyway.
+    const finish = () => {
+      setListening(false);
+      if (pending.current) cb.current(pending.current, true);
+      pending.current = "";
+      cb.current("", false);
+    };
+    r.onend = finish;
+    r.onerror = finish;
     rec.current = r;
     setSupported(true);
     return () => {
@@ -61,6 +79,7 @@ export function useSpeech(onText: (text: string, final: boolean) => void) {
       setListening(false);
     } else {
       try {
+        muted.current = false;
         r.start();
         setListening(true);
       } catch {
@@ -69,5 +88,15 @@ export function useSpeech(onText: (text: string, final: boolean) => void) {
     }
   }, [listening]);
 
-  return { supported, listening, toggle };
+  /** Stop without keeping the words still being heard (the caller already used them). */
+  const stopQuiet = useCallback(() => {
+    pending.current = "";
+    muted.current = true;
+    try {
+      rec.current?.stop();
+    } catch {}
+    setListening(false);
+  }, []);
+
+  return { supported, listening, toggle, stopQuiet };
 }

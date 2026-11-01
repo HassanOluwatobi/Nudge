@@ -16,3 +16,10 @@ const cases: [string, string[]][] = [
   ["Meeting with Ada at 3pm", ["Meeting with Ada at 3pm"]],
 ];
 for (const [i, o] of cases) test(i, () => expect(splitLines(i)).toEqual(o));
+const spoken: [string, string[]][] = [
+  ["Pay rent email Sade and book the dentist", ["Pay rent", "Email Sade", "Book the dentist"]],
+  ["I need to go to the bank I need to call Tunde", ["Go to the bank", "Call Tunde"]],
+  ["call mum buy groceries and then finish the deck.", ["Call mum", "Buy groceries", "Finish the deck"]],
+  ["Send the plan to Ada and check in with the team", ["Send the plan to Ada", "Check in with the team"]],
+];
+for (const [i, o] of spoken) test(`spoken: ${i}`, () => expect(splitLines(i)).toEqual(o));

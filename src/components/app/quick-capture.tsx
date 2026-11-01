@@ -13,7 +13,7 @@ import { keepFocus } from "./steps";
 export type Kind = "task" | EntryKind;
 
 const HINT: Record<Kind, string> = {
-  task: "Add one, or dump a whole list. Each line becomes its own task.",
+  task: "Add one, or say everything at once. It gets split into tasks.",
   idea: "Something for later. It'll come back in a few days.",
   note: "Somewhere to keep a number, an address, anything.",
 };
@@ -43,6 +43,9 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
   });
   const open = focused || !!text || !!interim || speech.listening;
   const dup = kind === "task" && text.trim().length > 2 && isDuplicate(state, text);
+  // Show how a brain dump will be cut up, live, while you type or speak.
+  const live = interim ? (text ? `${text} ${interim}` : interim) : text;
+  const parts = kind === "task" && live.trim() ? splitLines(live) : [];
 
   const grow = () => {
     const el = field.current;
@@ -56,7 +59,7 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
   };
   const save = () => {
     const typed = textState;
-    if (speech.listening) speech.toggle();
+    if (speech.listening) speech.stopQuiet();
     // Keep any words still being heard when Save is tapped.
     const text = interim ? (typed ? `${typed} ${interim}` : interim) : typed;
     setInterim("");
@@ -149,11 +152,28 @@ export function QuickCapture({ kind, state, actions, announce, onOpen }: { kind:
         {open && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ type: "spring", bounce: 0, duration: 0.32 }} className="overflow-hidden">
             <div className="border-t border-line px-3 pb-3 pt-3">
+              {parts.length > 1 && (
+                <ul className="mb-3 flex flex-wrap gap-1.5 px-1" aria-label="Tasks it will make">
+                  <AnimatePresence initial={false}>
+                    {parts.map((p, i) => (
+                      <motion.li key={`${i}-${p}`} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} transition={{ type: "spring", bounce: 0.2, duration: 0.3 }} className="max-w-full truncate rounded-full bg-signal-soft px-2.5 py-1 text-[13px] font-medium text-signal-ink">
+                        {p}
+                      </motion.li>
+                    ))}
+                  </AnimatePresence>
+                </ul>
+              )}
               <div className="flex items-center gap-3">
                 <AnimatePresence mode="wait" initial={false}>
-                  <motion.p key={dup ? "dup" : kind} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: 0.15 }} className="t-small min-w-0 flex-1 px-1 text-ink-3">
-                    {dup ? "You already have this one. Saving adds it again." : HINT[kind]}
-                  </motion.p>
+                  {parts.length > 1 ? (
+                    <motion.p key="split" initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: 0.15 }} className="t-small min-w-0 flex-1 px-1 font-semibold text-signal-ink">
+                      Saves as {parts.length} tasks
+                    </motion.p>
+                  ) : (
+                    <motion.p key={dup ? "dup" : kind} initial={{ opacity: 0, y: 3 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -3 }} transition={{ duration: 0.15 }} className="t-small min-w-0 flex-1 px-1 text-ink-3">
+                      {dup ? "You already have this one. Saving adds it again." : HINT[kind]}
+                    </motion.p>
+                  )}
                 </AnimatePresence>
                 <button type="submit" {...keepFocus} disabled={!text.trim() && !interim.trim()} className="btn btn-signal min-h-9 shrink-0 px-4 text-[14px]">
                   Save
