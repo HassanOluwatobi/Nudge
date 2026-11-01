@@ -11,6 +11,8 @@ import { useBackClose } from "@/lib/use-back";
 import { type ExtEvent, type Source, calendlyEvents, extKey, googleEvents, googleLinkEvents, googleReady, linkEvents, noteSync, notionEvents, outlookEvents } from "@/lib/sync";
 import { useKeyboardInset } from "@/lib/use-keyboard";
 import { useTasks } from "@/lib/use-tasks";
+import { requestSync, useLinkSync } from "@/lib/use-link";
+import { claimPair } from "@/lib/link";
 import { Art } from "./art";
 import { Capture } from "./capture";
 import { Checkin } from "./checkin";
@@ -45,7 +47,8 @@ const tabMotion = {
 };
 
 export function NudgeApp() {
-  const { state, actions } = useTasks();
+  const { state, actions, sync } = useTasks();
+  useLinkSync(state ? sync : null);
   useKeyboardInset();
   const [tab, setTab] = useState<Tab>("today");
   // Home shows Tasks, Ideas or Notes. It stays where you left it while the app is open.
@@ -125,6 +128,14 @@ export function NudgeApp() {
     const from = new URLSearchParams(location.search).get("from");
     // Morning lives on Home now. Evening still opens its short sheet.
     if (from === "evening" || from === "morning") setTimeout(() => setCheckin(from), 400);
+    // Opened from a "Copy link" on another device: join it.
+    const m = location.hash.match(/^#link=([0-9A-Za-z-]{12,16})$/);
+    if (m) {
+      history.replaceState(null, "", location.pathname + location.search);
+      claimPair(m[1])
+        .then(() => (toast("Linked. Bringing your tasks over now."), requestSync()))
+        .catch((e) => toast(e instanceof Error ? e.message : "That link didn't work. Make a new code on your other device."));
+    }
   }, []);
 
   useBackClose(tab !== "today" || !!over, () => {

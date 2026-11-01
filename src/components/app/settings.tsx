@@ -16,6 +16,8 @@ import { SourceButtons } from "./import";
 import { InstallButton } from "./install";
 import { downloadBackup } from "@/lib/backup";
 import { Sheet } from "./sheet";
+import { LinkDevices } from "./link";
+import { readLink } from "@/lib/link";
 
 const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const X_URL = "https://x.com/Art_sassin";
@@ -107,7 +109,9 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
         <InstallButton variant="row" />
       </div>
 
-      <section className="mt-4">
+      <LinkDevices />
+
+      <section className="mt-6">
         <h3 className="t-label">Daily plans</h3>
         <div className="mt-2 divide-y divide-line rounded-2xl bg-white ring-1 ring-line">
           {(["morning", "evening"] as const).map((k) => (
@@ -218,7 +222,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
           <span>
             <span className="block font-medium">Your data</span>
             <span className="t-small text-ink-2">
-              Stays on this device.{" "}
+              {readLink() ? "On your linked devices." : "Stays on this device."}{" "}
               <span className={!s.lastBackup || Date.now() - Date.parse(s.lastBackup) > 14 * 864e5 ? "font-semibold text-danger" : ""}>
                 {s.lastBackup ? `Last saved ${new Date(s.lastBackup).toLocaleDateString(undefined, { day: "numeric", month: "short" })}.` : "Not saved yet."}
               </span>
@@ -234,8 +238,8 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
               <div className="border-t border-line px-4 pb-4 pt-3">
                 <ol className="space-y-2">
                   {[
-                    "No account needed. Everything stays on this phone.",
-                    "I never see your tasks.",
+                    "No account needed. Everything is saved on your own devices.",
+                    "I never see your tasks. If you link devices, they're locked before they leave, and the server only holds a scrambled copy.",
                     "If you connect Notion, Calendly or a calendar link, that token or link is saved on this phone as plain text. It passes through a Shrink my day relay that stores nothing. You can remove it any time.",
                     "Voice typing uses your browser's speech feature. Some browsers send the audio to their own online service.",
                     "If you clear your browser, your list goes with it. Save a copy first.",
@@ -261,7 +265,7 @@ export function Settings({ open, onClose, state, actions, onCheckin, onGuide, on
                   <input ref={file} type="file" accept="application/json,.json" className="hidden" onChange={(e) => (e.target.files?.[0] && importData(e.target.files[0]), (e.target.value = ""))} />
                   {clear ? (
                     <div className="flex items-center justify-between gap-2 rounded-2xl bg-danger-soft p-2 pl-4" role="group" aria-label="Confirm clear">
-                      <span className="text-[15px]">Delete everything?</span>
+                      <span className="text-[15px]">{readLink() ? "Delete everything, on your linked devices too?" : "Delete everything?"}</span>
                       <div className="flex gap-1">
                         <button type="button" className="btn btn-quiet min-h-11" onClick={() => setClear(false)}>
                           Keep

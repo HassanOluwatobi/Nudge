@@ -23,6 +23,7 @@ import {
   weekStart,
   ymd,
 } from "./tasks";
+import { noteChange } from "./link";
 
 export const KEY = "nudgeme.v11";
 export const DRAFT_KEY = "nudgeme.v11.draft";
@@ -79,12 +80,31 @@ export function useTasks() {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
+  // Counts changes made on this device, so sync knows when to send them.
+  const [localRev, setLocalRev] = useState(0);
+  const revRef = useRef(0);
+
   const update = useCallback((fn: (s: State) => State) => {
-    const next = fn(ref.current ?? freshState());
+    const prev = ref.current ?? freshState();
+    const next = fn(prev);
+    if (next === prev) return;
+    ref.current = next;
+    save(next);
+    setState(next);
+    if (noteChange(prev, next)) {
+      revRef.current += 1;
+      setLocalRev(revRef.current);
+    }
+  }, []);
+
+  /** Changes that came from another device. Saved, but not sent back. */
+  const applySynced = useCallback((next: State) => {
     ref.current = next;
     save(next);
     setState(next);
   }, []);
+  const getState = useCallback(() => ref.current ?? freshState(), []);
+  const getRev = useCallback(() => revRef.current, []);
 
   const mapTask = useCallback(
     (id: string, fn: (t: Task) => Task) =>
@@ -344,7 +364,7 @@ export function useTasks() {
     },
   };
 
-  return { state, actions };
+  return { state, actions, sync: { localRev, applySynced, getState, getRev } };
 }
 
 export type Actions = ReturnType<typeof useTasks>["actions"];

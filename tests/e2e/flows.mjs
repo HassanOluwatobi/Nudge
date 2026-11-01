@@ -122,7 +122,7 @@ await flow("restore a backup file", {}, async (page, saved) => {
   await page.getByText("Your data", { exact: true }).click();
   await page.waitForTimeout(400);
   const chooser = page.waitForEvent("filechooser");
-  await page.getByRole("button", { name: /Restore from a backup/ }).click();
+  await page.getByRole("button", { name: /Load a copy/ }).click();
   await (await chooser).setFiles(file);
   await page.waitForTimeout(600);
   assert.ok((await saved()).tasks.some((t) => t.title === "From the backup"));

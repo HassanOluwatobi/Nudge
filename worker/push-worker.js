@@ -1,5 +1,5 @@
 /*
-  NudgeMe reminder sender. Runs free on Cloudflare Workers.
+  Shrink my day reminder sender and sync box. Runs free on Cloudflare Workers.
 
   What it does:
   - Every minute it sends any reminder that is due, as a Web Push notification.
@@ -8,6 +8,14 @@
     a time to send each one, and the push address of the phone.
   - It makes its own sending key the first time it runs. There are no secrets
     to copy anywhere.
+
+  Device linking (sync between phone and laptop):
+  - One device leaves a sealed box here for 10 minutes. The other device opens
+    it with the code you typed. The part of the code that unlocks the box is
+    never sent here.
+  - After that, each linked group keeps one sealed copy of its tasks here.
+    It is locked on the device with a key this worker never sees, so all it
+    holds is scrambled data and a version number.
 
   Setup (once, in the Cloudflare dashboard):
   1. Create a Worker, paste this file in, and deploy.
@@ -19,6 +27,8 @@ const PUSH_HOSTS = [/(^|\.)push\.apple\.com$/, /^fcm\.googleapis\.com$/, /^updat
 const MAX_ITEMS = 300;
 const MAX_BODY = 6000; // base64 characters per sealed message
 const CONTACT = "https://shrinkmyday.com";
+const MAX_VAULT = 1_800_000; // characters of sealed data per linked group
+const PAIR_MINS = 10;
 
 const cors = {
   "access-control-allow-origin": "*",
@@ -48,6 +58,8 @@ async function setup(db) {
     db.prepare("CREATE TABLE IF NOT EXISTS items (sub TEXT NOT NULL, at INTEGER NOT NULL, body TEXT NOT NULL)"),
     db.prepare("CREATE INDEX IF NOT EXISTS items_at ON items (at)"),
     db.prepare("CREATE INDEX IF NOT EXISTS items_sub ON items (sub)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS pairs (id TEXT PRIMARY KEY, box TEXT NOT NULL, exp INTEGER NOT NULL)"),
+    db.prepare("CREATE TABLE IF NOT EXISTS vaults (id TEXT PRIMARY KEY, token TEXT NOT NULL, rev INTEGER NOT NULL, blob TEXT NOT NULL, at INTEGER NOT NULL)"),
   ]);
 }
 
@@ -124,7 +136,74 @@ async function handle(req, env) {
     return json({ ok: true });
   }
 
-  if (url.pathname === "/") return json({ ok: true, name: "NudgeMe reminders" });
+  // ---------- device linking ----------
+  const okId = (v, n) => typeof v === "string" && v.length === n && /^[A-Za-z0-9_-]+$/.test(v);
+
+  // Leave a sealed box for the other device. Lasts 10 minutes, opens once.
+  if (req.method === "POST" && url.pathname === "/pair") {
+    const data = await req.json().catch(() => ({}));
+    if (!okId(data.id, 4) || typeof data.box !== "string" || data.box.length > 400) return json({ error: "Bad request." }, 400);
+    const now = Date.now();
+    await env.DB.prepare("DELETE FROM pairs WHERE exp < ?").bind(now).run();
+    const r = await env.DB.prepare("INSERT OR IGNORE INTO pairs (id, box, exp) VALUES (?, ?, ?)").bind(data.id, data.box, now + PAIR_MINS * 60_000).run();
+    if (!r.meta.changes) return json({ error: "taken" }, 409);
+    return json({ ok: true, exp: now + PAIR_MINS * 60_000 });
+  }
+  // The other device picks the box up. It is gone after this.
+  if (req.method === "POST" && url.pathname === "/pair/claim") {
+    const data = await req.json().catch(() => ({}));
+    if (!okId(data.id, 4)) return json({ error: "Bad request." }, 400);
+    const row = await env.DB.prepare("SELECT box, exp FROM pairs WHERE id = ?").bind(data.id).first();
+    if (!row || row.exp < Date.now()) return json({ error: "gone" }, 404);
+    await env.DB.prepare("DELETE FROM pairs WHERE id = ?").bind(data.id).run();
+    return json({ box: row.box });
+  }
+  // Lets the first device see that the code was used.
+  if (req.method === "GET" && url.pathname === "/pair/status") {
+    const id = url.searchParams.get("id");
+    if (!okId(id, 4)) return json({ error: "Bad request." }, 400);
+    const row = await env.DB.prepare("SELECT exp FROM pairs WHERE id = ?").bind(id).first();
+    return json({ waiting: !!row && row.exp > Date.now() });
+  }
+  // Read the sealed copy for a linked group.
+  if (req.method === "GET" && url.pathname === "/vault") {
+    const id = url.searchParams.get("id");
+    if (!okId(id, 22)) return json({ error: "Bad request." }, 400);
+    const row = await env.DB.prepare("SELECT rev, blob FROM vaults WHERE id = ?").bind(id).first();
+    if (row && row.rev < 0) return json({ gone: true }, 410);
+    return json(row ? { rev: row.rev, blob: row.blob } : { rev: 0, blob: null });
+  }
+  // Save a new sealed copy. Only devices that hold the group's write token can,
+  // and only on top of the version they last saw.
+  if (req.method === "POST" && url.pathname === "/vault") {
+    const data = await req.json().catch(() => ({}));
+    if (!okId(data.id, 22) || typeof data.token !== "string" || data.token.length < 20 || typeof data.blob !== "string" || !Number.isInteger(data.rev)) return json({ error: "Bad request." }, 400);
+    if (data.blob.length > MAX_VAULT) return json({ error: "too big" }, 413);
+    const tok = await sha(data.token);
+    const now = Date.now();
+    const row = await env.DB.prepare("SELECT token, rev, blob FROM vaults WHERE id = ?").bind(data.id).first();
+    if (row && row.token !== tok) return json({ error: "Not allowed." }, 403);
+    if (row && row.rev < 0) return json({ gone: true }, 410);
+    if ((row ? row.rev : 0) !== data.rev) return json({ error: "stale", rev: row ? row.rev : 0, blob: row ? row.blob : null }, 409);
+    const r = row
+      ? await env.DB.prepare("UPDATE vaults SET rev = rev + 1, blob = ?, at = ? WHERE id = ? AND rev = ?").bind(data.blob, now, data.id, data.rev).run()
+      : await env.DB.prepare("INSERT OR IGNORE INTO vaults (id, token, rev, blob, at) VALUES (?, ?, 1, ?, ?)").bind(data.id, tok, data.blob, now).run();
+    if (!r.meta.changes) {
+      const cur = await env.DB.prepare("SELECT rev, blob FROM vaults WHERE id = ?").bind(data.id).first();
+      return json({ error: "stale", rev: cur ? cur.rev : 0, blob: cur ? cur.blob : null }, 409);
+    }
+    return json({ ok: true, rev: data.rev + 1 });
+  }
+  // Forget a linked group everywhere. The data is wiped, and a marker stays so
+  // the other devices know to stop instead of starting a fresh copy.
+  if (req.method === "POST" && url.pathname === "/vault/forget") {
+    const data = await req.json().catch(() => ({}));
+    if (!okId(data.id, 22) || typeof data.token !== "string") return json({ error: "Bad request." }, 400);
+    await env.DB.prepare("UPDATE vaults SET rev = -1, blob = '', at = ? WHERE id = ? AND token = ?").bind(Date.now(), data.id, await sha(data.token)).run();
+    return json({ ok: true });
+  }
+
+  if (url.pathname === "/") return json({ ok: true, name: "Shrink my day reminders and sync" });
   return json({ error: "Not found." }, 404);
 }
 
@@ -172,6 +251,9 @@ async function send(env) {
     ...[...gone].flatMap((sid) => [db.prepare("DELETE FROM items WHERE sub = ?").bind(sid), db.prepare("DELETE FROM subs WHERE id = ?").bind(sid)]),
     // Anything stuck for more than a day is dropped.
     db.prepare("DELETE FROM items WHERE at < ?").bind(now - 864e5),
+    // Unused codes, and linked groups nobody has opened in a year.
+    db.prepare("DELETE FROM pairs WHERE exp < ?").bind(now),
+    db.prepare("DELETE FROM vaults WHERE at < ?").bind(now - 365 * 864e5),
   ];
   await db.batch(ops);
 }
