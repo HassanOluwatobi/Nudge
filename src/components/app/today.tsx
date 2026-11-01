@@ -4,11 +4,12 @@ import { ArrowRight, ChevronRight, Feather, ListTodo, Pencil, Plus, Settings2 } 
 import { AnimatePresence, motion } from "motion/react";
 import { type State, type Task, doneToday, prettyDue, suggestion, todayTasks, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
+import { Aurora, useDaypart } from "./aurora";
 import { Mark, Thread, pullFor } from "./thread";
 
 const hello = () => {
   const h = new Date().getHours();
-  return h < 5 ? "Good evening." : h < 12 ? "Good morning." : h < 17 ? "Good afternoon." : "Good evening.";
+  return h < 5 ? "Hello, night owl." : h < 12 ? "Good morning." : h < 17 ? "Good afternoon." : "Good evening.";
 };
 
 export function Today({
@@ -31,6 +32,7 @@ export function Today({
   announce: (s: string) => void;
 }) {
   const today = ymd();
+  const part = useDaypart();
   const pick = suggestion(state, today);
   const easy = state.meta.easy?.date === today && !!pick && pick.id === state.meta.easy.taskId;
   const others = easy ? [] : todayTasks(state, today).filter((t) => t.id !== pick?.id);
@@ -40,35 +42,37 @@ export function Today({
   const dateLine = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 safe-t">
-      <header className="flex items-center justify-between py-2">
-        <div className="flex items-center gap-2">
-          <Mark className="h-5 w-auto" />
-          <span className="text-[15px] font-semibold tracking-tight">NudgeMe</span>
+    <div className="flex min-h-dvh flex-col">
+      <Aurora field={part} className="rounded-b-[36px] on-color">
+        <div className="mx-auto w-full max-w-md px-5 pb-28 safe-t">
+          <header className="flex items-center justify-between py-2">
+            <div className="flex items-center gap-2">
+              <Mark light className="h-5 w-auto" />
+              <span className="text-[15px] font-semibold tracking-tight">NudgeMe</span>
+            </div>
+            <button type="button" className="icon-btn -mr-2 text-white/90" aria-label="Settings and privacy" onClick={onSettings}>
+              <Settings2 className="size-5" />
+            </button>
+          </header>
+          <p className="mt-8 text-[15px] font-medium text-white/75">{dateLine}</p>
+          <h1 className="mt-1 text-[42px] font-medium leading-[1.02] tracking-[-0.04em]">{hello()}</h1>
+          <p className="mt-3 max-w-[30ch] text-[16px] leading-snug text-white/85">
+            {!pick
+              ? "Clear your head first. Then pick one small step."
+              : easy
+                ? "Today is set to easy. This one thing is enough."
+                : fromWeek
+                  ? "Nothing is set for today. Here is one from this week."
+                  : "Here is a good place to start."}
+          </p>
         </div>
-        <div className="flex items-center">
-          <button type="button" className="btn btn-quiet gap-1.5" onClick={onList}>
-            <ListTodo className="size-[18px]" />
-            My list
-          </button>
-          <button type="button" className="icon-btn -mr-2" aria-label="Settings and privacy" onClick={onSettings}>
-            <Settings2 className="size-5" />
-          </button>
-        </div>
-      </header>
+      </Aurora>
 
-      <main className="flex-1 pb-36">
-        <p className="mt-6 text-[15px] text-ink-3">{dateLine}</p>
-        <h1 className="mt-1 font-serif text-[38px] leading-[1.05] tracking-[-0.02em]">{hello()}</h1>
-
+      <main className="relative z-10 mx-auto -mt-20 w-full max-w-md flex-1 px-5 pb-40">
         {!pick ? (
           <Empty onCapture={onCapture} hasOthers={open > 0} onList={onList} finished={finished.length} />
         ) : (
           <>
-            <p className="mt-2 text-[16px] text-ink-2">
-              {easy ? "Today is set to easy. This one thing is enough." : fromWeek ? "Nothing is set for today. Here is one from this week." : "Here is a good place to start."}
-            </p>
-
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.section
                 key={pick.id}
@@ -77,7 +81,7 @@ export function Today({
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, y: -10, scale: 0.985 }}
                 transition={{ type: "spring", stiffness: 380, damping: 32 }}
-                className="mt-6 rounded-[28px] bg-sheet p-5 shadow-[0_1px_0_rgb(255_255_255)_inset,0_24px_48px_-32px_rgb(29_27_38/0.35)] ring-1 ring-line/70"
+                className="float-card p-5"
               >
                 <div className="flex items-center justify-between">
                   <span className="eyebrow">Start here</span>
@@ -89,7 +93,8 @@ export function Today({
 
                 <Thread pull={pullFor(pick.steps)} className="mt-3 h-8 w-full max-w-[220px]" />
 
-                <div className="mt-3 rounded-2xl bg-signal-soft/70 p-4">
+                <div className="relative mt-3 overflow-hidden rounded-2xl bg-signal-soft/70 p-4 pl-5">
+                  <span aria-hidden className="absolute inset-y-3 left-0 w-1 rounded-r-full bg-gradient-to-b from-cyan via-lime to-peach" />
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-[13px] font-semibold text-signal-ink">{pick.steps ? "Next step" : "First step"}</span>
                     <button type="button" className="-my-2 -mr-2 inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-[13px] font-medium text-signal-ink" onClick={() => onOpen(pick)}>
@@ -188,29 +193,34 @@ export function Today({
         )}
       </main>
 
-      {pick && <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 bg-gradient-to-t from-paper via-paper/95 to-paper/0 pt-10 safe-b">
-        <div className="pointer-events-auto mx-auto w-full max-w-md px-5">
-          <button type="button" onClick={onCapture} className="btn btn-ink w-full text-[17px] shadow-[0_18px_40px_-20px_rgb(29_27_38/0.7)]">
-            <Plus className="size-5" /> Add a thought
-          </button>
+      {pick && (
+        <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 bg-gradient-to-t from-paper via-paper/90 to-paper/0 pt-12 safe-b">
+          <nav aria-label="Main" className="dock pointer-events-auto mx-auto flex w-[calc(100%-2.5rem)] max-w-[24rem] items-center gap-1 rounded-full p-1.5">
+            <button type="button" onClick={onCapture} className="btn btn-white min-h-[50px] flex-1 text-[16px]">
+              <Plus className="size-5" /> Add a thought
+            </button>
+            <button type="button" onClick={onList} className="btn min-h-[50px] gap-1.5 px-4 text-[15px] text-white/90">
+              <ListTodo className="size-[18px]" /> My list
+            </button>
+          </nav>
         </div>
-      </div>}
+      )}
     </div>
   );
 }
 
 function Empty({ onCapture, hasOthers, onList, finished }: { onCapture: () => void; hasOthers: boolean; onList: () => void; finished: number }) {
   return (
-    <section className="mt-6 rounded-[28px] bg-sheet p-6 ring-1 ring-line/70">
+    <section className="float-card p-6">
       <Thread pull={finished ? 1 : 0} done={finished > 0} className="h-10 w-full max-w-[220px]" />
       {finished ? (
         <>
-          <h2 className="mt-4 font-serif text-[26px] leading-tight">Today is clear.</h2>
+          <h2 className="mt-4 font-serif text-[27px] leading-tight tracking-[-0.015em]">Today is clear.</h2>
           <p className="mt-2 text-[16px] leading-relaxed text-ink-2">You finished {finished === 1 ? "one task" : `${finished} tasks`}. You can stop here.</p>
         </>
       ) : (
         <>
-          <h2 className="mt-4 font-serif text-[26px] leading-tight">Put what is on your mind here.</h2>
+          <h2 className="mt-4 font-serif text-[27px] leading-tight tracking-[-0.015em]">Put what is on your mind here.</h2>
           <p className="mt-2 text-[16px] leading-relaxed text-ink-2">NudgeMe holds it, then helps you start with one small step.</p>
         </>
       )}

@@ -16,6 +16,11 @@
   --color-night: var(--night);
   --color-night-2: var(--night-2);
   --color-moon: var(--moon);
+  --color-cyan: var(--cyan);
+  --color-lime: var(--lime);
+  --color-peach: var(--peach);
+  --color-pink: var(--pink);
+  --color-violet: var(--violet);
 }
 
 /*
@@ -26,19 +31,24 @@
   Night indigo for Focus, because Focus is the quietest place in the app.
 */
 :root {
-  --paper: #f4f2ec;
-  --sheet: #fffefb;
-  --ink: #1d1b26;
-  --ink-2: #57536a;
-  --ink-3: #8b879a;
-  --line: #e4e0d6;
-  --signal: #3d3bf3;
-  --signal-ink: #2a28c4;
-  --signal-soft: #e9e8ff;
-  --warm: #ff7a50;
-  --night: #15142b;
-  --night-2: #23214a;
-  --moon: #b9b8ff;
+  --paper: #f1ece3;
+  --sheet: #ffffff;
+  --ink: #000b2e;
+  --ink-2: #3a4466;
+  --ink-3: #7d8499;
+  --line: #e2dcd0;
+  --signal: #1a4fe0;
+  --signal-ink: #0033a8;
+  --signal-soft: #e6edff;
+  --warm: #ffb27a;
+  --night: #000b2e;
+  --night-2: #0b1a4a;
+  --moon: #9fe8f0;
+  --cyan: #14d6d6;
+  --lime: #bdeb7a;
+  --peach: #ffb27a;
+  --pink: #f79be8;
+  --violet: #c686ff;
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   color-scheme: light;
@@ -47,9 +57,11 @@
 @layer base {
 html,
 body {
+  overscroll-behavior: none;
   background: var(--paper);
   color: var(--ink);
   -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -63,6 +75,9 @@ html[data-view="finish"],
 html[data-view="finish"] body {
   background: var(--night);
 }
+html[data-view="finish"] body {
+  background: #1a4fe0;
+}
 
 button,
 [role="button"],
@@ -70,6 +85,7 @@ a,
 label {
   -webkit-user-select: none;
   user-select: none;
+  -webkit-touch-callout: none;
   touch-action: manipulation;
 }
 input,
@@ -114,14 +130,14 @@ textarea {
 .btn-signal {
   background: var(--signal);
   color: #fff;
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.25) inset, 0 10px 24px -12px rgb(61 59 243 / 0.7);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.25) inset, 0 12px 26px -12px rgb(26 79 224 / 0.75);
 }
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .btn-signal:hover {
     background: var(--signal-ink);
   }
   .btn-quiet:hover {
-    background: rgb(29 27 38 / 0.06);
+    background: rgb(0 11 46 / 0.06);
   }
   .btn-line:hover {
     border-color: var(--ink-3);
@@ -170,9 +186,9 @@ textarea {
 .icon-btn:active {
   transform: scale(0.94);
 }
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
   .icon-btn:hover {
-    background: rgb(29 27 38 / 0.06);
+    background: rgb(0 11 46 / 0.06);
   }
   .on-night .icon-btn:hover {
     background: rgb(255 255 255 / 0.08);
@@ -225,7 +241,7 @@ textarea {
 .field:focus {
   outline: none;
   border-color: var(--signal);
-  box-shadow: 0 0 0 4px rgb(61 59 243 / 0.12);
+  box-shadow: 0 0 0 4px rgb(26 79 224 / 0.14);
 }
 
 }
@@ -241,7 +257,7 @@ dialog.sheet {
   border-radius: 28px 28px 0 0;
   background: var(--sheet);
   color: var(--ink);
-  box-shadow: 0 -20px 60px -30px rgb(29 27 38 / 0.45);
+  box-shadow: 0 -20px 60px -30px rgb(0 11 46 / 0.45);
   overflow: auto;
   overscroll-behavior: contain;
 }
@@ -252,7 +268,7 @@ dialog.sheet {
   }
 }
 dialog.sheet::backdrop {
-  background: rgb(21 20 43 / 0.32);
+  background: rgb(0 11 46 / 0.32);
 }
 dialog.sheet[open] {
   animation: sheet-in 320ms var(--ease-out);
@@ -304,7 +320,7 @@ dialog.sheet.closing::backdrop {
   border-radius: 18px !important;
   font-family: var(--font-sans);
   font-size: 15px !important;
-  box-shadow: 0 16px 40px -18px rgb(21 20 43 / 0.6) !important;
+  box-shadow: 0 16px 40px -18px rgb(0 11 46 / 0.6) !important;
 }
 [data-sonner-toaster] [data-sonner-toast] [data-button] {
   background: var(--paper) !important;
@@ -341,4 +357,46 @@ dialog.sheet.closing::backdrop {
     animation-duration: 1ms !important;
     transition-duration: 1ms !important;
   }
+}
+
+/* the colour field drifts very slowly, like weather */
+.aurora-drift {
+  animation: drift 26s ease-in-out infinite alternate;
+}
+@keyframes drift {
+  to {
+    transform: translate3d(-4%, 3%, 0) scale(1.06);
+  }
+}
+@layer components {
+.on-color {
+  color: #fff;
+}
+.btn-white {
+  background: #fff;
+  color: var(--ink);
+  box-shadow: 0 14px 30px -16px rgb(0 11 46 / 0.6);
+}
+.btn-glass {
+  background: rgb(255 255 255 / 0.14);
+  color: #fff;
+  border: 1px solid rgb(255 255 255 / 0.28);
+}
+.dock {
+  background: rgb(0 11 46 / 0.86);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.12) inset, 0 20px 40px -18px rgb(0 11 46 / 0.6);
+}
+@media (prefers-reduced-transparency: reduce) {
+  .dock {
+    background: var(--ink);
+    backdrop-filter: none;
+  }
+}
+.float-card {
+  background: #fff;
+  border-radius: 28px;
+  box-shadow: 0 1px 0 rgb(255 255 255) inset, 0 30px 60px -30px rgb(0 11 46 / 0.55), 0 2px 6px -2px rgb(0 11 46 / 0.08);
+}
 }
