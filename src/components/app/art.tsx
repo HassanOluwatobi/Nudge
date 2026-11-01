@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 
 /*
   The flowing gradient. A small WebGL shader that paints iridescent silk:
-  midnight, electric blue, sky and ice bands that flow over each other, with a
+  electric blue, soft blue, sky and ice bands that drift over each other, with a
   soft sheen and fine grain.
 
   Touch and cursor: moving over it bends the silk like a lens, and every tap
@@ -31,22 +31,20 @@ float n2(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
 float fbm(vec2 p){ float v=0., a=.5; mat2 m=mat2(1.6,1.2,-1.2,1.6); for(int i=0;i<3;i++){ v+=a*n2(p); p=m*p; a*=.5; } return v; }
 vec3 C(float r,float g,float b){ return vec3(r,g,b)/255.; }
 vec3 silk(float x){
-  // NudgeMe blues: midnight, electric, sky, ice and near-white.
-  vec3 c0=C(16.,26.,77.), c1=C(18.,54.,194.), c2=C(29.,77.,245.), c3=C(111.,151.,255.), c4=C(226.,234.,255.), c5=C(150.,190.,255.);
-  x = fract(x) * 6.;
+  // Brand blues only: electric, soft blue, sky, ice. Close in value, so it stays calm.
+  vec3 c0=C(29.,77.,245.), c1=C(84.,124.,255.), c2=C(158.,186.,255.), c3=C(226.,234.,255.);
+  x = fract(x) * 4.;
   float f = smoothstep(0., 1., fract(x));
   if (x < 1.) return mix(c0, c1, f);
   if (x < 2.) return mix(c1, c2, f);
   if (x < 3.) return mix(c2, c3, f);
-  if (x < 4.) return mix(c3, c4, f);
-  if (x < 5.) return mix(c4, c5, f);
-  return mix(c5, c0, f);
+  return mix(c3, c0, f);
 }
 void main(){
   vec2 uv = gl_FragCoord.xy / R;
   float asp = R.x / R.y;
   vec2 p = (uv - .5) * vec2(asp, 1.);
-  float t = T * .24;
+  float t = T * .2;
 
   // Ripples: a ring that travels out from each touch and fades.
   float glow = 0.;
@@ -62,7 +60,7 @@ void main(){
       d += (fbm(p * 2.4 + w.z) - .5) * .22;
       float front = d - age * .55;
       float env = exp(-front * front * 38.) * exp(-age * 1.5) * w.w;
-      p += (dv / (d + .001)) * sin(front * 34.) * env * .07;
+      p += (dv / (d + .001)) * sin(front * 30.) * env * .035;
       glow += env * (.5 + .5 * sin(front * 34.));
     }
   }
@@ -71,33 +69,32 @@ void main(){
   float lens = exp(-dot(mv, mv) * 7.) * PA;
   p -= mv * lens * .22;
 
-  vec2 q = p * 1.15;
-  q.x += .28 * sin(q.y * 2.0 + t * 1.3);
-  q.y += .22 * sin(q.x * 1.6 - t);
-  float g = fbm(q * 1.1 + vec2(t * .4, -t * .3));
-  float band = q.y * 1.25 + q.x * .35
-    + .32 * sin(q.x * 2.2 + t)
-    + .18 * sin(q.x * 4.3 - t * 1.4 + q.y * 1.8)
-    + g * .55;
-  vec3 col = silk(band * .55 + t * .18 + S);
+  vec2 q = p * .9;
+  q.x += .1 * sin(q.y * 1.6 + t * 1.2);
+  q.y += .08 * sin(q.x * 1.3 - t);
+  float g = fbm(q * .9 + vec2(t * .3, -t * .2));
+  float band = q.y * .9 + q.x * .3
+    + .14 * sin(q.x * 1.8 + t)
+    + g * .22;
+  vec3 col = silk(band * .42 + t * .12 + S);
 
   // Folds and sheen, so it reads as fabric catching light.
-  float fold = sin(band * 6.2832 * .9 + t * .6);
-  col *= .9 + .1 * fold;
-  float sheen = pow(.5 + .5 * sin(band * 6.2832 * .45 - t * .8 + .6), 10.);
-  col += sheen * .32;
-  col += lens * .08 + glow * .14;
+  float fold = sin(band * 6.2832 * .7 + t * .5);
+  col *= .97 + .03 * fold;
+  float sheen = pow(.5 + .5 * sin(band * 6.2832 * .35 - t * .6 + .6), 12.);
+  col += sheen * .12;
+  col += lens * .05 + glow * .08;
 
   if (M > 1.5) {
     // Focus ring: deeper silk behind white numbers.
-    col = mix(col, C(10.,18.,70.), .38);
-    col += sheen * .08;
+    // Focus ring: settle toward electric blue so white numbers stay clear.
+    col = mix(col, C(18.,54.,194.), .55);
   } else if (M > .5) {
     // Finish: a touch softer, with a light top for the headline area.
-    col = mix(col, vec3(1.), smoothstep(.55, 1., uv.y) * .1);
+    col = mix(col, vec3(1.), smoothstep(.6, 1., uv.y) * .06);
   }
 
-  col += (h21(gl_FragCoord.xy + floor(T * 14.)) - .5) * .045;
+  col += (h21(gl_FragCoord.xy + floor(T * 14.)) - .5) * .03;
   gl_FragColor = vec4(col, 1.);
 }`;
 
@@ -115,7 +112,7 @@ export function Art({ mode, shift = 0, className }: { mode: 0 | 1 | 2; shift?: n
     if (!cv) return;
     const gl = cv.getContext("webgl", { antialias: false, alpha: false, preserveDrawingBuffer: false, powerPreference: "low-power" });
     if (!gl) {
-      cv.style.background = "linear-gradient(135deg,#101a4d,#1d4df5 40%,#6f97ff 70%,#e2eaff)";
+      cv.style.background = "linear-gradient(135deg,#1d4df5,#547cff 40%,#9ebaff 70%,#e2eaff)";
       return;
     }
     const sh = (type: number, src: string) => {

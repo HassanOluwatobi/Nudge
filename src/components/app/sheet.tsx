@@ -36,6 +36,8 @@ export function Sheet({
       d.classList.remove("closing");
       setShow(true);
       d.showModal();
+      // Always open at the top, not where it was last scrolled.
+      d.scrollTop = 0;
       // Focus the field we were given, or the sheet itself, never the close button.
       if (initialFocus?.current) initialFocus.current.focus();
       else d.focus({ preventScroll: true });

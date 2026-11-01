@@ -534,10 +534,11 @@
 .pill-done { background: #ebe6db; color: #4a4f6a; }
 
 /* A task row: a soft white strip, after Tiimo. */
+/* Cards share one edge: a 1px hairline in the line colour, no drop shadow. */
 .task-row {
-  background: #fff;
+  background: var(--sheet);
   border-radius: 18px;
-  box-shadow: 0 1px 0 rgb(255 255 255) inset, 0 1px 2px rgb(6 11 43 / 0.06), 0 8px 20px -14px rgb(6 11 43 / 0.25);
+  border: 1px solid var(--line);
 }
 .add-row {
   border: 1.5px dashed #d9d2c3;
@@ -614,9 +615,9 @@ input:focus-visible + .switch-track {
 /* Segmented toggle: same groove and knob as the switch. */
 .seg {
   border-radius: 999px;
-  border: 1px solid color-mix(in oklab, var(--line) 80%, var(--ink-3));
-  background: linear-gradient(180deg, color-mix(in oklab, var(--line) 85%, var(--ink-3)), color-mix(in oklab, var(--line) 70%, var(--paper)));
-  box-shadow: inset 0 1px 2px rgb(6 11 43 / 0.12), inset 0 -1px 0 rgb(255 255 255 / 0.5);
+  border: 1px solid var(--line);
+  background: color-mix(in oklab, var(--line) 38%, var(--sheet));
+  box-shadow: inset 0 1px 1px rgb(6 11 43 / 0.04);
 }
 .seg-knob {
   border-radius: 999px;
@@ -742,20 +743,22 @@ dialog.sheet.closing::backdrop {
    electric blue, softer text. Everything reads from tokens, so most of the
    app follows by itself. The rules below cover the few hand-set colours. */
 html[data-theme="dark"] {
-  --paper: #070b22;
-  --ivory: #0c1230;
-  --sheet: #121a3d;
-  --line: #242d57;
-  --ink: #eef1ff;
-  --ink-2: #b9c0de;
-  --ink-3: #8c94ba;
-  --signal-ink: #8ea9ff;
-  --signal-soft: #17235c;
+  /* After Linear: near-black neutrals, quiet hairlines, one accent. */
+  --paper: #08090a;
+  --ivory: #0f1012;
+  --sheet: #141517;
+  --line: #24262b;
+  --ink: #f7f8f8;
+  --ink-2: #b4b8bf;
+  --ink-3: #7f848d;
+  --signal: #2f5cff;
+  --signal-ink: #8aa5ff;
+  --signal-soft: #151d3d;
   --success: #3fc495;
   --warning: #f0a54a;
   --danger: #e2533f;
-  --danger-soft: #3a1714;
-  --hi: rgb(255 255 255 / 0.06);
+  --danger-soft: #2a1311;
+  --hi: rgb(255 255 255 / 0.05);
   color-scheme: dark;
 }
 html[data-theme="dark"] .bg-white,
@@ -788,7 +791,7 @@ html[data-theme="dark"] .text-\[\#5f9a12\] {
   color: #a6d86a;
 }
 html[data-theme="dark"] [class*="hue-"] {
-  --ht: color-mix(in oklab, var(--h) 26%, var(--sheet));
+  --ht: color-mix(in oklab, var(--h) 20%, var(--sheet));
 }
 html[data-theme="dark"] .pill {
   background: color-mix(in oklab, var(--ink-3) 18%, var(--paper));
@@ -812,9 +815,8 @@ html[data-theme="dark"] .pill-later {
 html[data-theme="dark"] .add-row {
   border-color: var(--line);
 }
-html[data-theme="dark"] .task-row,
 html[data-theme="dark"] .float-card {
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  box-shadow: inset 0 0 0 1px var(--line);
 }
 /* Buttons: the ink button flips to light so it stays the strong choice. */
 html[data-theme="dark"] .btn-ink {

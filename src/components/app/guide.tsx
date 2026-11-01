@@ -5,7 +5,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { feel } from "@/lib/feedback";
 import { Art } from "./art";
-import { AppleMark, CalendlyMark, GoogleMark, LogoTile, NotionMark } from "./brands";
+import { AppleMark, CalendlyMark, GoogleMark, LogoTile } from "./brands";
 
 /*
   The user guide. Five short pages, each with a small live illustration.
@@ -20,7 +20,7 @@ function Row({ emoji, text, hue, delay, done = false }: { emoji: string; text: s
     <motion.div initial={{ opacity: 0, y: 14, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay, type: "spring", bounce: 0.2, duration: 0.6 }} className="task-row flex items-center gap-2.5 px-2.5 py-2">
       <span className={`hue-${hue} tile grid size-8 place-items-center rounded-[10px] text-[15px]`}>{emoji}</span>
       <span className="flex-1 truncate text-[15px] font-semibold">{text}</span>
-      <motion.span className={`hue-${hue} grid size-5 place-items-center rounded-full border-2`} initial={false} animate={{ backgroundColor: done ? "var(--h)" : "rgba(0,0,0,0)", borderColor: done ? "var(--h)" : "var(--ink)" }} transition={{ delay: delay + 0.9, duration: 0.3 }}>
+      <motion.span className={`hue-${hue} grid size-5 place-items-center rounded-full border-2`} initial={false} animate={{ backgroundColor: done ? "var(--signal)" : "rgba(0,0,0,0)", borderColor: done ? "var(--signal)" : "var(--ink)" }} transition={{ delay: delay + 0.9, duration: 0.3 }}>
         {done && (
           <svg viewBox="0 0 16 16" className="size-3" fill="none">
             <motion.path d="M3.5 8.4 6.6 11.4 12.6 4.8" stroke="#fff" strokeWidth={2.6} strokeLinecap="round" initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ delay: delay + 1, duration: 0.3 }} />
@@ -47,18 +47,17 @@ function Capture() {
 function OneThing() {
   return (
     <div className="flex h-full flex-col justify-center px-6">
-      <motion.div initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", bounce: 0.15, duration: 0.7 }} className="relative h-20 overflow-hidden rounded-[18px]">
-        <Art mode={0} />
-        <span className="absolute left-2.5 top-2.5 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em]">Start here</span>
-      </motion.div>
-      <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25, type: "spring", bounce: 0, duration: 0.5 }} className="mt-3 font-serif text-[22px] leading-tight tracking-[-0.01em]">
-        Reply to Tunde
-      </motion.p>
-      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }} className="mt-1 text-[14px] leading-snug text-ink-2">
-        <span className="font-semibold text-signal-ink">Next:</span> Write the first line
-      </motion.p>
-      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, type: "spring", bounce: 0.2, duration: 0.5 }} className="mt-3 grid h-10 place-items-center rounded-full bg-signal text-[15px] font-semibold text-white">
-        Start
+      <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ type: "spring", bounce: 0.15, duration: 0.6 }} className="rounded-[20px] bg-white p-4 ring-1 ring-line">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.09em] text-signal-ink">Start here</p>
+        <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, type: "spring", bounce: 0, duration: 0.5 }} className="mt-2 font-serif text-[22px] leading-tight tracking-[-0.01em]">
+          Reply to Tunde
+        </motion.p>
+        <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.35 }} className="mt-1 text-[14px] leading-snug text-ink-2">
+          <span className="font-semibold text-signal-ink">Next:</span> Write the first line
+        </motion.p>
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.5, type: "spring", bounce: 0.2, duration: 0.5 }} className="btn btn-signal mt-3 min-h-10 w-full text-[15px]">
+          Start
+        </motion.div>
       </motion.div>
     </div>
   );
@@ -79,7 +78,7 @@ function Timer() {
               <stop offset="100%" stopColor="#6f97ff" />
             </linearGradient>
           </defs>
-          <circle cx="55" cy="55" r={R} fill="none" stroke="#e8e1d3" strokeWidth="10" />
+          <circle cx="55" cy="55" r={R} fill="none" stroke="var(--line)" strokeWidth="10" />
           <motion.circle cx="55" cy="55" r={R} fill="none" stroke="url(#g-ring)" strokeWidth="10" strokeLinecap="round" strokeDasharray={C} initial={{ strokeDashoffset: 0 }} animate={{ strokeDashoffset: reduce ? C * 0.35 : [0, C * 0.7] }} transition={{ duration: 6, ease: "linear", repeat: Infinity, repeatType: "reverse" }} />
         </svg>
         <div className="absolute inset-[18%] overflow-hidden rounded-full">
@@ -91,7 +90,7 @@ function Timer() {
           <motion.div key={t} initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 + i * 0.12 }} className="flex items-center gap-2 text-[14px] font-medium">
             <motion.span
               className="grid size-[22px] shrink-0 place-items-center rounded-[7px] border-2"
-              initial={{ backgroundColor: "rgba(29,77,245,0)", borderColor: "#c9c2b4" }}
+              initial={{ backgroundColor: "rgba(29,77,245,0)", borderColor: "var(--ink-3)" }}
               animate={i < 2 ? { backgroundColor: "#1d4df5", borderColor: "#1d4df5", scale: [1, 0.85, 1.1, 1] } : {}}
               transition={{ delay: 0.9 + i * 0.7, duration: 0.35 }}
             >
@@ -119,10 +118,10 @@ function Checkins() {
   ];
   return (
     <div className="flex h-full flex-col justify-center gap-2 px-6">
-      {items.map(({ icon: I, t, s, hue }, i) => (
-        <motion.div key={t} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.14, type: "spring", bounce: 0.2, duration: 0.6 }} className={`${hue} tile flex items-center gap-3 rounded-[16px] px-3.5 py-3`}>
-          <motion.span animate={i === 2 ? { rotate: [0, -14, 12, -8, 0] } : {}} transition={{ delay: 1, duration: 0.7, repeat: Infinity, repeatDelay: 2.2 }}>
-            <I className="size-5" />
+      {items.map(({ icon: I, t, s }, i) => (
+        <motion.div key={t} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 + i * 0.14, type: "spring", bounce: 0.2, duration: 0.6 }} className="flex items-center gap-3 rounded-[16px] bg-white px-3 py-2.5 ring-1 ring-line">
+          <motion.span className="grid size-8 place-items-center rounded-[10px] bg-signal-soft text-signal-ink" animate={i === 2 ? { rotate: [0, -14, 12, -8, 0] } : {}} transition={{ delay: 1, duration: 0.7, repeat: Infinity, repeatDelay: 2.2 }}>
+            <I className="size-[18px]" />
           </motion.span>
           <span className="flex-1 text-[15px] font-semibold text-ink">{t}</span>
           <span className="text-[14px] font-medium tabular-nums text-ink-2">{s}</span>
@@ -135,8 +134,8 @@ function Checkins() {
 function IdeasBack() {
   return (
     <div className="flex h-full flex-col items-center justify-center px-6">
-      <motion.div initial={{ opacity: 0, y: 30, rotate: -4 }} animate={{ opacity: 1, y: [30, -6, 0], rotate: [-4, 2, 0] }} transition={{ duration: 0.9, ease }} className="w-full rounded-[16px] border border-[#dfe9c8] bg-[#f6fbe9] p-3">
-        <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#4d7a12]">
+      <motion.div initial={{ opacity: 0, y: 30, rotate: -4 }} animate={{ opacity: 1, y: [30, -6, 0], rotate: [-4, 2, 0] }} transition={{ duration: 0.9, ease }} className="w-full rounded-[16px] bg-white p-3 ring-1 ring-line">
+        <p className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-signal-ink">
           <Lightbulb className="size-3" /> An idea came back
         </p>
         <p className="mt-1 text-[15px] leading-snug">A newsletter about design in African fintech</p>
@@ -159,7 +158,6 @@ function Calendars() {
   const marks = [
     { el: <GoogleMark className="size-7" />, bleed: false, name: "Google" },
     { el: <AppleMark className="size-full" />, bleed: true, name: "Apple" },
-    { el: <NotionMark className="size-8" />, bleed: false, name: "Notion" },
     { el: <CalendlyMark className="size-8" />, bleed: false, name: "Calendly" },
   ];
   return (
@@ -167,7 +165,7 @@ function Calendars() {
       <div className="flex gap-3">
         {marks.map((m, i) => (
           <motion.div key={m.name} initial={{ opacity: 0, y: 14, scale: 0.8 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ delay: 0.1 + i * 0.1, type: "spring", bounce: 0.4, duration: 0.6 }} className="flex flex-col items-center gap-1.5">
-            <span className="rounded-[14px] shadow-[0_8px_18px_-10px_rgb(6_11_43/0.4)]">
+            <span className="rounded-[14px]">
               <LogoTile bleed={m.bleed} size={52}>{m.el}</LogoTile>
             </span>
             <span className="text-[12px] font-medium text-ink-2">{m.name}</span>
@@ -215,7 +213,7 @@ const PAGES = [
   { art: OneThing, title: "Start with one thing", body: "Today picks one task and shows its next small step. Not feeling it? Tap Not this one, or Make today easy." },
   { art: Timer, title: "Focus, one step at a time", body: "Drag the ring to set a timer if you want one. Tick steps as you go. Finishing a step never finishes the task by itself." },
   { art: Checkins, title: "Gentle check-ins", body: "A two-minute morning kickoff, an evening wrap-up and a weekly reset on the day you choose. Change the times in Settings." },
-  { art: Calendars, title: "Your calendars, both ways", body: "Put check-ins and reminders in Google, Apple or Outlook so your phone rings. Connect Google, Apple, Notion or Calendly and upcoming events become tasks, each with a reminder." },
+  { art: Calendars, title: "Your calendars, both ways", body: "Put check-ins and reminders in Google, Apple or Outlook so your phone rings. Connect Google, Apple or Calendly and upcoming events become tasks, each with a reminder." },
   { art: AiSteps, title: "Break it down with your AI", body: "In any task, tap Break it down. NudgeMe opens ChatGPT, Claude, Gemini or Grok with the question ready. Paste the steps back and check them. Free." },
   { art: IdeasBack, title: "Ideas come back", body: "Park ideas in the Ideas tab. They return on Today later, so they stop circling in your head. Everything stays on your phone." },
 ];

@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 
 /* A small burst of petals when something gets done. Fired from anywhere with burst(x, y). */
 
-const COLORS = ["#19d3e6", "#5ef0cf", "#c3ef6e", "#ffb98a", "#ff9bd6", "#b9a2ff", "#1d4df5"];
+const COLORS = ["#1d4df5", "#1236c2", "#547cff", "#9ebaff", "#c9d8ff", "#1d4df5", "#6f97ff"];
 
 type Petal = { id: number; x: number; y: number; dx: number; dy: number; r: number; c: string; s: number; d: number };
 

@@ -15,7 +15,8 @@ export { CalendlyMark, NotionMark } from "./brands";
 
 export const MARK: Record<Source, (p: { className?: string }) => React.ReactElement> = { google: GoogleMark, outlook: OutlookMark, ics: AppleMark, notion: NotionMark, calendly: CalendlyMark };
 // Outlook shows up once its app ID is set. Until then, Outlook users import a file.
-export const SOURCES: Source[] = (["google", "outlook", "ics", "notion", "calendly"] as Source[]).filter((s) => s !== "outlook" || !!MS_CLIENT_ID);
+// Notion is left out: connecting it took too many technical steps.
+export const SOURCES: Source[] = (["google", "outlook", "ics", "calendly"] as Source[]).filter((s) => s !== "outlook" || !!MS_CLIENT_ID);
 
 const SUB: Record<Source, string> = {
   google: "Next two weeks of events",
@@ -47,7 +48,7 @@ export function SourceButtons({ state, onPick }: { state: State; onPick: (s: Sou
               <span className="t-small mt-0.5 block leading-snug text-ink-3">{SUB[s]}</span>
             </span>
             {on(s) ? (
-              <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-success">
+              <span className="inline-flex items-center gap-1 text-[13px] font-semibold text-signal-ink">
                 <Check className="size-4" strokeWidth={2.6} /> On
               </span>
             ) : (
@@ -189,7 +190,7 @@ export function ImportSheet({
                               <span className="t-small text-ink-3">{added ? "Already added" : e.allDay ? "All day" : e.start.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })}</span>
                             </span>
                             {!added && (
-                              <motion.span className="grid size-6 place-items-center rounded-[8px] border-2" initial={false} animate={{ backgroundColor: on ? "#1d4df5" : "rgba(0,0,0,0)", borderColor: on ? "#1d4df5" : "#c9c2b4" }} transition={{ duration: 0.2 }}>
+                              <motion.span className="grid size-6 place-items-center rounded-[8px] border-2" initial={false} animate={{ backgroundColor: on ? "#1d4df5" : "rgba(0,0,0,0)", borderColor: on ? "#1d4df5" : "var(--ink-3)" }} transition={{ duration: 0.2 }}>
                                 {on && <Check className="size-3.5 text-white" strokeWidth={3} />}
                               </motion.span>
                             )}

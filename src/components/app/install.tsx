@@ -37,7 +37,7 @@ export function InstallButton() {
 
   if (installed)
     return (
-      <div className="flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-white text-[15px] font-medium text-success ring-1 ring-line">
+      <div className="flex min-h-[52px] items-center justify-center gap-2 rounded-full bg-white text-[15px] font-medium text-signal-ink ring-1 ring-line">
         <Check className="size-4" /> On your home screen
       </div>
     );

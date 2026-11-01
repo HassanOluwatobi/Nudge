@@ -1,14 +1,16 @@
 "use client";
 
-import { Check, ChevronDown, Pause, Play, Plus, Scissors } from "lucide-react";
+import { Check, ChevronDown, Pause, Play, Plus, Scissors, Trash2 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { feel } from "@/lib/feedback";
 import { notify } from "@/lib/reminders";
 import { type State, type Task, MAX_STEP, nextStep, smallerStep, suggestStep, todayTasks, ymd } from "@/lib/tasks";
 import type { Actions } from "@/lib/use-tasks";
 import { Art } from "./art";
 import { Sheet } from "./sheet";
+import { keepFocus } from "./steps";
 import { StepCheck, Tile } from "./task-row";
 
 const R = 118;
@@ -103,7 +105,7 @@ export function Focus({
     <div className="min-h-dvh bg-paper text-ink">
       <div className="mx-auto w-full max-w-md px-5 pb-36 safe-t">
         <header className="flex items-center justify-between py-2">
-          <button type="button" onClick={() => setPicker(true)} className="flex h-10 max-w-[70%] items-center gap-2 rounded-full bg-white pl-1.5 pr-3 text-[14px] font-medium shadow-[0_1px_2px_rgb(6_11_43/0.06),0_6px_16px_-10px_rgb(6_11_43/0.3)]" aria-label="Choose what to focus on">
+          <button type="button" onClick={() => setPicker(true)} className="flex h-10 max-w-[70%] items-center gap-2 rounded-full bg-white pl-1.5 pr-3 text-[14px] font-medium ring-1 ring-line" aria-label="Choose what to focus on">
             {task ? <Tile task={task} size={28} /> : <span className="grid size-7 place-items-center rounded-full bg-paper text-[13px]">⏱</span>}
             <span className="truncate">{task ? task.title : "Just a timer"}</span>
             <ChevronDown className="size-4 shrink-0 text-ink-3" />
@@ -150,13 +152,13 @@ export function Focus({
                 <stop offset="100%" stopColor="#6f97ff" />
               </linearGradient>
             </defs>
-            <circle cx="140" cy="140" r={R} fill="none" stroke="#e8e1d3" strokeWidth="22" />
+            <circle cx="140" cy="140" r={R} fill="none" stroke="var(--line)" strokeWidth="22" />
             <motion.circle
               cx="140"
               cy="140"
               r={R}
               fill="none"
-              stroke={over ? "#ff9bd6" : "url(#ring)"}
+              stroke={over ? "var(--signal)" : "url(#ring)"}
               strokeWidth="22"
               strokeLinecap="round"
               transform="rotate(-90 140 140)"
@@ -214,7 +216,7 @@ export function Focus({
           <>
             <div className="mt-6 flex justify-center gap-2" role="group" aria-label="Quick times">
               {QUICK.map((m) => (
-                <button key={m} type="button" aria-pressed={mins === m} onClick={() => (setMins(m), feel("tick", "light"))} className={`h-10 min-w-12 rounded-full px-3 text-[14px] font-semibold transition-[background-color,color,transform] duration-150 active:scale-95 ${mins === m ? "bg-ink text-white" : "bg-white text-ink-2 ring-1 ring-line"}`}>
+                <button key={m} type="button" aria-pressed={mins === m} onClick={() => (setMins(m), feel("tick", "light"))} className="chip min-w-12 justify-center px-3 text-[14px] font-semibold">
                   {m}m
                 </button>
               ))}
@@ -341,7 +343,7 @@ function Steps({ task, actions, onFinished, announce }: { task: Task; actions: A
           Add a step
         </label>
         <input id="focus-add" value={draft} maxLength={MAX_STEP} onChange={(e) => setDraft(e.target.value)} placeholder={task.steps.length ? "Add another step" : `Try: ${suggestStep(task.title)}`} className="field min-w-0 flex-1" />
-        <button type="submit" className="btn btn-ink btn-icon size-[50px] shrink-0 rounded-[14px]" aria-label="Add step">
+        <button type="submit" {...keepFocus} className="btn btn-ink btn-icon size-[50px] shrink-0 rounded-[14px]" aria-label="Add step">
           <Plus className="size-5" />
         </button>
       </form>
@@ -362,6 +364,17 @@ function Steps({ task, actions, onFinished, announce }: { task: Task; actions: A
         <Check className="size-5" /> Finish this task
       </button>
       <p className="t-small mt-2 text-center text-ink-3">Only when the whole task is done.</p>
+      <button
+        type="button"
+        className="btn btn-quiet mx-auto mt-4 flex gap-1.5 text-[14px] text-danger"
+        onClick={() => {
+          const gone = actions.remove(task.id);
+          feel("undo", "warning");
+          if (gone) toast("Task deleted.", { action: { label: "Undo", onClick: () => actions.put(gone) } });
+        }}
+      >
+        <Trash2 className="size-4" /> Delete this task
+      </button>
     </section>
   );
 }

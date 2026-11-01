@@ -8,6 +8,7 @@ import { type Entry, type EntryKind, type State, prettyDue, ymd } from "@/lib/ta
 import type { Actions } from "@/lib/use-tasks";
 import { useSpeech } from "@/lib/use-speech";
 import { feel } from "@/lib/feedback";
+import { keepFocus } from "./steps";
 import { Sheet } from "./sheet";
 import { TopBar } from "./today";
 
@@ -76,11 +77,11 @@ export function Ideas({ state, actions, onAdd, onSettings, onHelp, doneCount, to
           className="max-h-40 min-h-11 flex-1 resize-none bg-transparent py-2.5 text-[16px] placeholder:text-ink-3 focus:outline-none [field-sizing:content]"
         />
         {speech.supported && (
-          <button type="button" onClick={speech.toggle} aria-pressed={speech.listening} aria-label={speech.listening ? "Stop listening" : "Speak"} className={`grid size-11 shrink-0 place-items-center rounded-full ${speech.listening ? "bg-coral text-white" : "bg-paper text-ink-2"}`}>
+          <button type="button" onClick={speech.toggle} aria-pressed={speech.listening} aria-label={speech.listening ? "Stop listening" : "Speak"} className={`btn btn-icon size-11 ${speech.listening ? "btn-danger" : "btn-line"}`}>
             <Mic className="size-5" />
           </button>
         )}
-        <button type="submit" disabled={!text.trim()} aria-label={kind === "idea" ? "Save idea" : "Save note"} className="btn btn-signal btn-icon size-11 shrink-0">
+        <button type="submit" {...keepFocus} disabled={!text.trim()} aria-label={kind === "idea" ? "Save idea" : "Save note"} className="btn btn-signal btn-icon size-11 shrink-0">
           <ArrowUp className="size-5" />
         </button>
       </form>
@@ -88,7 +89,7 @@ export function Ideas({ state, actions, onAdd, onSettings, onHelp, doneCount, to
 
       {list.length === 0 ? (
         <div className="mt-10 text-center">
-          <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-[#eef8d9] text-[#5f9a12]">{kind === "idea" ? <Lightbulb className="size-6" /> : <NotebookPen className="size-6" />}</span>
+          <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-signal-soft text-signal-ink">{kind === "idea" ? <Lightbulb className="size-6" /> : <NotebookPen className="size-6" />}</span>
           <p className="t-body mt-3 text-ink-2">{kind === "idea" ? "No ideas yet. Put them here so they stop circling in your head." : "No notes yet. Keep numbers, addresses and little facts here."}</p>
         </div>
       ) : (
