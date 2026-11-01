@@ -33,7 +33,7 @@ function Switch({ label, hint, checked, onChange, icon }: { label: string; hint:
 }
 
 const XMark = () => (
-  <svg viewBox="0 0 24 24" className="size-3.5" fill="currentColor" aria-hidden>
+  <svg viewBox="0 0 24 24" className="size-3" fill="currentColor" aria-hidden>
     <path d="M18.9 2H22l-6.8 7.8L23 22h-6.2l-4.9-6.4L6.3 22H3.2l7.3-8.3L1 2h6.3l4.4 5.9L18.9 2Zm-1.1 18h1.7L6.3 3.9H4.5L17.8 20Z" />
   </svg>
 );
@@ -41,14 +41,14 @@ const XMark = () => (
 /** Made by Hassan. Shown at the top of Settings and the foot of Today. */
 export function Credit({ compact = false }: { compact?: boolean }) {
   return (
-    <a href={X_URL} target="_blank" rel="noopener noreferrer" onClick={() => feel("tap", "light")} className={`flex items-center gap-3 rounded-2xl bg-white ring-1 ring-line transition-transform active:scale-[0.98] ${compact ? "p-2.5 pl-3" : "p-3"}`}>
+    <a href={X_URL} target="_blank" rel="noopener noreferrer" onClick={() => feel("tap", "light")} className={`flex items-center gap-2.5 rounded-2xl bg-white ring-1 ring-line transition-transform active:scale-[0.98] ${compact ? "p-2.5 pl-3" : "p-3"}`}>
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src="/hassan.jpg" alt="Hassan" width={40} height={40} className="size-10 shrink-0 rounded-full object-cover ring-1 ring-line" />
       <span className="min-w-0 flex-1">
         <span className="block text-[15px] font-semibold">Made by Hassan</span>
-        <span className="t-small block text-ink-2">Say hi or share feedback</span>
+        <span className="t-small block truncate whitespace-nowrap text-ink-2">Say hi or share feedback</span>
       </span>
-      <span className="inline-flex h-9 items-center gap-1.5 rounded-full bg-ink px-3 text-[13px] font-semibold text-white">
+      <span className="inline-flex h-8 shrink-0 items-center gap-1 rounded-full bg-ink px-2.5 text-[12px] font-semibold text-white">
         <XMark /> @Art_sassin
       </span>
     </a>
