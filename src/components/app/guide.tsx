@@ -145,7 +145,7 @@ function Timer() {
 const PAGES = [
   { art: Capture, title: "Put it all down", body: "Pick Tasks, Ideas or Notes at the top of Home, then type or speak. It lands right in that list. Messy is fine. Press and hold anything for more options." },
   { art: OneThing, title: "Start with one thing", body: "Under Tasks, Home picks one thing and shows its next small step. Not feeling it? Tap Not this one, or Make today easy." },
-  { art: Timer, title: "Focus, one step at a time", body: "Drag the ring to set a timer if you want one. Tick subtasks as you go, then finish the task when it is all done. Check-ins and calendars live in Settings." },
+  { art: Timer, title: "Focus, one step at a time", body: "Focus shows one subtask at a time. Tap Done, next to move on. Add a timer if it helps, then finish the task. Check-ins and calendars live in Settings." },
 ];
 
 export function Guide({ open, onClose }: { open: boolean; onClose: () => void }) {

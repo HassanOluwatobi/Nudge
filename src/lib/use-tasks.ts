@@ -205,11 +205,12 @@ export function useTasks() {
     startTimer(mins: number, taskId?: string) {
       update((s) => ({ ...s, meta: { ...s.meta, timer: { taskId, mins, end: Date.now() + mins * 60_000 } } }));
     },
-    addMinute() {
+    addMinute(n = 1) {
       update((s) => {
         const t = s.meta.timer;
         if (!t) return s;
-        return { ...s, meta: { ...s.meta, timer: t.pausedLeft !== undefined ? { ...t, mins: t.mins + 1, pausedLeft: t.pausedLeft + 60_000 } : { ...t, mins: t.mins + 1, end: Math.max(t.end, Date.now()) + 60_000 } } };
+        const ms = n * 60_000;
+        return { ...s, meta: { ...s.meta, timer: t.pausedLeft !== undefined ? { ...t, mins: t.mins + n, pausedLeft: t.pausedLeft + ms } : { ...t, mins: t.mins + n, end: Math.max(t.end, Date.now()) + ms } } };
       });
     },
     pauseTimer() {
