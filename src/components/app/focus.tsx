@@ -11,6 +11,7 @@ import { Sheet } from "./sheet";
 import { AddSubtask, SubtaskList } from "./steps";
 import { burstFrom } from "./petals";
 import { Tile } from "./task-row";
+import { TopBar } from "./today";
 
 const QUICK = [5, 10, 15, 25, 45];
 const R = 88;
@@ -39,6 +40,10 @@ const clock = (ms: number) => new Date(ms).toLocaleTimeString(undefined, { hour:
   Everything else (the full subtask list, adding more) is folded away below.
 */
 export function Focus({
+  dark,
+  onTheme,
+  onSettings,
+  onHelp,
   state,
   actions,
   taskId,
@@ -46,6 +51,10 @@ export function Focus({
   onFinished,
   announce,
 }: {
+  dark?: boolean;
+  onTheme?: () => void;
+  onSettings: () => void;
+  onHelp: () => void;
   state: State;
   actions: Actions;
   taskId?: string;
@@ -69,14 +78,22 @@ export function Focus({
     <div className="min-h-dvh bg-paper text-ink">
       <div className="mx-auto w-full max-w-md px-5 pb-36 safe-t">
         {/* What you are focusing on. Tap to switch. */}
-        <header className="py-2">
-          <p className="t-label">Focusing on</p>
-          <button type="button" onClick={() => setPicker(true)} className="mt-1 flex max-w-full items-center gap-2 text-left" aria-label="Choose what to focus on">
-            {task && <Tile task={task} size={32} />}
-            <span className="truncate font-serif text-[26px] leading-tight tracking-[-0.01em]">{task ? task.title : "Just a timer"}</span>
-            <ChevronDown className="size-5 shrink-0 text-ink-3" />
-          </button>
-        </header>
+        <TopBar
+          dark={dark}
+          onTheme={onTheme}
+          onSettings={onSettings}
+          onHelp={onHelp}
+          title={
+            <span className="block min-w-0">
+              <span className="block text-[13px] font-medium text-ink-3">Focusing on</span>
+              <button type="button" onClick={() => setPicker(true)} className="flex max-w-full items-center gap-1.5 text-left" aria-label="Choose what to focus on">
+                {task && <Tile task={task} size={26} />}
+                <span className="truncate font-serif text-[24px] leading-tight tracking-[-0.01em]">{task ? task.title : "Just a timer"}</span>
+                <ChevronDown className="size-4 shrink-0 text-ink-3" />
+              </button>
+            </span>
+          }
+        />
 
         {task ? <NowCard task={task} actions={actions} onFinish={finish} announce={announce} /> : <NoTaskCard onPick={() => setPicker(true)} />}
 

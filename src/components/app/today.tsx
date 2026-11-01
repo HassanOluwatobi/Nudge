@@ -19,7 +19,7 @@ const round = "btn btn-line btn-icon size-10 text-ink-2";
 export function TopBar({ title, onSettings, onAdd, onHelp, dark, onTheme }: { title?: React.ReactNode; onSettings: () => void; onAdd?: () => void; onHelp?: () => void; dark?: boolean; onTheme?: () => void }) {
   return (
     <header className="flex min-h-[56px] items-center justify-between gap-3 py-2">
-      <div className="min-w-0">{title}</div>
+      <div className="min-w-0 flex-1">{title}</div>
       <div className="flex items-center gap-2">
         {onTheme && (
           <button type="button" className={round} aria-label={dark ? "Switch to light mode" : "Switch to dark mode"} onClick={() => (onTheme(), feel("tick", "light"))}>

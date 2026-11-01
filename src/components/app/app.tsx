@@ -223,6 +223,7 @@ export function NudgeApp() {
     setOver({ name: "finish", task: t });
     announce(`Finished: ${t.title}.`);
   };
+  const themeProps = { dark: resolvedDark, onTheme: () => actions.setSettings({ theme: resolvedDark ? "light" : "dark" }) };
   const common = { state, actions, announce, onHelp: () => setGuide(true), onSettings: () => setSettings(true), onAdd: () => setCapture({}), onOpen: (t: Task) => setOpenId(t.id), onMenu: (t: Task) => setMenuId(t.id) };
 
   return (
@@ -262,10 +263,10 @@ export function NudgeApp() {
         ) : (
           <motion.div key={tab} custom={dir} variants={tabMotion} initial="enter" animate="center" exit="exit" transition={{ type: "spring", bounce: 0, duration: 0.34 }}>
             {tab === "today" && (
-              <Today {...common} dark={resolvedDark} onTheme={() => actions.setSettings({ theme: resolvedDark ? "light" : "dark" })} view={homeView} onView={setHomeView} onAddTo={(part) => setCapture({ part, bucket: "today" })} onFocus={startFocus} onCheckin={setCheckin} />
+              <Today {...common} {...themeProps} view={homeView} onView={setHomeView} onAddTo={(part) => setCapture({ part, bucket: "today" })} onFocus={startFocus} onCheckin={setCheckin} />
             )}
-            {tab === "todo" && <Todo {...common} onAdd={() => setCapture({ bucket: "week" })} onAddTo={(bucket) => setCapture({ bucket })} />}
-            {tab === "focus" && <Focus state={state} actions={actions} announce={announce} taskId={focusId === null ? undefined : (focusId ?? suggestion(state)?.id)} onPickTask={(id) => (setFocusId(id ?? null), state.meta.timer && actions.stopTimer())} onFinished={finished} />}
+            {tab === "todo" && <Todo {...common} {...themeProps} onAddTo={(bucket) => setCapture({ bucket })} />}
+            {tab === "focus" && <Focus {...themeProps} onSettings={() => setSettings(true)} onHelp={() => setGuide(true)} state={state} actions={actions} announce={announce} taskId={focusId === null ? undefined : (focusId ?? suggestion(state)?.id)} onPickTask={(id) => (setFocusId(id ?? null), state.meta.timer && actions.stopTimer())} onFinished={finished} />}
           </motion.div>
         )}
       </AnimatePresence>

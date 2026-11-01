@@ -26,6 +26,8 @@ export function Todo({
   onOpen,
   onMenu,
   onHelp,
+  dark,
+  onTheme,
   announce,
 }: {
   state: State;
@@ -36,6 +38,8 @@ export function Todo({
   onOpen: (t: Task) => void;
   onMenu: (t: Task) => void;
   onHelp: () => void;
+  dark?: boolean;
+  onTheme?: () => void;
   announce: (s: string) => void;
 }) {
   const today = ymd();
@@ -54,12 +58,11 @@ export function Todo({
 
   return (
     <div className="mx-auto w-full max-w-md px-4 pb-36 safe-t">
-      <TopBar onSettings={onSettings} onAdd={onAdd} onHelp={onHelp} />
-      <h1 className="mt-4 text-center font-serif text-[44px] leading-none tracking-[-0.025em]">Plan</h1>
-      <p className="t-small mt-2 text-center text-ink-3">What is coming up. Today lives on Home.</p>
+      <TopBar onSettings={onSettings} onHelp={onHelp} dark={dark} onTheme={onTheme} title={<span className="block leading-tight"><span className="block text-[13px] font-medium text-ink-3">This week and later</span><span className="block font-serif text-[28px] leading-none tracking-[-0.02em]">Plan</span></span>} />
+
 
       {groups.map(([b, items]) => (
-        <section key={b} className="mt-7" aria-labelledby={`b-${b}`}>
+        <section key={b} className="mt-6 first-of-type:mt-4" aria-labelledby={`b-${b}`}>
           <div className="mb-2.5 flex items-center justify-between px-1">
             <button type="button" className="flex items-center gap-1.5" aria-expanded={!collapsed[b]} onClick={() => (setCollapsed((c) => ({ ...c, [b]: !c[b] })), feel("tap"))}>
               <span id={`b-${b}`} className={`pill pill-${b}`}>
