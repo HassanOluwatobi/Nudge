@@ -14,7 +14,7 @@
 export type Source = "google" | "outlook" | "ics" | "notion" | "calendly";
 export type ExtEvent = { src: Source; id: string; title: string; start: Date; end?: Date; allDay: boolean };
 
-export const SOURCE_NAME: Record<Source, string> = { google: "Google Calendar", outlook: "Outlook", ics: "Apple or any calendar", notion: "Notion", calendly: "Calendly" };
+export const SOURCE_NAME: Record<Source, string> = { google: "Google Calendar", outlook: "Outlook", ics: "Apple, Outlook or any calendar", notion: "Notion", calendly: "Calendly" };
 
 export const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ?? "";
 export const MS_CLIENT_ID = process.env.NEXT_PUBLIC_MS_CLIENT_ID ?? "";

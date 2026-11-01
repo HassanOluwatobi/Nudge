@@ -29,14 +29,15 @@ export function CalendlyMark() {
 }
 
 export const MARK: Record<Source, () => React.ReactElement> = { google: GoogleMark, outlook: OutlookMark, ics: AppleMark, notion: NotionMark, calendly: CalendlyMark };
-export const SOURCES: Source[] = ["google", "outlook", "ics", "notion", "calendly"];
-const SHORT: Record<Source, string> = { google: "Google", outlook: "Outlook", ics: "Apple / file", notion: "Notion", calendly: "Calendly" };
+// Outlook shows up once its app ID is set. Until then, Outlook users import a file.
+export const SOURCES: Source[] = (["google", "outlook", "ics", "notion", "calendly"] as Source[]).filter((s) => s !== "outlook" || !!MS_CLIENT_ID);
+const SHORT: Record<Source, string> = { google: "Google", outlook: "Outlook", ics: MS_CLIENT_ID ? "Apple / file" : "Apple, Outlook, file", notion: "Notion", calendly: "Calendly" };
 
 /** Round source buttons, used in Settings and the import sheet. */
 export function SourceButtons({ state, onPick }: { state: State; onPick: (s: Source) => void }) {
   const on = (s: Source) => (s === "google" ? state.settings.sync.google : s === "outlook" ? state.settings.sync.outlook : s === "notion" ? !!state.settings.sync.notion : s === "calendly" ? !!state.settings.sync.calendly : false);
   return (
-    <div className="grid grid-cols-5 gap-1">
+    <div className={`grid gap-1 ${SOURCES.length === 5 ? "grid-cols-5" : "grid-cols-4"}`}>
       {SOURCES.map((s, i) => {
         const M = MARK[s];
         return (
@@ -262,8 +263,8 @@ export function ImportSheet({
             {source === "ics" && (
               <>
                 <ol className="t-small mt-4 list-decimal space-y-1 pl-5 text-ink-2">
-                  <li>On a Mac: open Calendar, pick a calendar, then File, Export.</li>
-                  <li>On iCloud.com or Google: download or export the calendar as .ics.</li>
+                  <li>Apple: on a Mac, open Calendar, pick a calendar, then File, Export.</li>
+                  <li>Outlook: on outlook.com, open Settings, Calendar, Shared calendars, and publish or download the calendar as .ics.</li>
                   <li>Choose the file below.</li>
                 </ol>
                 <button type="button" className="btn btn-signal mt-5 w-full gap-2" disabled={busy} onClick={() => file.current?.click()}>
