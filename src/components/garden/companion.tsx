@@ -19,6 +19,9 @@ type Props = {
   className?: string;
 };
 
+// Island size. Top of the island sits near y = 0.08.
+const MX = 3.3, MY = 0.5, MZ = 2.2, MOFF = -0.42;
+
 // Plant slots on the mound, front to back, avoiding Nudge in the middle.
 const SLOTS: [number, number, number][] = [
   // x, z, scale
@@ -76,7 +79,11 @@ export function Companion({ plants, cheer, mood = "happy", className }: Props) {
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.12;
       renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.shadowMap.type = THREE.PCFShadowMap;
+      // The garden runs past the edges and fades out softly, so it feels bigger than the screen.
+      const fade = "linear-gradient(90deg, transparent 0%, #000 16%, #000 84%, transparent 100%)";
+      renderer.domElement.style.maskImage = fade;
+      renderer.domElement.style.webkitMaskImage = fade;
       renderer.domElement.style.width = "100%";
       renderer.domElement.style.height = "100%";
       renderer.domElement.setAttribute("aria-hidden", "true");
@@ -116,10 +123,11 @@ export function Companion({ plants, cheer, mood = "happy", className }: Props) {
         });
 
       // The mound.
-      const moundGeo = new THREE.SphereGeometry(1, 96, 32, 0, Math.PI * 2, 0, Math.PI / 2);
-      const mound = new THREE.Mesh(moundGeo, clay("#b7e3c9", 0.7, 0.5));
-      mound.scale.set(4.6, 0.42, 2.15);
-      mound.position.y = -0.3;
+      // A soft clay island: a whole squashed pebble, so its edge curves away instead of ending in a cut.
+      const moundGeo = new THREE.SphereGeometry(1, 128, 48);
+      const mound = new THREE.Mesh(moundGeo, clay("#c3e7d0", 0.78, 0.55));
+      mound.scale.set(MX, MY, MZ);
+      mound.position.y = MOFF;
       mound.receiveShadow = true;
       scene.add(mound);
 
@@ -249,8 +257,9 @@ export function Companion({ plants, cheer, mood = "happy", className }: Props) {
             g.add(l);
           }
         }
-        const [x, z, s] = SLOTS[i % SLOTS.length];
-        const y = -0.3 + 0.42 * Math.sqrt(Math.max(0, 1 - (x / 4.6) ** 2 - (z / 2.15) ** 2));
+        const [sx0, z0, s] = SLOTS[i % SLOTS.length];
+        const x = sx0 * 0.84, z = z0 * 0.9;
+        const y = MOFF + MY * Math.sqrt(Math.max(0, 1 - (x / MX) ** 2 - (z / MZ) ** 2));
         g.position.set(x, y - 0.02, z);
         g.rotation.y = kind === "flower" || kind === "bud" ? (x > 0 ? -0.25 : 0.25) : (i * 1.7) % Math.PI;
         g.userData.base = s * 1.25;
@@ -281,8 +290,10 @@ export function Companion({ plants, cheer, mood = "happy", className }: Props) {
         if (!w || !h) return;
         renderer.setSize(w, h, false);
         camera.aspect = w / h;
-        // Keep the whole mound in view on narrow phones.
-        camera.position.z = w / h < 1.2 ? 9.2 + (1.2 - w / h) * 5 : 9.2;
+        // Fit the whole island in the frame at any shape, so it never gets cut off.
+        const d = Math.max(6.4, 2.55 / (Math.tan((15 * Math.PI) / 180) * (w / h)));
+        camera.position.set(0, d * 0.44, d);
+        camera.lookAt(0, 0.42, 0);
         camera.updateProjectionMatrix();
         if (reduce) render();
       };
@@ -305,9 +316,15 @@ export function Companion({ plants, cheer, mood = "happy", className }: Props) {
       const render = () => renderer.render(scene, camera);
 
       let raf = 0;
+      let last = 0;
+      let visible = true;
+      const io = new IntersectionObserver(([e]) => (visible = e.isIntersecting));
+      io.observe(el);
+      // 30 frames a second is plenty for a gentle scene and saves battery.
       const loop = (now: number) => {
         raf = requestAnimationFrame(loop);
-        if (document.hidden) return;
+        if (document.hidden || !visible || now - last < 32) return;
+        last = now;
         const t = now / 1000;
         // Breathe.
         const br = Math.sin(t * 1.7) * 0.022 * (1 - sleepy * 0.4);
@@ -372,6 +389,7 @@ export function Companion({ plants, cheer, mood = "happy", className }: Props) {
       cleanup = () => {
         cancelAnimationFrame(raf);
         ro.disconnect();
+        io.disconnect();
         window.removeEventListener("pointermove", onMove);
         renderer.dispose();
         scene.traverse((o) => {
@@ -402,15 +420,15 @@ export function Companion({ plants, cheer, mood = "happy", className }: Props) {
 
   return (
     <div ref={host} className={className} role="img" aria-label={`Nudge, your clay companion, in a garden with ${plants} ${plants === 1 ? "thing" : "things"} grown`}>
-      {failed && <FallbackNudge />}
+      {(failed || !ready) && <FallbackNudge />}
     </div>
   );
 }
 
 /** Flat fallback when 3D is not available. Same character, simple shapes. */
-function FallbackNudge() {
+export function FallbackNudge({ className = "mt-6" }: { className?: string }) {
   return (
-    <div className="relative mx-auto mt-6 h-[150px] w-[220px]">
+    <div className={`relative mx-auto h-[150px] w-[220px] max-h-full ${className}`}>
       <div className="absolute inset-x-[-40px] bottom-0 h-10 rounded-[50%] bg-[#cfe8da]" />
       <div className="nm-float absolute bottom-4 left-1/2 h-[120px] w-[150px] -translate-x-1/2 rounded-[50%_50%_44%_44%/60%_60%_40%_40%] bg-[radial-gradient(circle_at_35%_30%,#f7c2ad,#e9a084_60%,#d98c70)] shadow-[0_14px_20px_-10px_rgb(140_70_60/0.4)]">
         <span className="absolute top-[40%] left-[32%] h-4 w-3 rounded-full bg-[#1d1420]" />

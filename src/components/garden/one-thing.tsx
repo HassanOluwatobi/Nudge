@@ -1,53 +1,94 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { ArrowRight, Check, ChevronRight, Feather, Moon, Sparkles, Star } from "lucide-react";
+import { ArrowRight, BellRing, Check, ChevronRight, Feather, Moon, Pause, Play, Plus, Sparkles, Sprout, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { stepMinutes, type Task } from "@/lib/nudge";
+import { prettyDue, stepMins, type Task, ymd } from "@/lib/nudge";
 import type { Actions } from "@/lib/use-nudge";
+import { askNotify } from "@/lib/reminders";
 
 const SWIPE = 96;
 
-/** The one thing. Swipe right when it's done, left to save it for later. */
+const fmt = (ms: number) => {
+  const s = Math.max(0, Math.ceil(ms / 1000));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+};
+
+/** The one thing. Do the small step, then say if the whole task is finished. */
 export function OneThingCard({
   task,
   actions,
   gentle,
-  onDone,
+  timer,
+  timeUp,
+  onStepDone,
+  onAllDone,
   onOpen,
 }: {
   task: Task;
   actions: Actions;
   gentle: boolean;
-  onDone: () => void;
+  timer?: { taskId: string; end: number; mins: number };
+  timeUp?: boolean;
+  onStepDone: () => void;
+  onAllDone: () => void;
   onOpen: () => void;
 }) {
   const [dx, setDx] = useState(0);
   const [leaving, setLeaving] = useState<"right" | "left" | null>(null);
   const [squish, setSquish] = useState(0);
+  const [asking, setAsking] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
   const start = useRef<{ x: number; y: number; id: number } | null>(null);
   const dragging = useRef(false);
+  const busy = useRef(false);
   const next = task.subs.find((s) => !s.d);
-  const step = next ? next.t : task.step;
+  const step = (next ? next.t : task.step).replace(/^Start with: /, "");
+  const mins = stepMins(step);
+  const running = timer?.taskId === task.id && timer.end > now ? timer : undefined;
+  const today = ymd();
 
-  const done = () => {
+  useEffect(() => {
+    if (!running) return;
+    const i = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(i);
+  }, [running]);
+
+  const stepDone = () => {
+    if (busy.current || asking) return;
+    busy.current = true;
+    setDx(0);
+    onStepDone();
+    setAsking(true);
+    setTimeout(() => (busy.current = false), 400);
+  };
+  const allDone = () => {
+    if (busy.current) return;
+    busy.current = true;
     setLeaving("right");
-    setTimeout(onDone, 260);
+    setTimeout(onAllDone, 260);
   };
   const later = () => {
+    if (busy.current) return;
+    busy.current = true;
     setLeaving("left");
     setTimeout(() => {
       actions.move(task.id, "week");
-      toast("Saved for later this week. Pick another whenever you like.", {
+      toast("Moved to later this week.", {
         duration: 5000,
         action: { label: "Undo", onClick: () => actions.setMust(task.id) },
       });
     }, 260);
   };
+  const startTimer = async () => {
+    actions.setMeta({ timer: { taskId: task.id, end: Date.now() + mins * 60000, mins } });
+    setNow(Date.now());
+    askNotify();
+  };
 
   const onPointerDown = (e: React.PointerEvent) => {
-    if ((e.target as HTMLElement).closest("button,a,input")) return;
+    if (asking || (e.target as HTMLElement).closest("button,a,input")) return;
     start.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
     dragging.current = false;
   };
@@ -68,7 +109,7 @@ export function OneThingCard({
   };
   const onPointerUp = () => {
     if (dragging.current) {
-      if (dx > SWIPE) done();
+      if (dx > SWIPE) stepDone();
       else if (dx < -SWIPE) later();
       else setDx(0);
     }
@@ -77,19 +118,18 @@ export function OneThingCard({
   };
 
   const p = Math.max(-1, Math.min(1, dx / SWIPE));
+  const total = (running?.mins ?? mins) * 60000;
+  const progress = running ? 1 - (running.end - now) / total : 0;
 
   return (
     <div className="relative" data-tour="card">
-      {/* What a swipe will do. */}
-      <div aria-hidden className="absolute inset-0 overflow-hidden rounded-[2.25rem]">
-        <div className="absolute inset-0 flex items-center justify-between bg-[linear-gradient(90deg,#d3f1e2,#efe9ff)] px-8 text-[15px] font-semibold">
-          <span className="flex items-center gap-2 text-[#2f8a5c]" style={{ opacity: Math.max(0, p) }}>
-            <Check className="size-5" strokeWidth={3} /> Done
-          </span>
-          <span className="flex items-center gap-2 text-[#6b4fd8]" style={{ opacity: Math.max(0, -p) }}>
-            Later <Moon className="size-5" />
-          </span>
-        </div>
+      <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 flex h-full items-center justify-between px-2 text-[14px] font-semibold">
+        <span className="flex items-center gap-1.5 text-[#2f8a5c]" style={{ opacity: Math.max(0, p) }}>
+          <Check className="size-4" strokeWidth={3} /> Step done
+        </span>
+        <span className="flex items-center gap-1.5 text-[#5b3fd6]" style={{ opacity: Math.max(0, -p) }}>
+          Later <Moon className="size-4" />
+        </span>
       </div>
 
       <article
@@ -98,54 +138,99 @@ export function OneThingCard({
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
         aria-label={`Your one thing: ${task.title}`}
-        className={cn(
-          "clay-card relative touch-pan-y select-none p-5 sm:p-6",
-          leaving === "right" && "nm-fly-right",
-          leaving === "left" && "nm-fly-left",
-          !leaving && !dx && "nm-spring-in"
-        )}
-        style={leaving ? undefined : { transform: dx ? `translateX(${dx}px) rotate(${dx / 40}deg)` : undefined, transition: dx ? "none" : "transform 380ms cubic-bezier(.22,1.4,.36,1)" }}
+        className={cn("relative touch-pan-y select-none bg-white", leaving === "right" && "nm-fly-right", leaving === "left" && "nm-fly-left")}
+        style={leaving ? undefined : { transform: dx ? `translateX(${dx}px) rotate(${dx / 60}deg)` : undefined, opacity: dx ? 1 - Math.abs(p) * 0.25 : 1, transition: dx ? "none" : "transform 420ms cubic-bezier(.34,1.56,.64,1), opacity 300ms" }}
       >
-        <div className="flex items-center justify-between gap-3">
-          <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[13px] font-semibold", gentle ? "bg-[#efe9ff] text-[#6b4fd8]" : "bg-[#ffe6dc] text-[#d4553f]")}>
-            {gentle ? <Feather className="size-3.5" /> : <Star className="size-3.5 fill-current" />}
-            {gentle ? "Gentle day · just this" : "Your one thing"}
-          </span>
-          <button type="button" onClick={onOpen} className="flex items-center gap-0.5 rounded-full px-2 py-1 text-[13px] font-medium text-muted-foreground hover:text-foreground">
-            Details <ChevronRight className="size-3.5" />
-          </button>
-        </div>
-
-        <h2 className="mt-3 font-serif text-[28px] leading-[1.12] tracking-tight text-balance text-[var(--plum)] min-[400px]:text-[31px]">{task.title}</h2>
-
-        <div key={step} className={cn("step-pill mt-4 px-5 py-3.5 nm-pop", squish && "nm-squish")}>
-          <p className="text-[13px] text-muted-foreground">
-            {next ? "Next step" : "First step"} · {stepMinutes(step)}
+        <div className="flex items-center justify-between gap-2">
+          <p className={cn("eyebrow flex items-center gap-1.5", gentle && "text-[#5b3fd6]")}>
+            {gentle ? <Feather className="size-3.5" /> : <Star className="size-3 fill-[var(--coral)] text-[var(--coral)]" />}
+            {gentle ? "Easy day · just this" : "Your one thing"}
+            {task.due && task.due >= today && <span className="text-[var(--ink-3)]">· Due {prettyDue(task.due, today).replace(/^(Today|Tomorrow)$/, (m) => m.toLowerCase())}</span>}
           </p>
-          <p className="mt-1 text-[17px] leading-snug font-semibold text-[var(--plum)]">{step.replace(/^Start with: /, "")}</p>
-        </div>
-
-        <button type="button" onClick={done} data-tour="done" className="candy mt-5 h-[58px] w-full text-[17px]">
-          <Check className="size-5" strokeWidth={3} /> I did it, grow something
-        </button>
-
-        <div className="mt-3 flex items-center justify-center gap-1 text-[14px] font-medium">
-          <button
-            type="button"
-            data-tour="smaller"
-            onClick={() => {
-              actions.shrink(task.id);
-              setSquish((n) => n + 1);
-            }}
-            className="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[#7a5ad9] hover:bg-[#f2edff]"
-          >
-            <Sparkles className="size-4" /> Make it smaller
-          </button>
-          <span className="text-border">•</span>
-          <button type="button" onClick={later} className="flex items-center gap-1.5 rounded-full px-3.5 py-2 text-muted-foreground hover:bg-muted">
-            Not now <ArrowRight className="size-4" />
+          <button type="button" onClick={onOpen} className="-mr-2 flex h-9 shrink-0 items-center gap-0.5 rounded-full px-2.5 text-[14px] font-medium text-[var(--ink-2)] hover:text-[var(--ink)]">
+            Details <ChevronRight className="size-4" />
           </button>
         </div>
+
+        <h2 className="mt-1 line-clamp-2 font-serif text-[29px] leading-[1.08] tracking-[-0.025em] [overflow-wrap:anywhere] text-[var(--ink)]">{task.title}</h2>
+
+        {asking ? (
+          <div className="nm-rise mt-4">
+            <div className="flex items-center gap-3 rounded-[1.25rem] bg-[#eaf7f0] px-4 py-3.5">
+              <span className="nm-pop grid size-10 shrink-0 place-items-center rounded-full bg-[#2f8a5c] text-white">
+                <Sprout className="size-5" />
+              </span>
+              <div>
+                <p className="text-[16px] leading-snug font-semibold text-[var(--ink)]">Nice. That step counts.</p>
+                <p className="text-[14px] text-[var(--ink-2)]">Is the whole task finished?</p>
+              </div>
+            </div>
+            <div className="mt-4 grid grid-cols-[1fr_1fr] gap-2.5">
+              <button type="button" onClick={() => setAsking(false)} className="candy candy-soft h-[56px] text-[15px]">
+                Not yet
+              </button>
+              <button type="button" onClick={allDone} className="candy candy-coral h-[56px] text-[16px]">
+                <Check className="size-5" strokeWidth={3} /> All done
+              </button>
+            </div>
+            <p className="mt-2 text-center text-[13px] text-[var(--ink-3)]">Not yet shows you the next small step.</p>
+          </div>
+        ) : (
+          <>
+            <div key={step} className={cn("nm-rise mt-4 flex items-center gap-3.5 border-t border-[var(--hair)] pt-4", squish && "nm-squish")}>
+              <button
+                type="button"
+                onClick={running ? () => actions.setMeta({ timer: undefined }) : startTimer}
+                aria-label={running ? "Stop timer" : `Start a ${mins} minute timer`}
+                className="press relative grid size-14 shrink-0 place-items-center rounded-full bg-[#f6f1ef] text-[var(--ink)]"
+              >
+                <svg viewBox="0 0 56 56" className="absolute inset-0 -rotate-90" aria-hidden>
+                  <circle cx="28" cy="28" r="25" fill="none" stroke="rgb(36 25 42 / 0.08)" strokeWidth="3" />
+                  {running && <circle cx="28" cy="28" r="25" fill="none" stroke="var(--coral)" strokeWidth="3" strokeLinecap="round" strokeDasharray={157} strokeDashoffset={157 * (1 - progress)} className="transition-[stroke-dashoffset] duration-1000 ease-linear" />}
+                </svg>
+                {running ? <Pause className="size-5 fill-current" /> : <Play className="ml-0.5 size-5 fill-current" />}
+              </button>
+              <div className="min-w-0 flex-1">
+                <p className="text-[13px] font-medium text-[var(--ink-3)]">
+                  {running ? (
+                    <span className="font-semibold text-[var(--coral)] tabular-nums">{fmt(running.end - now)} left</span>
+                  ) : timeUp ? (
+                    <span className="flex items-center gap-1 font-semibold text-[var(--coral)]">
+                      <BellRing className="size-3.5" /> Time is up. How did it go?
+                    </span>
+                  ) : (
+                    <>
+                      {next || task.step.startsWith("Keep going") ? "Next step" : "First step"} · {mins} min · tap play for a timer
+                    </>
+                  )}
+                </p>
+                <p className="mt-0.5 text-[17px] leading-snug font-semibold [overflow-wrap:anywhere] text-[var(--ink)]">{step}</p>
+              </div>
+            </div>
+
+            <button type="button" onClick={stepDone} data-tour="done" className="candy mt-4 h-[56px] w-full text-[17px]">
+              <Check className="size-5" strokeWidth={2.6} /> I did this step
+            </button>
+
+            <div className="mt-1.5 flex items-center justify-center text-[15px] font-medium">
+              <button
+                type="button"
+                data-tour="smaller"
+                onClick={() => {
+                  actions.shrink(task.id);
+                  setSquish((n) => n + 1);
+                }}
+                className="flex h-11 items-center gap-1.5 rounded-full px-4 text-[#5b3fd6]"
+              >
+                <Sparkles className="size-4" /> Make it smaller
+              </button>
+              <span className="h-4 w-px bg-[var(--hair)]" aria-hidden />
+              <button type="button" onClick={later} className="flex h-11 items-center gap-1.5 rounded-full px-4 text-[var(--ink-2)]">
+                Do it later <ArrowRight className="size-4" />
+              </button>
+            </div>
+          </>
+        )}
       </article>
     </div>
   );
@@ -154,55 +239,70 @@ export function OneThingCard({
 /** No one thing yet: offer up to three to choose from. */
 export function PickCard({ options, onPick, onMore }: { options: Task[]; onPick: (id: string) => void; onMore: () => void }) {
   return (
-    <article className="clay-card nm-spring-in p-6" data-tour="card">
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ffe6dc] px-3 py-1.5 text-[13px] font-semibold text-[#d4553f]">
-        <Star className="size-3.5 fill-current" /> Pick your one thing
-      </span>
-      <h2 className="mt-4 font-serif text-[28px] leading-tight tracking-tight text-[var(--plum)]">Which one feels doable?</h2>
-      <p className="mt-1 text-[15px] text-muted-foreground">Just one. The rest stays safe.</p>
-      <div className="mt-5 flex flex-col gap-3">
+    <div data-tour="card">
+      <p className="eyebrow">Choose your one thing</p>
+      <h2 className="mt-1 font-serif text-[27px] leading-tight tracking-[-0.025em] text-[var(--ink)]">Which is easiest to start?</h2>
+      <div className="mt-4 flex flex-col divide-y divide-[var(--hair)] overflow-hidden rounded-[1.25rem] bg-[#f8f4f2]">
         {options.map((t) => (
-          <button key={t.id} type="button" onClick={() => onPick(t.id)} className="candy candy-soft h-auto min-h-[56px] w-full justify-between px-5 py-3 text-left text-[16px] font-semibold">
-            <span className="line-clamp-2">{t.title}</span>
-            <span className="shrink-0 text-[13px] font-medium text-muted-foreground">Choose</span>
+          <button key={t.id} type="button" onClick={() => onPick(t.id)} className="flex min-h-[56px] w-full items-center justify-between gap-3 px-4 py-3 text-left text-[16px] font-semibold text-[var(--ink)] active:bg-[#f1ebe8]">
+            <span className="line-clamp-2 [overflow-wrap:anywhere]">{t.title}</span>
+            <ChevronRight className="size-5 shrink-0 text-[var(--ink-3)]" />
           </button>
         ))}
       </div>
-      <button type="button" onClick={onMore} className="mt-4 w-full rounded-full py-2 text-[14px] font-medium text-muted-foreground hover:text-foreground">
+      <button type="button" onClick={onMore} className="mt-2 h-11 w-full rounded-full text-[15px] font-medium text-[var(--ink-2)]">
         See my whole list
       </button>
-    </article>
+    </div>
   );
 }
 
-/** The one thing is done. */
-export function WinCard({ title, canPick, onPick }: { title: string; canPick: boolean; onPick: () => void }) {
+/** The one thing is done. Resting state after the celebration. */
+export function WinCard({
+  title,
+  canPick,
+  onPick,
+  askReminders,
+  onReminders,
+}: {
+  title: string;
+  canPick: boolean;
+  onPick: () => void;
+  askReminders: boolean;
+  onReminders: () => void;
+}) {
   return (
-    <article className="clay-card nm-spring-in p-7 text-center" data-tour="card">
-      <p className="text-[40px] leading-none">🌼</p>
-      <h2 className="mt-3 font-serif text-[30px] leading-tight tracking-tight text-[var(--plum)]">Your one thing is done.</h2>
-      <p className="mx-auto mt-2 max-w-xs text-[15px] text-muted-foreground text-pretty line-through decoration-[#e8664f]/40">{title}</p>
-      <p className="mx-auto mt-3 max-w-xs text-[15px] text-pretty text-[var(--plum)]">That&apos;s a full win. Resting counts too.</p>
-      {canPick && (
-        <button type="button" onClick={onPick} className="candy candy-soft mt-6 h-[54px] w-full text-[16px]">
-          I&apos;ve got energy, pick another
-        </button>
-      )}
-    </article>
+    <div className="select-none" data-tour="card">
+      <p className="eyebrow flex items-center gap-1.5 text-[#2f8a5c]">
+        <Check className="size-3.5" strokeWidth={3} /> Done today
+      </p>
+      <h2 className="mt-1 line-clamp-2 font-serif text-[27px] leading-tight tracking-[-0.025em] text-[var(--ink-3)] line-through decoration-[var(--coral)]/50 [overflow-wrap:anywhere]">{title}</h2>
+      <p className="mt-1.5 text-[15px] text-[var(--ink-2)]">Great job. You can stop here, or do one more.</p>
+      <div className={cn("mt-4 grid gap-2.5", canPick && askReminders ? "grid-cols-2" : "grid-cols-1")}>
+        {canPick && (
+          <button type="button" onClick={onPick} className="candy h-[54px] text-[16px]">
+            Do one more
+          </button>
+        )}
+        {askReminders && (
+          <button type="button" onClick={onReminders} className="candy candy-grape h-[54px] text-[15px]">
+            <BellRing className="size-4" /> Daily reminder
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
-/** Nothing on the list. Point at the capture bar. */
-export function EmptyCard() {
+/** Nothing on the list yet. */
+export function EmptyCard({ onAdd }: { onAdd: () => void }) {
   return (
-    <article className="clay-card nm-spring-in p-7 text-center" data-tour="card">
-      <h2 className="font-serif text-[28px] leading-tight tracking-tight text-[var(--plum)]">Your garden is ready.</h2>
-      <p className="mx-auto mt-2 max-w-xs text-[15px] text-muted-foreground text-pretty">
-        Tell me what&apos;s on your mind below. I&apos;ll find the one thing and make it small.
-      </p>
-      <p className="mt-4 text-2xl nm-float" aria-hidden>
-        👇
-      </p>
-    </article>
+    <div className="text-center" data-tour="card">
+      <h2 className="font-serif text-[27px] leading-tight tracking-[-0.025em] text-[var(--ink)]">Your garden is ready.</h2>
+      <p className="mx-auto mt-1 max-w-xs text-[15px] text-[var(--ink-2)] text-pretty">Tell me one thing you need to do. I&apos;ll make the first step small.</p>
+      <button type="button" onClick={onAdd} className="candy mt-4 h-[56px] w-full text-[17px]">
+        <Plus className="size-5" strokeWidth={2.4} /> Add something
+      </button>
+    </div>
   );
 }

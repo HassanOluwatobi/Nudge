@@ -1,15 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { ArrowLeft, Lock, Mic, Sprout, Square } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { type Entry, makeEntry, makeTask, parseCapture, splitDump, type Task, ymd } from "@/lib/nudge";
+import { type Entry, makeEntry, makeTask, parseCapture, prettyDue, splitDump, suggestStep, type Task, ymd } from "@/lib/nudge";
 import type { Actions } from "@/lib/use-nudge";
 import { useSpeech } from "@/lib/use-speech";
-import { Companion } from "./companion";
+import { motion, useReducedMotion } from "motion/react";
+import { daypart, Landscape } from "./landscape";
+import { Mark } from "./bird";
 
 type Kind = "task" | "idea" | "note";
-type Draft = { id: number; text: string; kind: Kind; raw: string };
+type Draft = { id: number; text: string; kind: Kind; raw: string; due?: string };
 const NEXT_KIND: Record<Kind, Kind> = { task: "idea", idea: "note", note: "task" };
 const KIND_STYLE: Record<Kind, string> = {
   task: "bg-[#ffe6dc] text-[#d4553f]",
@@ -17,22 +20,27 @@ const KIND_STYLE: Record<Kind, string> = {
   note: "bg-[#efe9ff] text-[#6b4fd8]",
 };
 const KIND_LABEL: Record<Kind, string> = { task: "To do", idea: "Idea", note: "Note" };
+const DRAFT_KEY = "nudgeme.draft";
 
 const SAYS = [
-  "Hi, I'm Nudge! I help you do one calm thing at a time.",
-  "Tell me everything on your mind. Tasks, worries, ideas. Messy is fine.",
-  "Here's what I heard. Tap a label if I guessed wrong.",
-  "Now pick one thing for today. Just one. I'll keep the rest safe.",
+  "",
+  "Write everything you need to do. One thing on each line. Spelling doesn't matter.",
+  "Here's what I found. Tap a label if it's wrong.",
+  "Choose one thing for today. I'll keep the rest safe.",
 ];
 
-/** First run. Nudge walks you through it: empty your head, sort, pick one. */
+/** First run. Nudge walks you through it: write it all down, check, choose one. */
 export function Guide({ actions }: { actions: Actions }) {
-  const [step, setStep] = useState(0);
+  const [step, setStepRaw] = useState(0);
   const [dump, setDump] = useState("");
   const [interim, setInterim] = useState("");
   const [drafts, setDrafts] = useState<Draft[]>([]);
   const [pick, setPick] = useState<number | null>(null);
   const [cheer, setCheer] = useState(0);
+  const [hint, setHint] = useState("");
+  const [typing, setTyping] = useState(false);
+  const busy = useRef(false);
+  const area = useRef<HTMLTextAreaElement>(null);
   const speech = useSpeech((text, final) => {
     if (final) {
       setDump((d) => (d ? d.replace(/\s*$/, "\n") : "") + text);
@@ -40,85 +48,157 @@ export function Guide({ actions }: { actions: Actions }) {
     } else setInterim(text);
   });
 
+  // Keep what was typed if the page reloads.
+  useEffect(() => {
+    try {
+      const d = localStorage.getItem(DRAFT_KEY);
+      if (d) {
+        setDump(d);
+        setStepRaw(1);
+      }
+    } catch {}
+  }, []);
+  useEffect(() => {
+    try {
+      if (dump.trim()) localStorage.setItem(DRAFT_KEY, dump);
+      else localStorage.removeItem(DRAFT_KEY);
+    } catch {}
+  }, [dump]);
+
+  // The phone's Back button goes back one step.
+  useEffect(() => {
+    const onPop = () => setStepRaw((s) => Math.max(0, s - 1));
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
   const go = (n: number) => {
-    setStep(n);
+    if (n > step) history.pushState({ guide: n }, "");
+    setStepRaw(n);
     setCheer((c) => c + 1);
+    setHint("");
+    setTyping(false);
+    window.scrollTo({ top: 0 });
+  };
+  const back = () => {
+    if (history.state?.guide) history.back();
+    else setStepRaw((s) => Math.max(0, s - 1));
+  };
+
+  const finish = (ds: Draft[], mustDraft: number | null) => {
+    if (busy.current) return;
+    busy.current = true;
+    const today = ymd();
+    const tasks: Task[] = [];
+    const entries: Entry[] = [];
+    let mustId: string | undefined;
+    for (const d of ds) {
+      if (d.kind === "task") {
+        const p = parseCapture(d.raw);
+        const t = makeTask(p && p.kind === "task" ? p : { kind: "task", title: d.text, bucket: "week", step: suggestStep(d.text) });
+        if (d.id === mustDraft) mustId = t.id;
+        tasks.push(t);
+      } else entries.push(makeEntry(d.kind, d.text, today));
+    }
+    try {
+      localStorage.removeItem(DRAFT_KEY);
+    } catch {}
+    actions.finishOnboarding(tasks, entries, mustId);
   };
 
   const sort = () => {
     const all = (dump + (interim ? "\n" + interim : "")).trim();
     if (speech.listening) speech.toggle();
+    if (!all) {
+      setHint("Type at least one thing first. For example: call mum.");
+      area.current?.focus();
+      return;
+    }
+    const seen = new Set<string>();
     const ds = splitDump(all)
       .map((line, i) => {
         const p = parseCapture(line);
-        return p ? ({ id: i, kind: p.kind, raw: line, text: p.kind === "task" ? p.title : p.text } as Draft) : null;
+        if (!p) return null;
+        const text = p.kind === "task" ? p.title : p.text;
+        if (seen.has(text.toLowerCase())) return null;
+        seen.add(text.toLowerCase());
+        return { id: i, kind: p.kind, raw: line, text, due: p.kind === "task" ? p.due : undefined } as Draft;
       })
-      .filter(Boolean) as Draft[];
+      .filter(Boolean)
+      .slice(0, 60) as Draft[];
+    if (!ds.length) {
+      setHint("I couldn't find a task in that. Try a few words, like: buy airtime.");
+      return;
+    }
+    // Just one thing? Skip the extra screens and start.
+    if (ds.length === 1 && ds[0].kind === "task") {
+      finish(ds, ds[0].id);
+      return;
+    }
     setDrafts(ds);
     go(2);
   };
 
-  const finish = () => {
-    const today = ymd();
-    const tasks: Task[] = [];
-    const entries: Entry[] = [];
-    let mustId: string | undefined;
-    for (const d of drafts) {
-      if (d.kind === "task") {
-        const p = parseCapture(d.raw);
-        const t = makeTask(p && p.kind === "task" ? p : { kind: "task", title: d.text, bucket: "week", step: "Set a 10 minute timer and just begin." });
-        if (d.id === pick) mustId = t.id;
-        tasks.push(t);
-      } else entries.push(makeEntry(d.kind, d.text, today));
-    }
-    actions.finishOnboarding(tasks, entries, mustId);
+  const tasks = drafts.filter((d) => d.kind === "task");
+  const toPick = () => {
+    if (!tasks.length) return finish(drafts, null);
+    if (tasks.length === 1) return finish(drafts, tasks[0].id);
+    // Suggest the one due soonest, so the big button always means "start".
+    const first = [...tasks].sort((a, b) => (a.due ?? "9999").localeCompare(b.due ?? "9999"))[0];
+    setPick(first.id);
+    go(3);
   };
 
-  const tasks = drafts.filter((d) => d.kind === "task");
+  const compact = step > 0 && typing;
 
   return (
-    <main className="relative z-10 mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-[max(1.25rem,env(safe-area-inset-bottom))]">
+    <main className="relative z-10 mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
       <div className="flex h-11 items-center justify-between">
         {step > 0 ? (
-          <button type="button" onClick={() => setStep(step - 1)} aria-label="Back" className="candy candy-soft grid size-11 place-items-center rounded-full p-0">
+          <button type="button" onClick={back} aria-label="Back" className="candy candy-soft grid size-11 place-items-center rounded-full p-0">
             <ArrowLeft className="size-5" />
           </button>
         ) : (
-          <span className="font-serif text-[22px] tracking-tight text-[var(--plum)]">
-            Nudge<span className="serif-em">Me</span>
+          <span className="flex items-center gap-2 text-[18px] font-semibold tracking-[-0.03em]">
+            <Mark className="size-8" />
+            NudgeMe
           </span>
         )}
         {step > 0 && (
           <div className="flex gap-1.5" aria-label={`Step ${step} of 3`}>
             {[1, 2, 3].map((i) => (
-              <span key={i} className={cn("h-2 rounded-full transition-all duration-300", i <= step ? "w-7 bg-[#ff8f8f]" : "w-2 bg-[#ead9dc]")} />
+              <span key={i} className={cn("h-2 rounded-full transition-all duration-300", i <= step ? "w-6 bg-[var(--ink)]" : "w-1.5 bg-[var(--hair)]")} />
             ))}
           </div>
         )}
       </div>
 
-      <div className="relative">
-        <div key={step} className="bubble nm-pop relative z-10 mx-auto mt-4 max-w-sm px-5 py-3.5 text-center text-[16px] leading-snug text-[var(--plum)] after:left-1/2 after:-translate-x-1/2" aria-live="polite">
+      {step === 0 ? (
+        <Stack />
+      ) : (
+        <h1 key={step} className={cn("nm-rise t-display mt-6 mb-5 text-[30px] text-pretty", compact && "mt-3 mb-3 text-[22px]")} aria-live="polite">
           {SAYS[step]}
-        </div>
-        <Companion plants={step === 0 ? 3 : step} cheer={cheer} className={cn("w-full transition-[height] duration-500", step === 0 ? "h-[300px]" : "h-[190px]")} />
-      </div>
+        </h1>
+      )}
 
       <div key={step} className="nm-spring-in flex flex-1 flex-col">
         {step === 0 && (
           <>
-            <h1 className="mt-2 text-center font-serif text-[42px] leading-[1.03] tracking-tight text-balance text-[var(--plum)]">
-              One calm step <em className="serif-em">at a time.</em>
+            <h1 className="t-display mt-2 text-[40px] leading-[1.02] tracking-[-0.035em] text-balance">
+              One calm step<br />at a time.
             </h1>
-            <p className="mx-auto mt-4 max-w-sm text-center text-[16px] leading-relaxed text-muted-foreground text-pretty">
-              Dump everything on your mind. NudgeMe picks out one thing and makes it small enough to start. No guilt, no piles, no noise.
+            <p className="t-body mt-3 max-w-sm text-[var(--ink-2)] text-pretty">
+              Write down everything on your mind. NudgeMe chooses one thing and makes it small enough to start. No guilt. No long lists.
             </p>
-            <div className="flex-1" />
-            <button type="button" onClick={() => go(1)} className="candy mt-8 h-[60px] w-full text-[17px]">
+            <div className="min-h-4 flex-1" />
+            <button type="button" onClick={() => go(1)} className="candy mt-4 h-[60px] w-full text-[17px]">
               Let&apos;s begin
             </button>
-            <p className="mt-4 flex items-center justify-center gap-1.5 text-[13px] text-muted-foreground">
-              <Lock className="size-3.5" /> No sign-up. Everything stays on this device.
+            <p className="mt-3 flex flex-wrap items-center justify-center gap-x-1.5 gap-y-1 text-[13px] text-[var(--ink-3)]">
+              <Lock className="size-3.5" /> Free. No sign-up. Your list stays on this phone.
+              <Link href="/privacy" className="font-semibold text-[var(--ink-2)] underline underline-offset-2">
+                Privacy
+              </Link>
             </p>
           </>
         )}
@@ -127,51 +207,76 @@ export function Guide({ actions }: { actions: Actions }) {
           <>
             <div className="clay-card relative mt-1 flex flex-1 flex-col p-2">
               <textarea
+                ref={area}
                 value={interim ? dump + (dump ? "\n" : "") + interim : dump}
                 onChange={(e) => {
                   setInterim("");
-                  setDump(e.target.value);
+                  setHint("");
+                  setDump(e.target.value.slice(0, 8000));
                 }}
-                autoFocus
-                placeholder={"Call the bank tomorrow\nFinish the portfolio site\nIdea: a podcast about Lagos designers\nBuy sandals"}
+                onFocus={() => setTyping(true)}
+                onBlur={() => setTimeout(() => setTyping(false), 150)}
+                placeholder={"For example:\ncall mum tomorrow\nfinish history homework\nbuy airtime"}
                 aria-label="Everything on your mind"
-                className="min-h-56 w-full flex-1 resize-none rounded-[1.8rem] bg-transparent p-4 text-[17px] leading-relaxed text-[var(--plum)] outline-none placeholder:text-[#b6a6bb]"
+                className="min-h-44 w-full flex-1 resize-none rounded-[1.8rem] bg-transparent p-4 pb-16 text-[17px] leading-relaxed text-[var(--plum)] outline-none placeholder:text-[#c4b6c8] placeholder:italic"
               />
               {speech.supported && (
-                <button type="button" onClick={speech.toggle} className="candy candy-grape absolute right-4 bottom-4 h-12 rounded-full px-5 text-[15px]">
+                <button
+                  type="button"
+                  onClick={speech.toggle}
+                  aria-pressed={speech.listening}
+                  className={cn("candy absolute right-4 bottom-4 h-12 rounded-full px-5 text-[15px]", speech.listening ? "candy-grape" : "candy-soft")}
+                >
                   {speech.listening ? <Square className="size-4 fill-current" /> : <Mic className="size-5" />}
-                  {speech.listening ? "Stop" : "Talk instead"}
+                  {speech.listening ? "Stop" : "Speak"}
                 </button>
               )}
+              {speech.listening && (
+                <p className="absolute bottom-6 left-6 flex items-center gap-2 text-[14px] font-semibold text-[#6b4fd8]" aria-live="polite">
+                  <span className="size-2.5 animate-pulse rounded-full bg-[#e8664f]" /> Listening. Speak now.
+                </p>
+              )}
             </div>
-            <button type="button" onClick={sort} disabled={!dump.trim() && !interim} className="candy mt-6 h-[60px] w-full text-[17px]">
+            {hint && (
+              <p className="mt-3 text-center text-[15px] font-medium text-[#d4553f]" role="alert">
+                {hint}
+              </p>
+            )}
+            <button type="button" onMouseDown={(e) => e.preventDefault()} onClick={sort} className="candy mt-4 h-[60px] w-full text-[17px]">
               Sort it for me
             </button>
-            <button type="button" onClick={() => actions.finishOnboarding([], [])} className="mt-2 h-11 w-full text-[14px] font-medium text-muted-foreground hover:text-foreground">
-              Skip for now
-            </button>
+            <div className="mt-1 flex items-center justify-between">
+              <button type="button" onClick={() => finish([], null)} className="h-11 px-2 text-[14px] font-medium text-muted-foreground hover:text-foreground">
+                Skip for now
+              </button>
+              {speech.supported && <p className="text-right text-[12px] text-muted-foreground">Speaking uses your browser&apos;s voice typing.</p>}
+            </div>
           </>
         )}
 
         {step === 2 && (
           <>
-            <ul className="mt-1 flex-1 space-y-2.5">
+            <p className="mt-1 mb-2 text-center text-[13px] text-muted-foreground">To do = goes on your list. Idea and Note = saved for later.</p>
+            <ul className="flex-1 space-y-2.5 pb-24">
               {drafts.map((d, i) => (
-                <li key={d.id} className="clay-card nm-spring-in flex items-center gap-3 rounded-[1.6rem] p-4" style={{ animationDelay: `${i * 50}ms` }}>
-                  <p className="flex-1 text-[16px] leading-snug font-semibold text-[var(--plum)]">{d.text}</p>
+                <li key={d.id} className="clay-card nm-spring-in flex items-center gap-3 rounded-[1.6rem] p-4" style={{ animationDelay: `${Math.min(i, 10) * 50}ms` }}>
+                  <div className="min-w-0 flex-1">
+                    <p className="line-clamp-3 text-[16px] leading-snug font-semibold [overflow-wrap:anywhere] text-[var(--plum)]">{d.text}</p>
+                    {d.due && d.kind === "task" && <p className="mt-0.5 text-[13px] text-muted-foreground">Due {prettyDue(d.due).replace(/^(Today|Tomorrow)$/, (m) => m.toLowerCase())}</p>}
+                  </div>
                   <button
                     type="button"
                     onClick={() => setDrafts((ds) => ds.map((x) => (x.id === d.id ? { ...x, kind: NEXT_KIND[x.kind] } : x)))}
                     aria-label={`${KIND_LABEL[d.kind]}. Tap to change.`}
-                    className={cn("h-8 shrink-0 rounded-full px-3.5 text-[13px] font-semibold transition-colors", KIND_STYLE[d.kind])}
+                    className={cn("h-11 min-w-[72px] shrink-0 rounded-full px-4 text-[14px] font-semibold transition-colors", KIND_STYLE[d.kind])}
                   >
                     {KIND_LABEL[d.kind]}
                   </button>
                 </li>
               ))}
             </ul>
-            <div className="sticky bottom-0 pt-4">
-              <button type="button" onClick={() => (tasks.length ? go(3) : finish())} className="candy h-[60px] w-full text-[17px]">
+            <div className="sticky bottom-0 -mx-5 bg-gradient-to-t from-[var(--sky-2)] via-[var(--sky-2)]/95 to-transparent px-5 pt-6 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+              <button type="button" onClick={toPick} className="candy h-[60px] w-full text-[17px]">
                 Looks right
               </button>
             </div>
@@ -180,12 +285,12 @@ export function Guide({ actions }: { actions: Actions }) {
 
         {step === 3 && (
           <>
-            <ul className="mt-1 flex-1 space-y-2.5">
+            <ul className="mt-1 flex-1 space-y-2.5 pb-28">
               {tasks.map((d, i) => (
-                <li key={d.id} className="nm-spring-in" style={{ animationDelay: `${i * 50}ms` }}>
+                <li key={d.id} className="nm-spring-in" style={{ animationDelay: `${Math.min(i, 10) * 50}ms` }}>
                   <button
                     type="button"
-                    onClick={() => setPick(d.id === pick ? null : d.id)}
+                    onClick={() => setPick(d.id)}
                     aria-pressed={pick === d.id}
                     className={cn(
                       "clay-card flex w-full items-center gap-3 rounded-[1.6rem] p-4 text-left transition-all",
@@ -195,19 +300,50 @@ export function Guide({ actions }: { actions: Actions }) {
                     <span className={cn("grid size-8 shrink-0 place-items-center rounded-full transition-colors", pick === d.id ? "bg-[#ff8f8f] text-white" : "bg-[#f6eef2] text-[#c9b3c0]")}>
                       <Sprout className="size-4" />
                     </span>
-                    <span className="text-[16px] leading-snug font-semibold text-[var(--plum)]">{d.text}</span>
+                    <span className="line-clamp-3 text-[16px] leading-snug font-semibold [overflow-wrap:anywhere] text-[var(--plum)]">{d.text}</span>
                   </button>
                 </li>
               ))}
             </ul>
-            <div className="sticky bottom-0 pt-4">
-              <button type="button" onClick={finish} className="candy h-[60px] w-full text-[17px]">
-                {pick !== null ? "Plant it and start my day" : "I'll pick later"}
+            <div className="sticky bottom-0 -mx-5 bg-gradient-to-t from-[var(--sky-2)] via-[var(--sky-2)]/95 to-transparent px-5 pt-6 pb-[max(0.25rem,env(safe-area-inset-bottom))]">
+              <button type="button" onClick={() => finish(drafts, pick)} className="candy h-[60px] w-full text-[17px]">
+                Start with this one
+              </button>
+              <button type="button" onClick={() => finish(drafts, null)} className="h-11 w-full text-[14px] font-medium text-muted-foreground hover:text-foreground">
+                I&apos;ll choose later
               </button>
             </div>
           </>
         )}
       </div>
     </main>
+  );
+}
+
+/** Welcome art: your path, and the one thing that starts it. */
+function Stack() {
+  const reduce = useReducedMotion();
+  return (
+    <div className="relative -mx-2 mt-3 mb-8" aria-hidden>
+      <motion.div
+        initial={reduce ? false : { opacity: 0, scale: 0.97 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+        className="relative h-[clamp(190px,34dvh,280px)] overflow-hidden rounded-[30px]"
+      >
+        <Landscape lit={3} part={daypart()} className="absolute inset-0 size-full" />
+      </motion.div>
+      <motion.div
+        initial={reduce ? false : { opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", bounce: 0.25, duration: 0.8, delay: 0.35 }}
+        className="surface absolute inset-x-5 -bottom-7 rounded-[22px] px-5 py-4"
+      >
+        <p className="t-label flex items-center gap-2">
+          <span className="size-2 rounded-full bg-[var(--gold)]" /> Your one thing
+        </p>
+        <p className="t-title mt-1">Call mum</p>
+      </motion.div>
+    </div>
   );
 }
