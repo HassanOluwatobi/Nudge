@@ -1,6 +1,6 @@
 "use client";
 
-import { AnimatePresence, motion, useInView, useMotionTemplate, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
+import { AnimatePresence, motion, useInView, useReducedMotion, useScroll, useTransform, type MotionValue } from "motion/react";
 import { ArrowRight, Check, Lock, Moon, ShieldCheck, Smartphone, WifiOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { AiSteps, Capture, Devices, IdeasBack, OneThing, Reminders, Timer } from "@/components/app/guide";
@@ -15,25 +15,12 @@ import { Petals } from "@/components/app/petals";
 */
 
 const X_URL = "https://x.com/Art_sassin";
+
+// Flat buttons, like the best product sites: solid fill, medium weight, colour shifts on hover. No shadows.
+const BTN = "group inline-flex h-12 items-center gap-2 rounded-full bg-ink px-6 text-[16px] font-medium text-white transition-colors duration-200 hover:bg-[#1c2552] active:bg-[#0f1638]";
+const BTN_SM = "inline-flex h-10 items-center gap-1.5 rounded-full bg-ink px-4 text-[14px] font-medium text-white transition-colors duration-200 hover:bg-[#1c2552]";
+const BTN_GHOST = "inline-flex h-10 items-center gap-1.5 rounded-full bg-white px-4 text-[14px] font-medium text-ink ring-1 ring-line transition-colors duration-200 hover:bg-[#f7f4ec]";
 const SUPPORT_URL = "https://selar.com/showlove/hassanx";
-
-// The loose thoughts. x and y are % of the hero panel.
-// m is the spot on a phone, or null to leave it out there.
-type Loose = { t: string; e: string; hue: string; x: number; y: number; r: number; m: [number, number] | null };
-const LOOSE: Loose[] = [
-  { t: "Reply to Tunde", e: "✉️", hue: "aqua", x: 14, y: 26, r: -6, m: [24, 19] },
-  { t: "Pay rent", e: "💳", hue: "cyan", x: 84, y: 24, r: 5, m: [80, 16] },
-  { t: "Gym?", e: "🏋️", hue: "lime", x: 8, y: 58, r: 4, m: [84, 76] },
-  { t: "Call mum back", e: "📞", hue: "peach", x: 88, y: 50, r: -4, m: null },
-  { t: "Fix the leaking tap", e: "🔧", hue: "lilac", x: 20, y: 82, r: 3, m: [30, 81] },
-  { t: "Renew passport", e: "🛂", hue: "blue", x: 76, y: 84, r: -5, m: [68, 89] },
-  { t: "Send the invoice", e: "🧾", hue: "coral", x: 32, y: 17, r: 3, m: null },
-  { t: "Book the dentist", e: "🩺", hue: "pink", x: 66, y: 15, r: -3, m: null },
-  { t: "Laundry", e: "🧺", hue: "aqua", x: 94, y: 70, r: 6, m: null },
-  { t: "Newsletter idea", e: "💡", hue: "lime", x: 9, y: 40, r: -3, m: null },
-  { t: "Water the plants", e: "🪴", hue: "lime", x: 36, y: 90, r: 2, m: null },
-];
-
 
 /*
   Painted skies. Soft layered gradients with a fine grain on top, so they never
@@ -98,17 +85,21 @@ function Cloud({ className = "" }: { className?: string }) {
   );
 }
 
-/** The app, in a window, the way people will see it. */
-function Window({ children, title = "Shrink my day", className = "" }: { children: React.ReactNode; title?: string; className?: string }) {
+/** The app, in a window, the way people will see it. A soft outer frame and hairlines, no heavy shadow. */
+function Window({ children, title = "Shrink my day", className = "", bleed = false }: { children: React.ReactNode; title?: string; className?: string; bleed?: boolean }) {
   return (
-    <div className={`overflow-hidden rounded-[18px] bg-white shadow-[0_40px_80px_-30px_rgba(6,11,43,0.45),0_0_0_1px_rgba(6,11,43,0.06)] ${className}`}>
-      <div className="flex h-9 items-center gap-1.5 border-b border-black/[0.06] px-3.5">
-        <span className="size-[10px] rounded-full bg-[#ff5f57]" />
-        <span className="size-[10px] rounded-full bg-[#febc2e]" />
-        <span className="size-[10px] rounded-full bg-[#28c840]" />
-        <span className="mx-auto pr-10 text-[12px] font-medium text-ink-3">{title}</span>
+    <div className={`bg-white/45 p-[6px] ring-1 ring-white/80 backdrop-blur-sm ${bleed ? "rounded-t-[24px] pb-0" : "rounded-[24px]"} ${className}`}>
+      <div className={`overflow-hidden bg-[#fbf9f4] ring-1 ring-black/[0.07] ${bleed ? "rounded-t-[18px]" : "rounded-[18px]"}`}>
+        <div className="flex h-9 items-center gap-[7px] border-b border-black/[0.06] px-3.5">
+          <span className="size-[11px] rounded-full bg-[#ff5f57] ring-1 ring-black/10" />
+          <span className="size-[11px] rounded-full bg-[#febc2e] ring-1 ring-black/10" />
+          <span className="size-[11px] rounded-full bg-[#28c840] ring-1 ring-black/10" />
+          <span className="mx-auto flex items-center gap-1.5 rounded-md px-2 py-0.5 pr-14 text-[12px] text-ink-3">
+            <Lock className="size-3" strokeWidth={2.25} /> {title}
+          </span>
+        </div>
+        {children}
       </div>
-      {children}
     </div>
   );
 }
@@ -118,107 +109,152 @@ function Logo({ className = "size-7" }: { className?: string }) {
   return <img src="/logo.svg" alt="" className={className} />;
 }
 
-function Chip({ c, p, i, phone }: { c: Loose; p: MotionValue<number>; i: number; phone: boolean }) {
-  const [x, y] = phone && c.m ? c.m : [c.x, c.y];
-  const left = useTransform(p, [0.08, 0.42], [`${x}%`, "50%"]);
-  const top = useTransform(p, [0.08, 0.42], [`${y}%`, "50%"]);
-  const scale = useTransform(p, [0.08, 0.42], [1, 0.35]);
-  const opacity = useTransform(p, [0, 0.3, 0.42], [1, 1, 0]);
-  const rotate = useTransform(p, [0.08, 0.42], [c.r, 0]);
+const SHOTS = [
+  { key: "plan", tab: "Put it all down", alt: "The Plan screen in Shrink my day, with this week's tasks and someday ideas" },
+  { key: "home", tab: "Pick one thing", alt: "The Home screen in Shrink my day, showing one task and its next step" },
+  { key: "focus", tab: "Do one step", alt: "The Focus screen in Shrink my day, with one step and a timer" },
+] as const;
+
+function Phone({ src, alt }: { src: string; alt: string }) {
   return (
-    <motion.div style={{ left, top, scale, opacity, rotate, x: "-50%", y: "-50%" }} className={`absolute z-10 ${phone && !c.m ? "hidden" : ""}`}>
-      <div className="lp-float flex items-center gap-2 rounded-[14px] bg-white py-1.5 pl-1.5 pr-3 shadow-[0_14px_34px_-14px_rgba(6,11,43,0.35),0_0_0_1px_rgba(6,11,43,0.05)]" style={{ animationDelay: `${-i * 0.7}s` }}>
-        <span className={`hue-${c.hue} tile grid size-7 place-items-center rounded-[9px] text-[14px]`}>{c.e}</span>
-        <span className="whitespace-nowrap text-[14px] font-semibold text-ink">{c.t}</span>
+    <div className="rounded-[46px] bg-[#101219] p-[7px] ring-1 ring-black/20">
+      <div className="relative overflow-hidden rounded-[39px] bg-paper">
+        <div className="relative flex h-[40px] items-center justify-between px-[26px] pt-[2px] text-[13px] font-semibold text-ink">
+          <span className="tabular-nums">9:41</span>
+          <span className="absolute left-1/2 top-[9px] h-[24px] w-[78px] -translate-x-1/2 rounded-full bg-[#101219]" />
+          <span className="flex items-center gap-[5px]">
+            <svg viewBox="0 0 18 12" className="h-[10px] w-[15px]" fill="currentColor" aria-hidden>
+              <rect x="0" y="8" width="3" height="4" rx="1" />
+              <rect x="5" y="5.5" width="3" height="6.5" rx="1" />
+              <rect x="10" y="3" width="3" height="9" rx="1" />
+              <rect x="15" y="0" width="3" height="12" rx="1" />
+            </svg>
+            <svg viewBox="0 0 16 12" className="h-[10px] w-[14px]" fill="currentColor" aria-hidden>
+              <path d="M8 2.2c2.4 0 4.6.9 6.2 2.5l1.3-1.3A10.6 10.6 0 0 0 8 .3 10.6 10.6 0 0 0 .5 3.4l1.3 1.3A8.7 8.7 0 0 1 8 2.2Zm0 3.7c1.4 0 2.7.5 3.6 1.4l1.3-1.3A7 7 0 0 0 8 4a7 7 0 0 0-4.9 2l1.3 1.3c1-.9 2.2-1.4 3.6-1.4Zm0 3.6c.5 0 1 .2 1.3.6L8 11.4 6.7 10c.4-.3.8-.5 1.3-.5Z" />
+            </svg>
+            <span className="relative h-[11px] w-[22px] rounded-[3.5px] border border-ink/40 p-[1.5px]">
+              <span className="block h-full w-[75%] rounded-[1.5px] bg-ink" />
+            </span>
+          </span>
+        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} alt={alt} width={390} height={844} className="block h-auto w-full" />
       </div>
-    </motion.div>
+    </div>
   );
 }
 
 function Hero() {
-  const ref = useRef<HTMLDivElement>(null);
+  const [on, setOn] = useState(1);
+  const [held, setHeld] = useState(false);
   const reduce = useReducedMotion();
-  const { scrollYProgress: p } = useScroll({ target: ref, offset: ["start start", "end end"] });
-  const headOpacity = useTransform(p, [0, 0.1, 0.24], [1, 1, 0]);
-  const headY = useTransform(p, [0, 0.24], [0, -60]);
-  const blurPx = useTransform(p, [0.1, 0.24], [0, 10]);
-  const headBlur = useMotionTemplate`blur(${blurPx}px)`;
-  const cardOpacity = useTransform(p, [0.4, 0.52], [0, 1]);
-  const cardScale = useTransform(p, [0.4, 0.56], [0.6, 1]);
-  const cardY = useTransform(p, [0.4, 0.56], [30, 0]);
-  const endOpacity = useTransform(p, [0.56, 0.68], [0, 1]);
-  const endY = useTransform(p, [0.56, 0.68], [20, 0]);
-  const hintOpacity = useTransform(p, [0, 0.06], [1, 0]);
-  const [stepDone, setStepDone] = useState(false);
-  const [phone, setPhone] = useState(false);
+  const stage = useRef<HTMLDivElement>(null);
+  const { scrollYProgress: p } = useScroll({ target: stage, offset: ["start end", "start 0.35"] });
+  const lift = useTransform(p, [0, 1], [0.94, 1]);
   useEffect(() => {
-    const mq = matchMedia("(max-width: 767px)");
-    const on = () => setPhone(mq.matches);
-    on();
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
-  }, []);
-  useEffect(() => p.on("change", (v) => setStepDone(v > 0.8)), [p]);
+    if (held || reduce) return;
+    const t = setTimeout(() => setOn((v) => (v + 1) % SHOTS.length), 5200);
+    return () => clearTimeout(t);
+  }, [on, held, reduce]);
+  const pick = (i: number) => (setOn(i), setHeld(true));
 
   return (
-    <section ref={ref} className={reduce ? "" : "h-[260svh]"}>
-      <div className="sticky top-0 h-svh p-2 sm:p-3">
-        <div className="relative h-full overflow-hidden rounded-[28px] sm:rounded-[36px]">
-          <Sky name="dawn" />
+    <section className="relative px-3 pt-32 sm:px-4 sm:pt-40">
+      <div className="mx-auto flex max-w-4xl flex-col items-center text-center">
+        <motion.h1
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
+          className="font-serif text-[54px] leading-[0.98] tracking-[-0.035em] text-ink sm:text-[88px] lg:text-[100px]"
+        >
+          Too much on
+          <br />
+          your mind?
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+          className="mt-6 max-w-[33ch] text-[18px] leading-[1.45] text-ink-2 sm:text-[20px]"
+        >
+          Shrink my day is a calm to-do list for ADHD brains. Put it all down, pick one thing, and start with a tiny step.
+        </motion.p>
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.18, ease: [0.22, 1, 0.36, 1] }} className="mt-8 flex flex-col items-center gap-3">
+          <a href="/app" className={BTN}>
+            Start now, it&apos;s free <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+          </a>
+          <span className="text-[14px] text-ink-3">Opens in your browser. No sign up.</span>
+        </motion.div>
+      </div>
 
-          {/* The loose thoughts */}
-          {!reduce && LOOSE.map((c, i) => <Chip key={c.t} c={c} p={p} i={i} phone={phone} />)}
-
-          {/* Headline */}
-          <motion.div style={reduce ? {} : { opacity: headOpacity, y: headY, filter: headBlur }} className="absolute inset-0 z-20 flex flex-col items-center justify-center px-6 text-center">
-            <p className="flex items-center gap-2 rounded-full bg-white/60 py-1 pl-1 pr-3 text-[13px] font-medium text-ink ring-1 ring-white/80 backdrop-blur">
-              <span className="rounded-full bg-ink px-2 py-0.5 text-[11px] font-semibold text-white">New</span> Sync your phone and laptop
-            </p>
-            <h1 className="mt-5 max-w-[14ch] font-serif text-[52px] leading-[0.95] tracking-[-0.03em] text-ink sm:text-[84px] lg:text-[104px]">Too much on your mind?</h1>
-            <p className="mt-5 max-w-[36ch] text-[17px] leading-snug text-ink-2 sm:text-[19px]">A calm to-do list for ADHD brains. Put it all down, pick one thing, and start with a tiny step.</p>
-            <div className="pointer-events-auto mt-7 flex flex-col items-center gap-3">
-              <a href="/app" className="group inline-flex h-12 items-center gap-2 rounded-full bg-ink px-6 text-[16px] font-semibold text-white shadow-[0_12px_30px_-10px_rgba(6,11,43,0.6)] transition-transform hover:scale-[1.03] active:scale-[0.98]">
-                Start now, it&apos;s free <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
-              </a>
-              <span className="text-[13px] text-ink-2">Free. No sign up. Works offline.</span>
-            </div>
-          </motion.div>
-
-          {/* What's left: one thing */}
-          {!reduce && (
-            <>
-              <motion.div style={{ opacity: cardOpacity, scale: cardScale, y: cardY, x: "-50%" }} className="absolute left-1/2 top-[44%] z-30 w-[min(86vw,360px)] -translate-y-1/2">
-                <div className="rounded-[26px] bg-white p-5 shadow-[0_30px_80px_-24px_rgba(6,11,43,0.6)]">
-                  <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-3">Your one thing</p>
-                  <p className="mt-2 font-serif text-[30px] leading-none tracking-[-0.02em] text-ink">Reply to Tunde</p>
-                  <div className="mt-4 space-y-2">
-                    {["Open the email", "Write two lines", "Send it"].map((s, i) => (
-                      <div key={s} className={`flex items-center gap-2.5 rounded-[12px] px-2.5 py-2 text-[15px] ${i === (stepDone ? 1 : 0) ? "bg-signal-soft font-semibold text-ink" : "text-ink-2"}`}>
-                        <span className={`grid size-5 place-items-center rounded-full border-2 transition-colors ${i === 0 && stepDone ? "border-signal bg-signal" : "border-ink-3/50"}`}>
-                          {i === 0 && stepDone && (
-                            <svg viewBox="0 0 16 16" className="size-3" fill="none">
-                              <path d="M3.5 8.4 6.6 11.4 12.6 4.8" stroke="#fff" strokeWidth={2.6} strokeLinecap="round" />
-                            </svg>
-                          )}
-                        </span>
-                        <span className={i === 0 && stepDone ? "text-ink-3 line-through" : ""}>{s}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="btn btn-signal mt-4 min-h-11 w-full text-[16px]">Start</div>
-                </div>
-              </motion.div>
-              <motion.div style={{ opacity: endOpacity, y: endY }} className="absolute inset-x-0 bottom-[7%] z-30 px-6 text-center">
-                <p className="font-serif text-[34px] leading-none tracking-[-0.02em] text-ink sm:text-[48px]">One thing. One tiny step.</p>
-                <p className="mt-3 text-[16px] text-ink-2">That&apos;s how a big day gets small.</p>
-              </motion.div>
-              <motion.div style={{ opacity: hintOpacity }} className="absolute inset-x-0 bottom-6 z-20 flex justify-center">
-                <span className="lp-hint h-9 w-[22px] rounded-full ring-2 ring-ink/40" />
-              </motion.div>
-            </>
-          )}
+      {/* Tabs, like flicking between screens of the app */}
+      <div className="mt-14 flex justify-center sm:mt-16">
+        <div role="tablist" aria-label="See the app" className="flex rounded-full bg-white p-1 ring-1 ring-line">
+          {SHOTS.map((t, i) => (
+            <button
+              key={t.key}
+              role="tab"
+              aria-selected={on === i}
+              onClick={() => pick(i)}
+              className={`relative h-9 rounded-full px-3.5 text-[13px] font-medium transition-colors sm:h-10 sm:px-5 sm:text-[14px] ${on === i ? "text-white" : "text-ink-2 hover:text-ink"}`}
+            >
+              {on === i && <motion.span layoutId="hero-tab" className="absolute inset-0 rounded-full bg-ink" transition={{ type: "spring", bounce: 0.15, duration: 0.5 }} />}
+              <span className="relative">{t.tab}</span>
+            </button>
+          ))}
         </div>
       </div>
+
+      {/* The product, on its own patch of sky */}
+      <motion.div ref={stage} style={reduce ? {} : { scale: lift }} className="relative mx-auto mt-6 max-w-[1240px] origin-top overflow-hidden rounded-[24px] sm:rounded-[32px]">
+        <Sky name="dawn" />
+        {/* Desktop: the full app in a window, with the phone beside it */}
+        <div className="relative hidden pl-[5%] pr-[17%] pt-[5%] md:block">
+          <div className="relative">
+            <Window title="shrinkmyday.com" bleed>
+              <div className="relative aspect-[2560/1300] bg-paper">
+                {SHOTS.map((t, i) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={t.key}
+                    src={`/landing/desk-${t.key}.webp`}
+                    alt={i === on ? t.alt : ""}
+                    aria-hidden={i !== on}
+                    width={1280}
+                    height={650}
+                    loading={i === 1 ? "eager" : "lazy"}
+                    className={`absolute inset-0 h-full w-full object-cover object-top transition-opacity duration-500 ${i === on ? "opacity-100" : "opacity-0"}`}
+                  />
+                ))}
+              </div>
+            </Window>
+            <motion.div
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35, type: "spring", bounce: 0.15, duration: 0.9 }}
+              className="absolute -right-[19%] bottom-[-12%] w-[23%] min-w-[180px] max-w-[260px]"
+            >
+              <div className="relative">
+                {SHOTS.map((t, i) => (
+                  <div key={t.key} className={`${i === 0 ? "relative" : "absolute inset-0"} transition-opacity duration-500 ${i === on ? "opacity-100" : "opacity-0"}`} aria-hidden={i !== on}>
+                    <Phone src={`/landing/mob-${t.key}.webp`} alt={i === on ? t.alt : ""} />
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        </div>
+        {/* Phone screens: just the phone, big and clear */}
+        <div className="relative flex justify-center px-6 pt-10 md:hidden">
+          <div className="relative w-[72%] max-w-[300px] translate-y-[8%]">
+            {SHOTS.map((t, i) => (
+              <div key={t.key} className={`${i === 0 ? "relative" : "absolute inset-0"} transition-opacity duration-500 ${i === on ? "opacity-100" : "opacity-0"}`} aria-hidden={i !== on}>
+                <Phone src={`/landing/mob-${t.key}.webp`} alt={i === on ? t.alt : ""} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
     </section>
   );
 }
@@ -226,31 +262,32 @@ function Hero() {
 function Nav() {
   const [solid, setSolid] = useState(false);
   useEffect(() => {
-    const on = () => setSolid(window.scrollY > 40);
+    const on = () => setSolid(window.scrollY > 12);
     on();
     window.addEventListener("scroll", on, { passive: true });
     return () => window.removeEventListener("scroll", on);
   }, []);
   return (
-    <header className="pointer-events-none fixed inset-x-0 top-0 z-50 flex justify-center px-4 pt-5 sm:px-7 sm:pt-7">
-      <nav className={`pointer-events-auto flex w-full max-w-6xl items-center justify-between rounded-full py-2 pl-3 pr-2 backdrop-blur-xl transition-[background-color,box-shadow] duration-300 ${solid ? "bg-white/80 shadow-[0_8px_30px_-12px_rgba(6,11,43,0.25)] ring-1 ring-black/5" : "bg-white/45 ring-1 ring-white/70"}`}>
-        <a href="#" onClick={(e) => (e.preventDefault(), window.scrollTo({ top: 0, behavior: "smooth" }))} className="flex items-center gap-2">
-          <span className="grid size-8 place-items-center rounded-full bg-white shadow-sm">
-            <Logo className="size-5" />
-          </span>
-          <span className="font-serif text-[20px] tracking-[-0.01em] text-ink">Shrink my day</span>
+    <header className={`fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,backdrop-filter] duration-300 ${solid ? "bg-paper/80 shadow-[0_1px_0_rgba(6,11,43,0.06)] backdrop-blur-xl" : "bg-transparent"}`}>
+      <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-3 px-5 sm:grid sm:h-[72px] sm:grid-cols-[1fr_auto_1fr] sm:px-6">
+        <a href="#" onClick={(e) => (e.preventDefault(), window.scrollTo({ top: 0, behavior: "smooth" }))} className="flex items-center gap-2 justify-self-start">
+          <Logo className="size-6 sm:size-7" />
+          <span className="whitespace-nowrap font-serif text-[18px] tracking-[-0.01em] text-ink sm:text-[21px]">Shrink my day</span>
         </a>
-        <div className="flex items-center gap-1">
-          <a href="#how" className="hidden rounded-full px-3 py-2 text-[14px] font-medium text-ink-2 transition-colors hover:text-ink sm:block">
-            How it works
-          </a>
-          <a href="#private" className="hidden rounded-full px-3 py-2 text-[14px] font-medium text-ink-2 transition-colors hover:text-ink sm:block">
-            Privacy
-          </a>
-          <a href="/app" className="ml-1 inline-flex h-10 items-center rounded-full bg-ink px-4 text-[14px] font-semibold text-white transition-transform hover:scale-[1.03]">
-            Open the app
-          </a>
+        <div className="hidden items-center gap-1 sm:flex">
+          {[
+            ["How it works", "#how"],
+            ["Features", "#helpers"],
+            ["Privacy", "#private"],
+          ].map(([t, h]) => (
+            <a key={h} href={h} className="rounded-full px-3.5 py-2 text-[14px] font-medium text-ink-2 transition-colors hover:text-ink">
+              {t}
+            </a>
+          ))}
         </div>
+        <a href="/app" className={`${BTN_SM} h-9 justify-self-end px-3.5 text-[13px] sm:h-10 sm:px-4 sm:text-[14px]`}>
+          Open the app
+        </a>
       </nav>
     </header>
   );
@@ -361,7 +398,7 @@ function How() {
             ))}
           </div>
         </div>
-        <div className="relative aspect-[5/4] overflow-hidden rounded-[32px]">
+        <div className="relative aspect-[5/4] overflow-hidden rounded-[24px] sm:rounded-[32px]">
           <AnimatePresence initial={false}>
             <motion.div key={HOW[on].sky} className="absolute inset-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.7 }}>
               <Sky name={HOW[on].sky} />
@@ -386,12 +423,12 @@ function Tile({ title, body, children, sky, className = "" }: { title: string; b
   const ref = useRef<HTMLDivElement>(null);
   const seen = useInView(ref, { once: true, amount: 0.5 });
   return (
-    <div ref={ref} className={`flex flex-col overflow-hidden rounded-[28px] bg-white ring-1 ring-line ${className}`}>
-      <div className="relative mx-3 mt-3 h-[250px] overflow-hidden rounded-[20px]">
+    <div ref={ref} className={`flex flex-col overflow-hidden rounded-[24px] bg-white ring-1 ring-line ${className}`}>
+      <div className="relative mx-2 mt-2 h-[250px] overflow-hidden rounded-[16px]">
         <Sky name={sky} />
         <div className="relative h-full">{seen && children}</div>
       </div>
-      <div className="px-6 pb-6 pt-5">
+      <div className="px-5 pb-5 pt-4">
         <h3 className="text-[19px] font-semibold tracking-[-0.01em]">{title}</h3>
         <p className="mt-1.5 text-[15px] leading-snug text-ink-2">{body}</p>
       </div>
@@ -401,7 +438,7 @@ function Tile({ title, body, children, sky, className = "" }: { title: string; b
 
 function Helpers() {
   return (
-    <section className="mx-auto max-w-6xl px-4 pb-24 sm:px-6 sm:pb-32">
+    <section id="helpers" className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-24 sm:px-6 sm:pb-32">
       <h2 className="max-w-[18ch] font-serif text-[40px] leading-[1.02] tracking-[-0.02em] sm:text-[56px]">
         Small helpers <span className="text-ink-3">that stay out of your way</span>
       </h2>
@@ -422,7 +459,7 @@ function Helpers() {
             { i: <Moon className="size-5" />, t: "Dark mode", b: "Easy on the eyes late at night.", c: "bg-[linear-gradient(135deg,#101a4d,#060b2b)] text-moon" },
             { i: <Smartphone className="size-5" />, t: "Feels like an app", b: "Add it to your Home Screen and it opens full screen.", c: "bg-[linear-gradient(135deg,#ffdf9e,#ff9a7a)] text-[#6b2a12]" },
           ].map((f) => (
-            <div key={f.t} className="rounded-[24px] bg-white p-6 ring-1 ring-line">
+            <div key={f.t} className="rounded-[24px] bg-white p-5 ring-1 ring-line">
               <span className={`grid size-10 place-items-center rounded-[12px] ${f.c}`}>{f.i}</span>
               <h3 className="mt-4 text-[17px] font-semibold">{f.t}</h3>
               <p className="mt-1 text-[15px] leading-snug text-ink-2">{f.b}</p>
@@ -436,8 +473,8 @@ function Helpers() {
 
 function Private() {
   return (
-    <section id="private" className="scroll-mt-24 px-2 sm:px-3">
-      <div className="relative overflow-hidden rounded-[28px] px-6 py-24 text-white sm:rounded-[36px] sm:py-32">
+    <section id="private" className="scroll-mt-24 px-3 sm:px-4">
+      <div className="relative mx-auto max-w-[1240px] overflow-hidden rounded-[24px] px-6 py-24 text-white sm:rounded-[32px] sm:py-32">
         <Sky name="night" />
         <div className="lp-grid pointer-events-none absolute inset-0" />
         <div className="relative mx-auto max-w-4xl text-center">
@@ -461,13 +498,13 @@ function Private() {
 
 function Final() {
   return (
-    <section className="px-2 pt-24 sm:px-3 sm:pt-32">
-      <div className="relative overflow-hidden rounded-[28px] sm:rounded-[36px]">
+    <section className="px-3 pt-24 sm:px-4 sm:pt-32">
+      <div className="relative mx-auto max-w-[1240px] overflow-hidden rounded-[24px] sm:rounded-[32px]">
         <Sky name="sunset" />
         <div className="relative flex flex-col items-center px-6 py-24 text-center sm:py-36">
           <h2 className="font-serif text-[56px] leading-[0.95] tracking-[-0.03em] text-ink sm:text-[110px]">Shrink your day.</h2>
           <p className="mt-5 max-w-[32ch] text-[17px] text-ink/75 sm:text-[19px]">It&apos;s free, it opens in your browser, and there&apos;s nothing to sign up for.</p>
-          <a href="/app" className="group mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-ink px-6 text-[16px] font-semibold text-white shadow-[0_12px_30px_-10px_rgba(6,11,43,0.6)] transition-transform hover:scale-[1.03] active:scale-[0.98]">
+          <a href="/app" className={`${BTN} mt-8`}>
             Open Shrink my day <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
           </a>
         </div>
@@ -484,10 +521,10 @@ function Footer() {
           <p className="text-[15px] font-semibold">Made by Hassan</p>
           <p className="mt-1 text-[15px] text-ink-2">An independent designer who needed it too.</p>
           <div className="mt-3 flex gap-2">
-            <a href={X_URL} target="_blank" rel="noopener noreferrer" className="btn btn-ink min-h-10 px-4 text-[14px]">
+            <a href={X_URL} target="_blank" rel="noopener noreferrer" className={BTN_SM}>
               Say hi on X
             </a>
-            <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer" className="btn btn-line min-h-10 px-4 text-[14px]">
+            <a href={SUPPORT_URL} target="_blank" rel="noopener noreferrer" className={BTN_GHOST}>
               ☕ Buy me a coffee
             </a>
           </div>
