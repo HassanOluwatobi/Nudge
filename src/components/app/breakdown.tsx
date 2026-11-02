@@ -1,6 +1,6 @@
 "use client";
 
-import { ClipboardPaste, ExternalLink, Sparkles } from "lucide-react";
+import { Check, ClipboardPaste, ExternalLink, Sparkles } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -100,14 +100,12 @@ export function BreakItDown({ task, actions, ai, announce, compact = false, onAd
                       </li>
                     ))}
                   </ul>
-                  <div className="mt-4 grid grid-cols-[auto_1fr] gap-2">
-                    <button type="button" className="btn btn-line min-h-12 px-4" onClick={() => (setText(""), setTyping(false))}>
-                      Try again
-                    </button>
-                    <button type="button" className="btn btn-signal min-h-12" onClick={add}>
-                      Add these {found.length} subtasks
-                    </button>
-                  </div>
+                  <button type="button" className="btn btn-signal mt-4 min-h-12 w-full gap-2 whitespace-nowrap" onClick={add}>
+                    <Check className="size-[18px]" strokeWidth={2.5} /> Add {found.length} subtasks
+                  </button>
+                  <button type="button" className="btn btn-quiet mt-1 min-h-10 w-full text-[14px] text-ink-2" onClick={() => (setText(""), setTyping(false))}>
+                    Paste a different answer
+                  </button>
                 </>
               )}
             </div>
