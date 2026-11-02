@@ -15,9 +15,10 @@ export function Tile({ task, size = 40 }: { task: Pick<Task, "emoji" | "title" |
     <span
       aria-hidden
       className={`hue-${task.hue} tile grid shrink-0 place-items-center rounded-[12px] font-semibold`}
-      style={{ width: size, height: size, fontSize: task.emoji ? size * 0.5 : size * 0.42 }}
+      style={{ width: size, height: size, fontSize: size * 0.5 }}
     >
-      {task.emoji ?? task.title.charAt(0).toUpperCase()}
+      {/* No matching icon: a calm dot in the task's colour, so the list stays tidy. */}
+      {task.emoji ?? <span className="block rounded-full bg-current opacity-60" style={{ width: size * 0.26, height: size * 0.26 }} />}
     </span>
   );
 }

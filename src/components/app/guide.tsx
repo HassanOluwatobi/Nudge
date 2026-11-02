@@ -50,9 +50,9 @@ export function Capture() {
       </div>
       {typed && (
         <>
-          <Row emoji="💳" text="Pay rent" hue="cyan" delay={0.15} />
-          <Row emoji="✉️" text="Email Sade" hue="aqua" delay={0.27} />
-          <Row emoji="🩺" text="Book the dentist" hue="blue" delay={0.39} />
+          <Row emoji="💳" text="Pay rent" hue="lime" delay={0.15} />
+          <Row emoji="✉️" text="Email Sade" hue="blue" delay={0.27} />
+          <Row emoji="🩺" text="Book the dentist" hue="aqua" delay={0.39} />
         </>
       )}
     </div>
@@ -268,9 +268,9 @@ export function Reminders() {
 
 type Mini = { e: string; t: string; hue: string };
 const MINI: Mini[] = [
-  { e: "🏋️", t: "Gym", hue: "lime" },
-  { e: "💳", t: "Pay rent", hue: "cyan" },
-  { e: "📞", t: "Call mum", hue: "peach" },
+  { e: "🏃", t: "Gym", hue: "coral" },
+  { e: "💳", t: "Pay rent", hue: "lime" },
+  { e: "📞", t: "Call mum", hue: "cyan" },
 ];
 
 function MiniRow({ m, done, size }: { m: Mini; done: boolean; size: "s" | "m" }) {

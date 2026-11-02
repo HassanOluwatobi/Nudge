@@ -237,19 +237,34 @@ export function smallerStep(step: string): string {
   return `Spend 2 minutes on: ${s.charAt(0).toLowerCase()}${s.slice(1)}`;
 }
 
+// Order matters: the first match wins, so specific words come before general ones.
 const EMOJI: [RegExp, string, Hue][] = [
-  [/\b(call|phone|ring)\b/, "📞", "cyan"],
-  [/\b(email|reply|message|text|dm|whatsapp|send)\b/, "✉️", "blue"],
-  [/\b(buy|order|shop|groceries|pick up)\b/, "🛒", "peach"],
-  [/\b(pay|rent|bill|bank|transfer|airtime|tax)\b/, "💳", "lime"],
-  [/\b(clean|wash|tidy|laundry|sweep|iron|dishes)\b/, "🧺", "aqua"],
-  [/\b(gym|run|walk|workout|exercise|yoga)\b/, "🏃", "coral"],
-  [/\b(read|study|revise|learn|homework|exam)\b/, "📚", "lilac"],
-  [/\b(write|draft|blog|essay|post|article)\b/, "✍️", "pink"],
-  [/\b(design|sketch|figma|mock|deck|slides)\b/, "🎨", "pink"],
-  [/\b(cook|meal|dinner|lunch|breakfast)\b/, "🍳", "peach"],
-  [/\b(doctor|dentist|meds|pharmacy)\b/, "🩺", "aqua"],
-  [/\b(book|schedule|plan|meeting)\b/, "🗓️", "blue"],
+  [/\b(doctor|dentist|meds|medicine|pharmacy|hospital|clinic|checkup|check-up|therapy|therapist)\b/, "🩺", "aqua"],
+  [/\b(haircut|hair|barber|salon|nails|shave)\b/, "💈", "pink"],
+  [/\b(birthday|anniversary|party|celebrat\w*|gift|present)\b/, "🎂", "pink"],
+  [/\b(passport|visa|flight|airport|trip|travel|pack|hotel)\b/, "✈️", "blue"],
+  [/\b(invoice|receipt|tax|taxes|budget|accounts?|expenses?)\b/, "🧾", "coral"],
+  [/\b(pay|rent|bill|bills|bank|transfer|airtime|data|subscription|loan|salary)\b/, "💳", "lime"],
+  [/\b(call|phone|ring|facetime)\b/, "📞", "cyan"],
+  [/\b(email|e-mail|reply|respond|message|text|dm|whatsapp|send|follow up|follow-up|inbox)\b/, "✉️", "blue"],
+  [/\b(meet|meeting|interview|standup|stand-up|catch up|catch-up|sync|1:1)\b/, "🗓️", "blue"],
+  [/\b(book|schedule|appointment|reserve|plan|organi[sz]e)\b/, "🗓️", "blue"],
+  [/\b(buy|order|shop|shopping|groceries|grocery|pick up|market|amazon)\b/, "🛒", "peach"],
+  [/\b(cook|meal|dinner|lunch|breakfast|bake|recipe|jollof|soup|rice|food)\b/, "🍳", "peach"],
+  [/\b(clean|wash|tidy|laundry|sweep|iron|dishes|vacuum|mop|declutter)\b/, "🧺", "aqua"],
+  [/\b(fix|repair|tap|plumber|install|assemble|paint|leak\w*|broken)\b/, "🔧", "lilac"],
+  [/\b(plants?|water|garden|flowers?)\b/, "🪴", "lime"],
+  [/\b(car|fuel|petrol|gas|mechanic|drive|uber)\b/, "🚗", "cyan"],
+  [/\b(gym|run|walk|workout|exercise|yoga|swim|stretch|training)\b/, "🏃", "coral"],
+  [/\b(sleep|nap|rest|bed|bedtime)\b/, "🌙", "lilac"],
+  [/\b(read|study|revise|learn|homework|exam|course|class|lecture|book club)\b/, "📚", "lilac"],
+  [/\b(write|draft|blog|essay|post|article|journal|notes)\b/, "✍️", "pink"],
+  [/\b(design|sketch|figma|mock|mockup|deck|slides|website|logo)\b/, "🎨", "pink"],
+  [/\b(code|bug|deploy|build|ship|launch|app|review|pr)\b/, "💻", "blue"],
+  [/\b(mum|mom|dad|mother|father|family|sister|brother|kids?|friends?|visit)\b/, "💛", "peach"],
+  [/\b(pray|church|mosque|meditat\w*)\b/, "🕊️", "aqua"],
+  [/\b(music|guitar|piano|practice|practise|sing)\b/, "🎵", "lilac"],
+  [/\b(file|form|forms|document|documents|sign|contract|renew|apply|application)\b/, "📄", "cyan"],
 ];
 export function guessLook(title: string): { emoji?: string; hue: Hue } {
   const t = title.toLowerCase();
