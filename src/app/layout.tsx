@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Toaster } from "@/components/ui/sonner";
+import { Stats } from "@/components/stats";
 import "./globals.css";
 
 // Two font files only, so the first screen loads fast on slow phones.
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         />
         {children}
         <Toaster position="top-center" offset={16} mobileOffset={{ top: 12 }} />
+        <Stats />
       </body>
     </html>
   );

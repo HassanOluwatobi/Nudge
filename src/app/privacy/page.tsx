@@ -98,7 +98,7 @@ export default function Privacy() {
         <P>The Shrink my day website is hosted on Vercel, and the reminder sender and relays run on Cloudflare. Like any website, these hosts may briefly keep standard technical logs, such as IP addresses, for security and to keep the service running. I don&apos;t use them to track you.</P>
 
         <H>Cookies and analytics</H>
-        <P>Shrink my day uses no cookies for tracking and no analytics. The only things it saves on your device are your own data and settings.</P>
+        <P>Shrink my day uses no cookies. To know roughly how many people visit, it counts page views with Vercel Web Analytics. That count is anonymous. It sees which page was opened, the country and the type of device. It never sees your tasks, your name or your sync code, and it can&apos;t follow you to other sites.</P>
 
         <H>Children</H>
         <P>Shrink my day isn&apos;t aimed at children under 13, and it doesn&apos;t knowingly collect anything from them.</P>
