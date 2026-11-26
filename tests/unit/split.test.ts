@@ -23,3 +23,11 @@ const spoken: [string, string[]][] = [
   ["Send the plan to Ada and check in with the team", ["Send the plan to Ada", "Check in with the team"]],
 ];
 for (const [i, o] of spoken) test(`spoken: ${i}`, () => expect(splitLines(i)).toEqual(o));
+
+import { splitLines as split2 } from "@/lib/tasks";
+test("keeps titles and initials together", () => {
+  expect(split2("Send email of articles and pictures to Mr. Kingsley")).toEqual(["Send email of articles and pictures to Mr. Kingsley"]);
+  expect(split2("Call Dr. Ade. Buy milk")).toEqual(["Call Dr. Ade", "Buy milk"]);
+  expect(split2("Visit St. Mary's church")).toHaveLength(1);
+  expect(split2("Listen to J. Cole album")).toHaveLength(1);
+});

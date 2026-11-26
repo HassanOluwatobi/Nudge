@@ -143,13 +143,27 @@ function splitRunOn(t: string): string[] {
 /** Calendar events this app created itself (check-ins and task reminders). Never import them as tasks. */
 export const isOwnEvent = (title: string) => /^(nudgeme|shrink my day)\s*:/i.test(title.trim());
 
+// Words that end in a full stop but don't end a sentence: "Mr. Kingsley", "Dr. Ade", "J. Cole", "St. Mary's".
+const ABBR = /(?:^|\s)(?:mr|mrs|ms|mx|dr|prof|sir|rev|fr|sr|jr|st|mt|rd|ave|no|vs|etc|approx|dept|gov|gen|capt|col|lt|sgt|hon|e\.g|i\.e|a\.m|p\.m|[a-z])\.$/i;
+
+function sentencesOf(text: string): string[] {
+  const raw = text.split(/(?<=[.!?])\s+(?=\S)|;\s*/);
+  const out: string[] = [];
+  for (const part of raw) {
+    const prev = out[out.length - 1];
+    if (prev !== undefined && ABBR.test(prev)) out[out.length - 1] = prev + " " + part;
+    else out.push(part);
+  }
+  return out;
+}
+
 export function splitLines(text: string): string[] {
   const out: string[] = [];
   for (const line of text.split(/\r?\n/)) {
     const bare = line.replace(/^\s*(?:[-*•–]|\d+[.)])\s*/, "");
     if (!bare.trim()) continue;
     // Sentences and semicolons first.
-    const sentences = bare.split(/(?<=[.!?])\s+(?=\S)|;\s*/);
+    const sentences = sentencesOf(bare);
     for (const sen of sentences) {
       const pieces = sen.includes(",") ? splitCommas(sen) : [sen];
       for (const piece of pieces) {
